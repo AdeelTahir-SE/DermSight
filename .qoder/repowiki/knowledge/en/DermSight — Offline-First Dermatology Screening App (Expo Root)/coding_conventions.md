@@ -1,0 +1,5 @@
+- Styling is done exclusively via NativeWind utility classes compiled from Tailwind, with theme tokens (primary, navy, risk tier colors) centralized in `tailwind.config.js` rather than inline styles.
+- Navigation follows expo-router's file-based convention with route groups `(auth)` for unauthenticated flows and `(app)` for authenticated tabs, each group having its own `_layout.tsx` stack/tab wrapper.
+- TypeScript imports use the `@/*` path alias pointing at `src/` instead of relative paths, enforced by `tsconfig.json` path mappings.
+- Platform capabilities are declared declaratively in `app.json` under `plugins` (camera, location, splash) and `android.permissions` rather than edited directly in generated native manifests.
+- The project ships multiple locale bundles (`en.json`, `fr.json`, `sw.json`) under `assets/locales/` to support multi-region community health worker deployments via i18next.

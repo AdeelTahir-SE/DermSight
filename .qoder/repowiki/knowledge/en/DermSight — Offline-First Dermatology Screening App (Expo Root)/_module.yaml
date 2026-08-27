@@ -1,0 +1,26 @@
+schema_version: 1
+module_path: ""
+title: DermSight — Offline-First Dermatology Screening App (Expo Root)
+scope:
+    - README.md
+    - ARCHITECTURE.md
+    - CLAUDE.md
+    - AGENTS.md
+    - app.json
+    - package.json
+    - package-lock.json
+    - tsconfig.json
+    - babel.config.js
+    - metro.config.js
+    - tailwind.config.js
+    - global.css
+    - nativewind-env.d.ts
+    - .gitignore
+    - .claude/
+    - scripts/
+    - assets/
+    - .env.example
+    - LICENSE
+source_files: []
+depends_on: []
+related_to: []
