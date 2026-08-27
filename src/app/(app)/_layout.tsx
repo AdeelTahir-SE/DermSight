@@ -4,21 +4,27 @@
  */
 
 import { ConnectivityBanner } from "@/components/ui/ConnectivityBanner";
+import { Image } from "expo-image";
 import { Tabs } from "expo-router";
-import { Text, View } from "react-native";
+import { ImageSourcePropType, Text, View } from "react-native";
 
 function TabIcon({
   icon,
   label,
   focused,
 }: {
-  icon: string;
+  icon: ImageSourcePropType;
   label: string;
   focused: boolean;
 }) {
   return (
     <View className="items-center justify-center py-1">
-      <Text className={`text-xl ${focused ? "" : "opacity-40"}`}>{icon}</Text>
+      <Image
+        source={icon}
+        style={{ width: 24, height: 24, opacity: focused ? 1 : 0.4 }}
+        contentFit="contain"
+        tintColor={focused ? "#0D9E94" : "#9CA3AF"}
+      />
       <Text
         className={`text-xs mt-0.5 ${focused ? "text-primary font-medium" : "text-gray-400"}`}
       >
@@ -51,7 +57,11 @@ export default function AppLayout() {
           name="home"
           options={{
             tabBarIcon: ({ focused }) => (
-              <TabIcon icon="🏠" label="Home" focused={focused} />
+              <TabIcon
+                icon={require("../../../assets/icons/tab-home.png")}
+                label="Home"
+                focused={focused}
+              />
             ),
           }}
         />
@@ -59,7 +69,11 @@ export default function AppLayout() {
           name="patients"
           options={{
             tabBarIcon: ({ focused }) => (
-              <TabIcon icon="👥" label="Patients" focused={focused} />
+              <TabIcon
+                icon={require("../../../assets/icons/tab-patients.png")}
+                label="Patients"
+                focused={focused}
+              />
             ),
           }}
         />
@@ -67,7 +81,11 @@ export default function AppLayout() {
           name="assessments"
           options={{
             tabBarIcon: ({ focused }) => (
-              <TabIcon icon="📋" label="Assessments" focused={focused} />
+              <TabIcon
+                icon={require("../../../assets/icons/tab-assessments.png")}
+                label="Assessments"
+                focused={focused}
+              />
             ),
           }}
         />
@@ -75,7 +93,11 @@ export default function AppLayout() {
           name="settings"
           options={{
             tabBarIcon: ({ focused }) => (
-              <TabIcon icon="⚙️" label="Settings" focused={focused} />
+              <TabIcon
+                icon={require("../../../assets/icons/tab-settings.png")}
+                label="Settings"
+                focused={focused}
+              />
             ),
           }}
         />
