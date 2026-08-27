@@ -2,7 +2,7 @@
  * Image utilities — compression and path helpers for local storage.
  */
 
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from "expo-file-system";
 
 /**
  * Ensure a directory exists for storing assessment images.
@@ -19,7 +19,10 @@ export async function ensureImageDirectory(): Promise<string> {
 /**
  * Copy a captured image to our app's private storage directory.
  */
-export async function saveImageLocally(sourceUri: string, assessmentId: string): Promise<string> {
+export async function saveImageLocally(
+  sourceUri: string,
+  assessmentId: string,
+): Promise<string> {
   const dir = await ensureImageDirectory();
   const destUri = `${dir}${assessmentId}.jpg`;
   await FileSystem.copyAsync({ from: sourceUri, to: destUri });

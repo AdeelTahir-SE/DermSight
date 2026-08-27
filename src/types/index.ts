@@ -2,10 +2,10 @@
  * Shared cross-feature types for DermSight.
  */
 
-export type SyncStatus = 'pending' | 'synced' | 'failed';
-export type OperationType = 'create' | 'update';
-export type EntityType = 'patient' | 'assessment';
-export type SyncQueueStatus = 'pending' | 'in_progress' | 'failed' | 'done';
+export type SyncStatus = "pending" | "synced" | "failed";
+export type OperationType = "create" | "update";
+export type EntityType = "patient" | "assessment";
+export type SyncQueueStatus = "pending" | "in_progress" | "failed" | "done";
 
 export interface User {
   id: string;
@@ -21,7 +21,7 @@ export interface Patient {
   firstName: string;
   lastName: string;
   dateOfBirth: string;
-  sex: 'male' | 'female' | 'other';
+  sex: "male" | "female" | "other";
   phone: string | null;
   address: string | null;
   notes: string | null;
@@ -35,8 +35,9 @@ export interface Patient {
   remoteId: string | null;
 }
 
-export type DiagnosisClass = 'mel' | 'bcc' | 'akiec' | 'bkl' | 'df' | 'vasc' | 'nv';
-export type RiskTier = 'low' | 'medium' | 'high' | 'urgent_referral';
+export type DiagnosisClass =
+  "mel" | "bcc" | "akiec" | "bkl" | "df" | "vasc" | "nv";
+export type RiskTier = "low" | "medium" | "high" | "urgent_referral";
 
 export interface Assessment {
   id: string;
