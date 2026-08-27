@@ -64,7 +64,7 @@ export default function SplashScreen() {
             {/* Logo */}
             <View className="w-32 h-32 rounded-3xl bg-primary-50 items-center justify-center mb-8">
               <Image
-                source={require("../../../assets/logo.png")}
+                source={require("../../assets/logo.png")}
                 style={{ width: 80, height: 80 }}
                 contentFit="contain"
               />

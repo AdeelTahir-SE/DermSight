@@ -4,10 +4,11 @@
 
 import { Button } from "@/components/ui/Button";
 import { runInference } from "@/features/assessments/inference/classify";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useState } from "react";
 import {
     ActivityIndicator,
+    Image,
     Pressable,
     ScrollView,
     Text,
@@ -15,24 +16,26 @@ import {
 } from "react-native";
 
 export default function ReviewScreen() {
-  const { patientId } = useLocalSearchParams<{ patientId: string }>();
+  const { patientId, imageUri } = useLocalSearchParams<{
+    patientId: string;
+    imageUri?: string;
+  }>();
   const router = useRouter();
   const [analyzing, setAnalyzing] = useState(false);
 
   const handleAnalyze = async () => {
     setAnalyzing(true);
     try {
-      // Run mock inference
-      const result = await runInference("mock_image_uri");
+      const result = await runInference(imageUri ?? "captured_image");
 
-      // Navigate to result with the inference data
       router.push({
         pathname: `/(app)/patients/${patientId}/result`,
         params: {
           result: JSON.stringify(result),
           patientId: patientId,
+          imageUri: imageUri ?? "",
         },
-      });
+      } as Href);
     } catch (e) {
       console.error("Analysis failed:", e);
     } finally {
@@ -62,14 +65,24 @@ export default function ReviewScreen() {
             Check the image quality before analysis.
           </Text>
 
-          {/* Image placeholder */}
-          <View className="w-full aspect-square bg-gray-100 rounded-2xl items-center justify-center mb-4 overflow-hidden">
-            <View className="w-32 h-32 rounded-full bg-amber-200 items-center justify-center">
-              <Text className="text-4xl">🔬</Text>
-            </View>
-            <Text className="text-gray-400 text-sm mt-3">
-              Captured Lesion Image
-            </Text>
+          {/* Captured image preview */}
+          <View className="w-full aspect-square bg-gray-100 rounded-2xl mb-4 overflow-hidden">
+            {imageUri ? (
+              <Image
+                source={{ uri: imageUri }}
+                className="w-full h-full"
+                resizeMode="cover"
+              />
+            ) : (
+              <View className="flex-1 items-center justify-center">
+                <View className="w-32 h-32 rounded-full bg-amber-200 items-center justify-center">
+                  <Text className="text-4xl">🔬</Text>
+                </View>
+                <Text className="text-gray-400 text-sm mt-3">
+                  Captured Lesion Image
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Quality indicator */}

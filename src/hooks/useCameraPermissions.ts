@@ -1,8 +1,8 @@
 /**
- * Camera permissions hook.
+ * Camera permissions hook — wraps expo-camera's useCameraPermissions.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCameraPermissions as useExpoCameraPermissions } from "expo-camera";
 import { Platform } from "react-native";
 
 interface CameraPermissionState {
@@ -12,32 +12,26 @@ interface CameraPermissionState {
 }
 
 export function useCameraPermissions(): CameraPermissionState {
-  const [status, setStatus] = useState<"granted" | "denied" | "undetermined">(
-    "undetermined",
-  );
-  const [isLoading, setIsLoading] = useState(false);
+  const [permission, requestPermission] = useExpoCameraPermissions();
 
-  useEffect(() => {
-    // For web/dev, assume granted
-    if (Platform.OS === "web") {
-      setStatus("granted");
-    }
-  }, []);
+  if (Platform.OS === "web") {
+    return {
+      status: "granted",
+      isLoading: false,
+      requestPermission: async () => true,
+    };
+  }
 
-  const requestPermission = useCallback(async (): Promise<boolean> => {
-    setIsLoading(true);
-    try {
-      // In production, use react-native-vision-camera's requestCameraPermission()
-      // For now, simulate granted
-      setStatus("granted");
-      return true;
-    } catch {
-      setStatus("denied");
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  return { status, isLoading, requestPermission };
+  return {
+    status: permission?.granted
+      ? "granted"
+      : permission?.canAskAgain
+        ? "undetermined"
+        : "denied",
+    isLoading: !permission,
+    requestPermission: async () => {
+      const result = await requestPermission();
+      return result.granted;
+    },
+  };
 }
