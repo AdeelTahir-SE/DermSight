@@ -2,14 +2,14 @@
  * Assessment History screen — timeline of past assessments for a patient.
  */
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Pressable } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { getAssessmentsByPatient } from '@/features/assessments/repository';
-import { Badge } from '@/components/ui/Badge';
-import { formatDateTime } from '@/utils/date';
-import type { Assessment } from '@/types';
-import { DIAGNOSIS_LABELS } from '@/constants/riskLevels';
+import { Badge } from "@/components/ui/Badge";
+import { DIAGNOSIS_LABELS } from "@/constants/riskLevels";
+import { getAssessmentsByPatient } from "@/features/assessments/repository";
+import type { Assessment } from "@/types";
+import { formatDateTime } from "@/utils/date";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { FlatList, Pressable, Text, View } from "react-native";
 
 export default function HistoryScreen() {
   const { patientId } = useLocalSearchParams<{ patientId: string }>();
@@ -30,8 +30,12 @@ export default function HistoryScreen() {
             <Text className="text-xl">←</Text>
           </Pressable>
           <View>
-            <Text className="text-lg font-bold text-navy">Assessment History</Text>
-            <Text className="text-xs text-gray-500">{assessments.length} total assessments</Text>
+            <Text className="text-lg font-bold text-navy">
+              Assessment History
+            </Text>
+            <Text className="text-xs text-gray-500">
+              {assessments.length} total assessments
+            </Text>
           </View>
         </View>
       </View>
@@ -41,32 +45,40 @@ export default function HistoryScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Pressable
-            onPress={() => router.push({
-              pathname: `/(app)/patients/${patientId}/result`,
-              params: { result: JSON.stringify({
-                classProbabilities: item.classProbabilities,
-                predictedClass: item.predictedClass,
-                confidenceScore: item.confidenceScore,
-                abcdScores: {
-                  asymmetry: item.abcdAsymmetry,
-                  border: item.abcdBorder,
-                  color: item.abcdColor,
-                  diameter: item.abcdDiameter,
+            onPress={() =>
+              router.push({
+                pathname: `/(app)/patients/${patientId}/result`,
+                params: {
+                  result: JSON.stringify({
+                    classProbabilities: item.classProbabilities,
+                    predictedClass: item.predictedClass,
+                    confidenceScore: item.confidenceScore,
+                    abcdScores: {
+                      asymmetry: item.abcdAsymmetry,
+                      border: item.abcdBorder,
+                      color: item.abcdColor,
+                      diameter: item.abcdDiameter,
+                    },
+                    riskTier: item.riskTier,
+                  }),
+                  patientId,
                 },
-                riskTier: item.riskTier,
-              }), patientId },
-            })}
+              })
+            }
             className="bg-white mx-5 mt-3 p-4 rounded-2xl border border-gray-100"
           >
             <View className="flex-row items-center justify-between mb-2">
-              <Text className="text-sm text-gray-500">{formatDateTime(item.capturedAt)}</Text>
+              <Text className="text-sm text-gray-500">
+                {formatDateTime(item.capturedAt)}
+              </Text>
               <Badge riskTier={item.riskTier} size="sm" />
             </View>
             <Text className="text-base font-semibold text-navy">
               {DIAGNOSIS_LABELS[item.predictedClass]?.name}
             </Text>
             <Text className="text-xs text-gray-400 mt-1">
-              Confidence: {Math.round(item.confidenceScore * 100)}% • Model v{item.modelVersion}
+              Confidence: {Math.round(item.confidenceScore * 100)}% • Model v
+              {item.modelVersion}
             </Text>
           </Pressable>
         )}

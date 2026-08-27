@@ -2,7 +2,7 @@
  * Patient detail layout — sub-stack for patient flow.
  */
 
-import { Stack } from 'expo-router';
+import { Stack } from "expo-router";
 
 export default function PatientDetailLayout() {
   return (

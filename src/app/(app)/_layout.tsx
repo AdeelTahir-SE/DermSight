@@ -3,16 +3,25 @@
  * Home | Patients | Assessments (sync) | Settings
  */
 
-import React from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { Tabs, usePathname } from 'expo-router';
-import { ConnectivityBanner } from '@/components/ui/ConnectivityBanner';
+import { ConnectivityBanner } from "@/components/ui/ConnectivityBanner";
+import { Tabs } from "expo-router";
+import { Text, View } from "react-native";
 
-function TabIcon({ icon, label, focused }: { icon: string; label: string; focused: boolean }) {
+function TabIcon({
+  icon,
+  label,
+  focused,
+}: {
+  icon: string;
+  label: string;
+  focused: boolean;
+}) {
   return (
     <View className="items-center justify-center py-1">
-      <Text className={`text-xl ${focused ? '' : 'opacity-40'}`}>{icon}</Text>
-      <Text className={`text-xs mt-0.5 ${focused ? 'text-primary font-medium' : 'text-gray-400'}`}>
+      <Text className={`text-xl ${focused ? "" : "opacity-40"}`}>{icon}</Text>
+      <Text
+        className={`text-xs mt-0.5 ${focused ? "text-primary font-medium" : "text-gray-400"}`}
+      >
         {label}
       </Text>
     </View>
@@ -27,9 +36,9 @@ export default function AppLayout() {
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: '#FFFFFF',
+            backgroundColor: "#FFFFFF",
             borderTopWidth: 1,
-            borderTopColor: '#F1F5F5',
+            borderTopColor: "#F1F5F5",
             elevation: 0,
             height: 70,
             paddingBottom: 8,

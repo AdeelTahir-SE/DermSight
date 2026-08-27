@@ -3,14 +3,13 @@
  * Pending syncs, patient count, quick actions, connectivity indicator.
  */
 
-import React, { useEffect } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuthStore } from '@/features/auth/store';
-import { usePatientsStore } from '@/features/patients/store';
-import { useAssessmentsStore } from '@/features/assessments/store';
-import { useConnectivity } from '@/hooks/useConnectivity';
-import { Card } from '@/components/ui/Card';
+import { useAssessmentsStore } from "@/features/assessments/store";
+import { useAuthStore } from "@/features/auth/store";
+import { usePatientsStore } from "@/features/patients/store";
+import { useConnectivity } from "@/hooks/useConnectivity";
+import { useRouter } from "expo-router";
+import { useEffect } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -25,19 +24,28 @@ export default function HomeScreen() {
   }, []);
 
   return (
-    <ScrollView className="flex-1 bg-gray-50" showsVerticalScrollIndicator={false}>
+    <ScrollView
+      className="flex-1 bg-gray-50"
+      showsVerticalScrollIndicator={false}
+    >
       {/* Header */}
       <View className="bg-white px-5 pt-4 pb-5 border-b border-gray-100">
         <View className="flex-row items-center justify-between mb-1">
           <View>
-            <Text className="text-xl font-bold text-navy">Hello, {workerName || 'Health Worker'}</Text>
-            <Text className="text-sm text-gray-500">Community Health Worker</Text>
+            <Text className="text-xl font-bold text-navy">
+              Hello, {workerName || "Health Worker"}
+            </Text>
+            <Text className="text-sm text-gray-500">
+              Community Health Worker
+            </Text>
           </View>
           <View className="flex-row items-center gap-3">
             <View className="flex-row items-center">
-              <View className={`w-2 h-2 rounded-full ${isOffline ? 'bg-amber-500' : 'bg-green-500'} mr-1.5`} />
+              <View
+                className={`w-2 h-2 rounded-full ${isOffline ? "bg-amber-500" : "bg-green-500"} mr-1.5`}
+              />
               <Text className="text-xs text-gray-500">
-                {isOffline ? 'Device Offline' : 'Device Online'}
+                {isOffline ? "Device Offline" : "Device Online"}
               </Text>
             </View>
             <Pressable className="w-9 h-9 rounded-full bg-gray-50 items-center justify-center">
@@ -45,7 +53,7 @@ export default function HomeScreen() {
             </Pressable>
             <View className="w-9 h-9 rounded-full bg-primary-50 items-center justify-center">
               <Text className="text-primary font-bold text-sm">
-                {(workerName || 'HW')[0].toUpperCase()}
+                {(workerName || "HW")[0].toUpperCase()}
               </Text>
             </View>
           </View>
@@ -55,15 +63,19 @@ export default function HomeScreen() {
       <View className="p-5">
         {/* New Assessment CTA */}
         <Pressable
-          onPress={() => router.push('/patients')}
+          onPress={() => router.push("/patients")}
           className="bg-primary rounded-2xl p-5 mb-5 flex-row items-center"
         >
           <View className="w-12 h-12 rounded-xl bg-white/20 items-center justify-center mr-4">
             <Text className="text-2xl">📷</Text>
           </View>
           <View className="flex-1">
-            <Text className="text-white text-lg font-bold">New Skin Assessment</Text>
-            <Text className="text-white/80 text-sm mt-0.5">Capture or upload a lesion.</Text>
+            <Text className="text-white text-lg font-bold">
+              New Skin Assessment
+            </Text>
+            <Text className="text-white/80 text-sm mt-0.5">
+              Capture or upload a lesion.
+            </Text>
           </View>
           <Text className="text-white/60 text-2xl">›</Text>
         </Pressable>
@@ -75,21 +87,21 @@ export default function HomeScreen() {
             title="Patients"
             value={`${patients.length}`}
             subtitle="Records"
-            onPress={() => router.push('/patients')}
+            onPress={() => router.push("/patients")}
           />
           <MetricCard
             icon="📋"
             title="Assessments"
             value={`${totalCount}`}
             subtitle="Total"
-            onPress={() => router.push('/assessments')}
+            onPress={() => router.push("/assessments")}
           />
           <MetricCard
             icon="☁️"
             title="Pending Sync"
             value={`${pendingSyncCount}`}
             subtitle="Records"
-            onPress={() => router.push('/assessments')}
+            onPress={() => router.push("/assessments")}
           />
           <MetricCard
             icon="📊"
@@ -105,7 +117,9 @@ export default function HomeScreen() {
           <View className="flex-row items-center bg-green-50 border border-green-100 rounded-2xl p-4">
             <Text className="text-xl mr-3">📡</Text>
             <View className="flex-1">
-              <Text className="text-sm font-medium text-green-800">You are offline</Text>
+              <Text className="text-sm font-medium text-green-800">
+                You are offline
+              </Text>
               <Text className="text-xs text-green-600 mt-0.5">
                 Data will sync automatically when connection is available.
               </Text>
@@ -134,7 +148,7 @@ function MetricCard({
     <Pressable
       onPress={onPress}
       className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm"
-      style={{ width: '48%' }}
+      style={{ width: "48%" }}
     >
       <View className="flex-row items-center mb-2">
         <Text className="text-lg mr-2">{icon}</Text>

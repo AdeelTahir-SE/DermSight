@@ -3,14 +3,14 @@
  * Uses placeholder for camera since react-native-vision-camera needs native modules.
  */
 
-import React, { useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
+import { Pressable, Text, View } from "react-native";
 
 export default function CaptureScreen() {
   const { patientId } = useLocalSearchParams<{ patientId: string }>();
   const router = useRouter();
-  const [mode, setMode] = useState<'photo' | 'guide'>('photo');
+  const [mode, setMode] = useState<"photo" | "guide">("photo");
   const [showTips, setShowTips] = useState(false);
 
   const handleCapture = () => {
@@ -18,7 +18,7 @@ export default function CaptureScreen() {
     // For now, navigate to review with a mock image
     router.push({
       pathname: `/(app)/patients/${patientId}/review`,
-      params: { mockImage: 'true' },
+      params: { mockImage: "true" },
     });
   };
 
@@ -68,18 +68,22 @@ export default function CaptureScreen() {
         {/* Mode tabs */}
         <View className="flex-row justify-center gap-1 mb-6">
           <Pressable
-            onPress={() => setMode('photo')}
-            className={`px-6 py-2 rounded-full ${mode === 'photo' ? 'bg-primary' : 'bg-white/10'}`}
+            onPress={() => setMode("photo")}
+            className={`px-6 py-2 rounded-full ${mode === "photo" ? "bg-primary" : "bg-white/10"}`}
           >
-            <Text className={`text-sm font-medium ${mode === 'photo' ? 'text-white' : 'text-white/60'}`}>
+            <Text
+              className={`text-sm font-medium ${mode === "photo" ? "text-white" : "text-white/60"}`}
+            >
               PHOTO
             </Text>
           </Pressable>
           <Pressable
-            onPress={() => setMode('guide')}
-            className={`px-6 py-2 rounded-full ${mode === 'guide' ? 'bg-primary' : 'bg-white/10'}`}
+            onPress={() => setMode("guide")}
+            className={`px-6 py-2 rounded-full ${mode === "guide" ? "bg-primary" : "bg-white/10"}`}
           >
-            <Text className={`text-sm font-medium ${mode === 'guide' ? 'text-white' : 'text-white/60'}`}>
+            <Text
+              className={`text-sm font-medium ${mode === "guide" ? "text-white" : "text-white/60"}`}
+            >
               GUIDE
             </Text>
           </Pressable>
@@ -93,8 +97,14 @@ export default function CaptureScreen() {
 
           {/* Shutter button */}
           <Pressable onPress={handleCapture} className="w-18 h-18">
-            <View className="w-18 h-18 rounded-full border-4 border-white items-center justify-center" style={{ width: 72, height: 72 }}>
-              <View className="w-14 h-14 rounded-full bg-white" style={{ width: 56, height: 56 }} />
+            <View
+              className="w-18 h-18 rounded-full border-4 border-white items-center justify-center"
+              style={{ width: 72, height: 72 }}
+            >
+              <View
+                className="w-14 h-14 rounded-full bg-white"
+                style={{ width: 56, height: 56 }}
+              />
             </View>
           </Pressable>
 

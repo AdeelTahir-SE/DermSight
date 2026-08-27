@@ -3,16 +3,15 @@
  * Shows 7-class diagnosis, mapped risk tier, ABCD explainability panel, recommended action.
  */
 
-import React from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { RiskTierBadge } from '@/components/assessment/RiskTierBadge';
-import { ClassProbabilityList } from '@/components/assessment/ClassProbabilityList';
-import { ABCDPanel } from '@/components/assessment/ABCDPanel';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { DIAGNOSIS_LABELS } from '@/constants/riskLevels';
-import type { InferenceResult } from '@/types';
+import { ABCDPanel } from "@/components/assessment/ABCDPanel";
+import { ClassProbabilityList } from "@/components/assessment/ClassProbabilityList";
+import { RiskTierBadge } from "@/components/assessment/RiskTierBadge";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { DIAGNOSIS_LABELS } from "@/constants/riskLevels";
+import type { InferenceResult } from "@/types";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 export default function ResultScreen() {
   const { result: resultParam, patientId } = useLocalSearchParams<{
@@ -26,13 +25,23 @@ export default function ResultScreen() {
     ? JSON.parse(resultParam)
     : {
         classProbabilities: {
-          mel: 0.35, bcc: 0.15, akiec: 0.10, bkl: 0.12,
-          df: 0.08, vasc: 0.05, nv: 0.15,
+          mel: 0.35,
+          bcc: 0.15,
+          akiec: 0.1,
+          bkl: 0.12,
+          df: 0.08,
+          vasc: 0.05,
+          nv: 0.15,
         },
-        predictedClass: 'mel',
+        predictedClass: "mel",
         confidenceScore: 0.35,
-        abcdScores: { asymmetry: 0.75, border: 0.62, color: 0.81, diameter: 0.45 },
-        riskTier: 'urgent_referral',
+        abcdScores: {
+          asymmetry: 0.75,
+          border: 0.62,
+          color: 0.81,
+          diameter: 0.45,
+        },
+        riskTier: "urgent_referral",
       };
 
   const diagnosisInfo = DIAGNOSIS_LABELS[result.predictedClass];
@@ -55,7 +64,8 @@ export default function ResultScreen() {
           <View className="bg-amber-50 border border-amber-100 rounded-xl p-3 flex-row items-start">
             <Text className="text-sm mr-2">⚠️</Text>
             <Text className="text-xs text-amber-700 flex-1">
-              This is a screening result, not a diagnosis. Always consult a specialist for confirmation.
+              This is a screening result, not a diagnosis. Always consult a
+              specialist for confirmation.
             </Text>
           </View>
 
@@ -65,7 +75,9 @@ export default function ResultScreen() {
           {/* Top Diagnosis */}
           <Card>
             <Text className="text-xs text-gray-500 mb-1">Top Diagnosis</Text>
-            <Text className="text-lg font-bold text-navy">{diagnosisInfo.name}</Text>
+            <Text className="text-lg font-bold text-navy">
+              {diagnosisInfo.name}
+            </Text>
             <View className="flex-row items-center mt-2">
               <Text className="text-sm text-gray-500 mr-2">Confidence</Text>
               <Text className="text-base font-bold text-primary">
@@ -75,7 +87,9 @@ export default function ResultScreen() {
             {diagnosisInfo.malignant && (
               <View className="flex-row items-center mt-2 bg-red-50 rounded-lg p-2">
                 <Text className="text-xs mr-1">⚠️</Text>
-                <Text className="text-xs text-red-600 font-medium">Malignant classification</Text>
+                <Text className="text-xs text-red-600 font-medium">
+                  Malignant classification
+                </Text>
               </View>
             )}
           </Card>
