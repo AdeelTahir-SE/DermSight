@@ -11,17 +11,19 @@
 - [riskLevels.ts](file://src/constants/riskLevels.ts)
 - [labels.ts](file://src/ml/labels.ts)
 - [ABCDPanel.tsx](file://src/components/assessment/ABCDPanel.tsx)
+- [RiskTierBadge.tsx](file://src/components/assessment/RiskTierBadge.tsx)
+- [index.ts](file://src/types/index.ts)
 </cite>
 
 ## Update Summary
 **Changes Made**
-- Updated capture screen implementation from placeholder to production-ready expo-camera with real-time preview
-- Enhanced permission handling with proper undetermined/denied/granted states
-- Added flash mode toggling and front/back camera switching functionality
-- Implemented sophisticated framing guides with corner brackets and center crosshair
-- Updated review screen to display actual captured images instead of placeholders
-- Enhanced useCameraPermissions hook for consistent cross-platform permission management
-- Improved error handling and user feedback throughout the capture workflow
+- Replaced placeholder camera functionality with production-ready implementation using expo-camera's CameraView component
+- Implemented comprehensive permission handling with proper undetermined/denied/granted states and platform-specific logic
+- Added real-time camera preview with sophisticated framing guides including corner brackets and center crosshair
+- Integrated flash mode toggling (off/on/auto) and front/back camera switching functionality
+- Enhanced review screen with actual captured image display, quality indicators, and loading states during analysis
+- Improved error handling throughout the capture workflow with user-friendly feedback
+- Added comprehensive accessibility features including high contrast overlays and clear instructional text
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -36,16 +38,16 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains DermSight's production-ready camera integration system end-to-end: from requesting camera permissions through guided lesion image capture with real-time preview and sophisticated framing guides, to reviewing image quality and running inference for risk assessment. The system uses expo-camera for native camera access with comprehensive permission handling, flash control, and camera switching capabilities. The review interface allows users to verify image quality before proceeding to analysis, and the result screen presents diagnosis probabilities, ABCD explainability, and recommended actions.
+DermSight's camera integration system provides a complete end-to-end solution for capturing lesion images with professional-grade features. The system leverages expo-camera for native camera access with comprehensive permission management, real-time preview capabilities, and sophisticated framing assistance. Healthcare workers can capture high-quality images with guided positioning, review them for quality assurance, and proceed to AI-powered risk assessment with full transparency through ABCD explainability scores.
 
 ## Project Structure
-The camera workflow spans several screens and utilities:
-- Capture screen provides a full-screen camera preview with framing guides, instructional overlays, and mode toggles.
-- Review screen displays the captured image, quality indicators, and options to analyze or retake.
-- Result screen shows classification results, confidence, and ABCD scores.
-- A hook manages camera permission state and requests across platforms.
-- Image utilities handle local storage operations for captured images.
-- Inference module runs mock classification and maps classes to risk tiers.
+The camera workflow spans multiple screens and supporting components:
+- **Capture Screen**: Full-screen camera interface with live preview, framing guides, and comprehensive controls
+- **Review Screen**: Image validation interface with quality assessment and analysis options
+- **Result Screen**: Comprehensive diagnosis presentation with confidence scores and clinical guidance
+- **Permission Hook**: Cross-platform camera permission management with appropriate fallbacks
+- **Image Utilities**: Local storage management for captured images with compression support
+- **Inference Module**: Mock classification system ready for TFLite model integration
 
 ```mermaid
 graph TB
@@ -55,6 +57,7 @@ Capture --> Permissions["useCameraPermissions<br/>cross-platform hook"]
 Review --> Inference["runInference<br/>mock ML"]
 Capture --> Images["Image Utils<br/>local storage"]
 Result --> Risk["Risk Mapping<br/>constants"]
+Result --> ABCD["ABCD Panel<br/>explainability"]
 ```
 
 **Diagram sources**
@@ -65,6 +68,7 @@ Result --> Risk["Risk Mapping<br/>constants"]
 - [image.ts:1-52](file://src/utils/image.ts#L1-L52)
 - [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
 - [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
+- [ABCDPanel.tsx:1-68](file://src/components/assessment/ABCDPanel.tsx#L1-L68)
 
 **Section sources**
 - [capture.tsx:1-248](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L248)
@@ -74,14 +78,15 @@ Result --> Risk["Risk Mapping<br/>constants"]
 - [image.ts:1-52](file://src/utils/image.ts#L1-L52)
 - [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
 - [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
+- [ABCDPanel.tsx:1-68](file://src/components/assessment/ABCDPanel.tsx#L1-L68)
 
 ## Core Components
-- **Camera Permission Hook**: Provides status and request flow with platform-specific handling; supports undetermined/denied/granted states with web fallback.
-- **Capture Screen**: Presents a full-screen CameraView with real-time preview, framing guides with corner brackets and center crosshair, instructional overlay, flash mode toggling, front/back camera switching, shutter button, and expandable tips panel.
-- **Review Screen**: Displays captured image with quality indicator, tips for better results, and actions to analyze or retake.
-- **Result Screen**: Shows top diagnosis, confidence, class probabilities, ABCD explainability, and next actions.
-- **Image Utilities**: Ensure directory, copy image to app storage, delete, and get file size.
-- **Inference Module**: Mock classifier that returns realistic probabilities, ABCD scores, and risk tier mapping.
+- **Camera Permission Hook**: Provides status and request flow with platform-specific handling; supports undetermined/denied/granted states with web fallback
+- **Capture Screen**: Presents a full-screen CameraView with real-time preview, sophisticated framing guides with corner brackets and center crosshair, instructional overlay, flash mode toggling, front/back camera switching, shutter button, and expandable tips panel
+- **Review Screen**: Displays captured image with quality indicator, tips for better results, and actions to analyze or retake
+- **Result Screen**: Shows top diagnosis, confidence, class probabilities, ABCD explainability, and recommended actions based on risk tier
+- **Image Utilities**: Ensure directory creation, copy images to app storage, delete files, and get file size information
+- **Inference Module**: Mock classifier that returns realistic probabilities, ABCD scores, and risk tier mapping
 
 **Section sources**
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
@@ -92,13 +97,14 @@ Result --> Risk["Risk Mapping<br/>constants"]
 - [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
 
 ## Architecture Overview
-The camera integration follows a linear user journey with robust error handling:
-1. User opens capture screen; permission hook ensures camera access with proper state management.
-2. Real-time camera preview with framing guides and instructions help position the lesion.
-3. Shutter triggers capture with quality settings (0.8 quality, EXIF data); navigation moves to review.
-4. Review screen validates image quality and offers analysis with loading states.
-5. Inference runs (currently mock) and navigates to result.
-6. Result screen presents diagnosis, confidence, ABCD scores, and risk tier.
+The camera integration follows a linear user journey with robust error handling and comprehensive user feedback:
+
+1. User opens capture screen; permission hook ensures camera access with proper state management
+2. Real-time camera preview with sophisticated framing guides and instructions helps position the lesion
+3. Shutter triggers capture with optimized quality settings (0.8 quality, EXIF data preservation); navigation moves to review
+4. Review screen validates image quality and offers analysis with loading states and progress indication
+5. Inference runs (currently mock) and navigates to result screen
+6. Result screen presents diagnosis, confidence, ABCD scores, and risk tier with clinical guidance
 
 ```mermaid
 sequenceDiagram
@@ -130,10 +136,12 @@ J-->>U : Display diagnosis & ABCD
 ## Detailed Component Analysis
 
 ### Camera Permission Hook
-- **Purpose**: Manage camera permission lifecycle with cross-platform support and provide a unified API for requesting access.
-- **Behavior**: On web/platforms without native camera, assumes granted; otherwise integrates with expo-camera's useCameraPermissions for native permission handling.
-- **State**: Tracks status (granted/denied/undetermined) and loading state during request.
-- **Integration**: Used by capture screen to gate camera features and guide users through permission flow with appropriate UI states.
+The useCameraPermissions hook provides cross-platform camera permission management with appropriate fallbacks for different environments:
+
+- **Purpose**: Manage camera permission lifecycle with cross-platform support and provide a unified API for requesting access
+- **Behavior**: On web/platforms without native camera, assumes granted; otherwise integrates with expo-camera's useCameraPermissions for native permission handling
+- **State Management**: Tracks status (granted/denied/undetermined) and loading state during permission requests
+- **Integration**: Used by capture screen to gate camera features and guide users through permission flow with appropriate UI states
 
 ```mermaid
 flowchart TD
@@ -152,17 +160,19 @@ SetGranted --> End
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
 
 ### Capture Screen
-- **Purpose**: Guided lesion capture with real-time camera preview, sophisticated framing guides, and comprehensive controls.
-- **Features**:
-  - Live CameraView with real-time preview and hardware acceleration.
-  - Framing guide with corner brackets and center crosshair to aid alignment.
-  - Instruction overlay advising proper positioning and lighting.
-  - Flash mode toggling (off/on/auto) with visual indicator.
-  - Front/back camera switching with smooth transitions.
-  - Shutter button with loading state and capture animation.
-  - Expandable tips panel for quick guidance on capturing clear images.
-  - Comprehensive error handling for capture failures.
-- **Navigation**: On capture, navigates to review screen with image URI and patient ID parameters.
+The capture screen implements a comprehensive camera interface with professional-grade features:
+
+- **Purpose**: Guided lesion capture with real-time camera preview, sophisticated framing guides, and comprehensive controls
+- **Key Features**:
+  - Live CameraView with real-time preview and hardware acceleration
+  - Sophisticated framing guide with corner brackets and center crosshair for precise lesion positioning
+  - Instruction overlay advising proper positioning and lighting conditions
+  - Flash mode toggling (off/on/auto) with visual indicator showing current mode
+  - Front/back camera switching with smooth transitions
+  - Shutter button with loading state and capture animation
+  - Expandable tips panel providing quick guidance on capturing clear images
+  - Comprehensive error handling for capture failures with user-friendly messages
+- **Navigation**: On successful capture, navigates to review screen with image URI and patient ID parameters
 
 ```mermaid
 flowchart TD
@@ -186,14 +196,16 @@ Adjust --> Guide
 - [capture.tsx:1-248](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L248)
 
 ### Review Screen
-- **Purpose**: Allow users to verify image quality and proceed to analysis or retake.
+The review screen provides image validation and analysis initiation:
+
+- **Purpose**: Allow users to verify image quality and proceed to analysis or retake
 - **Features**:
-  - Actual captured image display with proper sizing and aspect ratio.
-  - Quality indicator with visual feedback.
-  - Tips for better results (natural light, focus, full lesion capture).
-  - Loading states during analysis with progress indication.
-  - Actions: "Use Image & Analyze" and "Retake Photo".
-- **Workflow**: Calls inference module and navigates to result screen with inference data and image URI.
+  - Actual captured image display with proper sizing and aspect ratio
+  - Quality indicator with visual feedback and descriptive text
+  - Tips for better results including natural light, focus, and full lesion capture guidance
+  - Loading states during analysis with progress indication and user feedback
+  - Actions: "Use Image & Analyze" and "Retake Photo" with appropriate styling
+- **Workflow**: Calls inference module and navigates to result screen with inference data and image URI
 
 ```mermaid
 sequenceDiagram
@@ -218,13 +230,17 @@ Res-->>U : Display diagnosis & ABCD
 - [review.tsx:1-150](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L150)
 
 ### Result Screen
-- **Purpose**: Present diagnosis, confidence, class probabilities, ABCD explainability, and recommended action based on risk tier.
+The result screen presents comprehensive diagnosis information with clinical context:
+
+- **Purpose**: Present diagnosis, confidence, class probabilities, ABCD explainability, and recommended action based on risk tier
 - **Features**:
-  - Disclaimer emphasizing screening nature.
-  - Risk tier badge with color-coded severity and action guidance.
-  - Class probability list and ABCD panel for transparency.
-  - Actions to save result or start new assessment.
-  - Proper parameter parsing for result data and patient context.
+  - Disclaimer emphasizing screening nature and need for specialist consultation
+  - Risk tier badge with color-coded severity and action guidance
+  - Class probability list showing all possible diagnoses with confidence levels
+  - ABCD panel for transparency into model reasoning
+  - Actions to save result or start new assessment
+  - Proper parameter parsing for result data and patient context
+- **Clinical Integration**: Maps model outputs to clinically meaningful risk tiers with appropriate action items
 
 ```mermaid
 classDiagram
@@ -248,12 +264,14 @@ class ResultScreen {
 - [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
 
 ### Image Utilities
-- **Purpose**: Manage local storage for captured images with proper directory management.
+The image utilities provide local storage management for captured images:
+
+- **Purpose**: Manage local storage for captured images with proper directory management
 - **Functions**:
-  - ensureImageDirectory: Creates app-private directory for images.
-  - saveImageLocally: Copies captured image to private storage.
-  - deleteLocalImage: Removes stored image.
-  - getFileSizeKB: Returns file size for display or analytics.
+  - `ensureImageDirectory`: Creates app-private directory for images with intermediate directory support
+  - `saveImageLocally`: Copies captured image to private storage with unique naming
+  - `deleteLocalImage`: Removes stored image with existence checking
+  - `getFileSizeKB`: Returns file size for display or analytics purposes
 
 ```mermaid
 flowchart TD
@@ -271,12 +289,15 @@ ReturnURI --> End(["Done"])
 - [image.ts:1-52](file://src/utils/image.ts#L1-L52)
 
 ### Inference Module
-- **Purpose**: Provide classification results for captured images (currently mock).
+The inference module provides classification results for captured images:
+
+- **Purpose**: Provide classification results for captured images (currently mock implementation)
 - **Behavior**:
-  - Simulates processing delay.
-  - Generates normalized probabilities across model labels.
-  - Computes ABCD scores and maps predicted class to risk tier.
-  - Exposes helper to check model availability.
+  - Simulates processing delay for realistic user experience
+  - Generates normalized probabilities across model labels
+  - Computes ABCD scores and maps predicted class to risk tier
+  - Exposes helper function to check model availability
+- **Production Readiness**: Designed for easy replacement with TFLite model integration
 
 ```mermaid
 flowchart TD
@@ -299,12 +320,13 @@ Risk --> Return["Return InferenceResult"]
 - [labels.ts:1-26](file://src/ml/labels.ts#L1-L26)
 
 ## Dependency Analysis
-Key dependencies and relationships:
-- Capture depends on routing and UI components; integrates with permission hook for camera access and uses expo-camera for live preview.
-- Review depends on inference module and navigation to result.
-- Result depends on constants for risk mapping and ABCD panel component.
-- Image utilities are independent but used by capture/review flows for storage.
-- Inference uses model labels and risk level mappings.
+Key dependencies and relationships within the camera integration system:
+
+- **Capture Screen**: Depends on routing and UI components; integrates with permission hook for camera access and uses expo-camera for live preview
+- **Review Screen**: Depends on inference module and navigation to result screen
+- **Result Screen**: Depends on constants for risk mapping and ABCD panel component
+- **Image Utilities**: Independent but used by capture/review flows for storage operations
+- **Inference Module**: Uses model labels and risk level mappings for classification
 
 ```mermaid
 graph LR
@@ -342,19 +364,20 @@ Inference --> Labels["labels.ts"]
 - [labels.ts:1-26](file://src/ml/labels.ts#L1-L26)
 
 ## Performance Considerations
-- **Camera Preview**: Uses expo-camera's optimized CameraView component with hardware-accelerated rendering for smooth frame rates.
-- **Image Capture**: Configured with 0.8 quality setting and EXIF data preservation for optimal balance between quality and performance.
-- **Memory Management**: Proper cleanup of camera resources after capture; avoid retaining large image buffers in memory.
-- **Storage**: Store images in app-private directories to minimize overhead and ensure fast access; consider compression before upload to reduce bandwidth.
-- **Inference**: Batch preprocessing steps and leverage device-specific accelerators when integrating real models; keep UI responsive with progress indicators.
+- **Camera Preview**: Uses expo-camera's optimized CameraView component with hardware-accelerated rendering for smooth frame rates
+- **Image Capture**: Configured with 0.8 quality setting and EXIF data preservation for optimal balance between quality and performance
+- **Memory Management**: Proper cleanup of camera resources after capture; avoid retaining large image buffers in memory
+- **Storage**: Store images in app-private directories to minimize overhead and ensure fast access; consider compression before upload to reduce bandwidth
+- **Inference**: Batch preprocessing steps and leverage device-specific accelerators when integrating real models; keep UI responsive with progress indicators
 
 ## Troubleshooting Guide
 Common issues and resolutions:
-- **Camera Unavailable**: If platform lacks camera support or permissions are denied, show informative messages and guide users to settings to enable camera access.
-- **Permission Denied**: Persist denial state and offer retry flow; on web, assume granted for development but warn about limitations.
-- **Capture Failures**: Handle exceptions during photo capture with user-friendly error messages and retry options.
-- **Image Storage Errors**: Handle filesystem errors gracefully; fallback to temporary storage if necessary and notify users.
-- **Inference Failures**: Catch exceptions during analysis; provide retry option and log errors for diagnostics.
+
+- **Camera Unavailable**: If platform lacks camera support or permissions are denied, show informative messages and guide users to settings to enable camera access
+- **Permission Denied**: Persist denial state and offer retry flow; on web, assume granted for development but warn about limitations
+- **Capture Failures**: Handle exceptions during photo capture with user-friendly error messages and retry options
+- **Image Storage Errors**: Handle filesystem errors gracefully; fallback to temporary storage if necessary and notify users
+- **Inference Failures**: Catch exceptions during analysis; provide retry option and log errors for diagnostics
 
 **Section sources**
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
@@ -368,15 +391,15 @@ DermSight's camera integration provides a production-ready, user-friendly workfl
 ## Appendices
 
 ### Cross-Platform Compatibility Notes
-- **iOS/Android**: Uses expo-camera for native camera access with proper permission handling aligned with platform requirements.
-- **Web**: Continues assuming granted for development; informs users of limited functionality and encourages mobile use for clinical workflows.
-- **Permission States**: Consistent handling of undetermined/denied/granted states across all platforms with appropriate UI feedback.
+- **iOS/Android**: Uses expo-camera for native camera access with proper permission handling aligned with platform requirements
+- **Web**: Continues assuming granted for development; informs users of limited functionality and encourages mobile use for clinical workflows
+- **Permission States**: Consistent handling of undetermined/denied/granted states across all platforms with appropriate UI feedback
 
 ### Accessibility Considerations
-- **High Contrast**: Framing guides and overlays remain visible under various lighting conditions with appropriate contrast ratios.
-- **VoiceOver/TalkBack**: All interactive elements (shutter, tips, buttons) are properly labeled for screen readers.
-- **Lighting Guidance**: Clear instructions provided to improve image quality in low-light scenarios with practical tips.
-- **Touch Targets**: All interactive elements meet minimum touch target sizes for accessibility compliance.
+- **High Contrast**: Framing guides and overlays remain visible under various lighting conditions with appropriate contrast ratios
+- **VoiceOver/TalkBack**: All interactive elements (shutter, tips, buttons) are properly labeled for screen readers
+- **Lighting Guidance**: Clear instructions provided to improve image quality in low-light scenarios with practical tips
+- **Touch Targets**: All interactive elements meet minimum touch target sizes for accessibility compliance
 
 ### Implementation Examples
 

@@ -7,15 +7,10 @@ import { Input } from "@/components/ui/Input";
 import { useAuthStore } from "@/features/auth/store";
 import { createPatient } from "@/features/patients/repository";
 import { usePatientsStore } from "@/features/patients/store";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import {
-    Alert,
-    Pressable,
-    ScrollView,
-    Text,
-    View
-} from "react-native";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 
 export default function NewPatientScreen() {
   const router = useRouter();
@@ -95,7 +90,14 @@ export default function NewPatientScreen() {
           placeholder="Enter first name"
           value={firstName}
           onChangeText={setFirstName}
-          icon={<Text className="text-lg">👤</Text>}
+          icon={
+            <Image
+              source={require("../../../../assets/icons/np-person.png")}
+              style={{ width: 20, height: 20 }}
+              contentFit="contain"
+              tintColor="#0D9E94"
+            />
+          }
           error={errors.firstName}
         />
         <Input
@@ -103,7 +105,14 @@ export default function NewPatientScreen() {
           placeholder="Enter last name"
           value={lastName}
           onChangeText={setLastName}
-          icon={<Text className="text-lg">👤</Text>}
+          icon={
+            <Image
+              source={require("../../../../assets/icons/np-person.png")}
+              style={{ width: 20, height: 20 }}
+              contentFit="contain"
+              tintColor="#0D9E94"
+            />
+          }
           error={errors.lastName}
         />
         <Input
@@ -111,7 +120,14 @@ export default function NewPatientScreen() {
           placeholder="DD / MM / YYYY"
           value={dob}
           onChangeText={setDob}
-          icon={<Text className="text-lg">📅</Text>}
+          icon={
+            <Image
+              source={require("../../../../assets/icons/np-calendar.png")}
+              style={{ width: 20, height: 20 }}
+              contentFit="contain"
+              tintColor="#0D9E94"
+            />
+          }
           error={errors.dob}
           keyboardType="default"
         />
@@ -158,7 +174,14 @@ export default function NewPatientScreen() {
           placeholder="03XX XXXXXX"
           value={phone}
           onChangeText={setPhone}
-          icon={<Text className="text-lg">📱</Text>}
+          icon={
+            <Image
+              source={require("../../../../assets/icons/np-phone.png")}
+              style={{ width: 20, height: 20 }}
+              contentFit="contain"
+              tintColor="#0D9E94"
+            />
+          }
           keyboardType="phone-pad"
         />
         <Input
@@ -166,7 +189,14 @@ export default function NewPatientScreen() {
           placeholder="Enter address"
           value={address}
           onChangeText={setAddress}
-          icon={<Text className="text-lg">📍</Text>}
+          icon={
+            <Image
+              source={require("../../../../assets/icons/np-location.png")}
+              style={{ width: 20, height: 20 }}
+              contentFit="contain"
+              tintColor="#0D9E94"
+            />
+          }
         />
 
         {/* Additional Information */}
@@ -178,7 +208,14 @@ export default function NewPatientScreen() {
           placeholder="Any additional notes"
           value={notes}
           onChangeText={setNotes}
-          icon={<Text className="text-lg">📝</Text>}
+          icon={
+            <Image
+              source={require("../../../../assets/icons/np-notes.png")}
+              style={{ width: 20, height: 20 }}
+              contentFit="contain"
+              tintColor="#0D9E94"
+            />
+          }
           multiline
         />
 

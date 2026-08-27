@@ -7,9 +7,16 @@ import { useAssessmentsStore } from "@/features/assessments/store";
 import { useAuthStore } from "@/features/auth/store";
 import { usePatientsStore } from "@/features/patients/store";
 import { useConnectivity } from "@/hooks/useConnectivity";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import {
+  ImageSourcePropType,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -67,7 +74,12 @@ export default function HomeScreen() {
           className="bg-primary rounded-2xl p-5 mb-5 flex-row items-center"
         >
           <View className="w-12 h-12 rounded-xl bg-white/20 items-center justify-center mr-4">
-            <Text className="text-2xl">📷</Text>
+            <Image
+              source={require("../../../../assets/icons/home-camera.png")}
+              style={{ width: 28, height: 28 }}
+              contentFit="contain"
+              tintColor="#FFFFFF"
+            />
           </View>
           <View className="flex-1">
             <Text className="text-white text-lg font-bold">
@@ -83,28 +95,28 @@ export default function HomeScreen() {
         {/* Metric Cards - 2x2 Grid */}
         <View className="flex-row flex-wrap gap-3 mb-5">
           <MetricCard
-            icon="👤"
+            icon={require("../../../../assets/icons/home-users.png")}
             title="Patients"
             value={`${patients.length}`}
             subtitle="Records"
             onPress={() => router.push("/patients")}
           />
           <MetricCard
-            icon="📋"
+            icon={require("../../../../assets/icons/home-checklist.png")}
             title="Assessments"
             value={`${totalCount}`}
             subtitle="Total"
             onPress={() => router.push("/assessments")}
           />
           <MetricCard
-            icon="☁️"
+            icon={require("../../../../assets/icons/home-cloud.png")}
             title="Pending Sync"
             value={`${pendingSyncCount}`}
             subtitle="Records"
             onPress={() => router.push("/assessments")}
           />
           <MetricCard
-            icon="📊"
+            icon={require("../../../../assets/icons/home-chart.png")}
             title="Reports"
             value="View"
             subtitle="Summary"
@@ -115,8 +127,13 @@ export default function HomeScreen() {
         {/* Offline Status Banner */}
         {isOffline && (
           <View className="flex-row items-center bg-green-50 border border-green-100 rounded-2xl p-4">
-            <Text className="text-xl mr-3">📡</Text>
-            <View className="flex-1">
+            <Image
+              source={require("../../../../assets/icons/home-wifi-off.png")}
+              style={{ width: 24, height: 24 }}
+              contentFit="contain"
+              tintColor="#166534"
+            />
+            <View className="flex-1 ml-3">
               <Text className="text-sm font-medium text-green-800">
                 You are offline
               </Text>
@@ -138,7 +155,7 @@ function MetricCard({
   subtitle,
   onPress,
 }: {
-  icon: string;
+  icon: ImageSourcePropType;
   title: string;
   value: string;
   subtitle: string;
@@ -151,7 +168,12 @@ function MetricCard({
       style={{ width: "48%" }}
     >
       <View className="flex-row items-center mb-2">
-        <Text className="text-lg mr-2">{icon}</Text>
+        <Image
+          source={icon}
+          style={{ width: 20, height: 20, marginRight: 8 }}
+          contentFit="contain"
+          tintColor="#0D9E94"
+        />
         <Text className="text-sm text-gray-500">{title}</Text>
       </View>
       <Text className="text-2xl font-bold text-navy">{value}</Text>

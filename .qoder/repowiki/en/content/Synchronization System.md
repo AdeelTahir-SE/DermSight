@@ -14,27 +14,43 @@
 - [ConnectivityBanner.tsx](file://src/components/ui/ConnectivityBanner.tsx)
 - [supabase.ts](file://src/lib/supabase.ts)
 - [index.ts (types)](file://src/types/index.ts)
+- [001_initial_schema.sql](file://supabase/migrations/001_initial_schema.sql)
+- [002_rls_policies.sql](file://supabase/migrations/002_rls_policies.sql)
+- [003_storage_bucket.sql](file://supabase/migrations/003_storage_bucket.sql)
+- [004_functions_and_analytics.sql](file://supabase/migrations/004_functions_and_analytics.sql)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated Sync Engine section to reflect production-ready Supabase integration with RPC functions
+- Added comprehensive Supabase backend architecture section covering database schema, RLS policies, and storage
+- Enhanced RPC function documentation with upsert_patient and upsert_assessment implementations
+- Updated Storage Integration section with lesion-images bucket configuration and security policies
+- Added Server-Side Processing section covering database migrations and analytics functions
+- Revised error handling and retry logic to reflect actual Supabase client integration
+- Updated performance considerations for real network operations and image uploads
 
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Project Structure](#project-structure)
 3. [Core Components](#core-components)
 4. [Architecture Overview](#architecture-overview)
-5. [Detailed Component Analysis](#detailed-component-analysis)
-6. [Dependency Analysis](#dependency-analysis)
-7. [Performance Considerations](#performance-considerations)
-8. [Troubleshooting Guide](#troubleshooting-guide)
-9. [Conclusion](#conclusion)
-10. [Appendices](#appendices)
+5. [Supabase Backend Integration](#supabase-backend-integration)
+6. [Detailed Component Analysis](#detailed-component-analysis)
+7. [Dependency Analysis](#dependency-analysis)
+8. [Performance Considerations](#performance-considerations)
+9. [Troubleshooting Guide](#troubleshooting-guide)
+10. [Conclusion](#conclusion)
+11. [Appendices](#appendices)
 
 ## Introduction
-This document explains DermSight’s offline-first synchronization system that ensures reliable data consistency between the local SQLite database and the Supabase cloud backend. It focuses on the outbox pattern implementation, sync engine architecture (queue management, background processing, retry with exponential backoff, conflict resolution), network monitoring via NetInfo API, automatic sync triggering, user feedback for sync progress, error handling strategies, performance considerations for large datasets, battery optimization, debugging techniques, and how sync integrates with patient management and assessments features.
+This document explains DermSight's offline-first synchronization system that ensures reliable data consistency between the local SQLite database and the Supabase cloud backend. The system implements a production-ready outbox pattern with real-time data synchronization using Supabase RPC functions, comprehensive database migrations, row-level security policies, and secure storage bucket management. It covers the sync engine architecture including queue management, background processing, retry logic with exponential backoff, conflict resolution strategies, network connectivity monitoring via NetInfo API, automatic sync triggering based on connection status, user feedback for sync progress, error handling strategies, performance considerations for large datasets, battery optimization for background sync, debugging techniques, and seamless integration with patient management and assessments features.
 
 ## Project Structure
-The synchronization system is implemented across several layers:
+The synchronization system is implemented across several layers with comprehensive Supabase backend integration:
 - Data layer: SQLite schema and Drizzle ORM client define tables including a dedicated sync queue table for outbox entries.
-- Sync engine: Orchestrates reading pending items from the outbox, marking them in progress, attempting uploads to Supabase, updating statuses, and applying retry/backoff logic.
+- Sync engine: Orchestrates reading pending items from the outbox, marking them in progress, attempting uploads to Supabase via RPC functions, updating statuses, and applying retry/backoff logic.
+- Supabase backend: PostgreSQL database with Row Level Security (RLS), storage buckets for lesion images, and server-side RPC functions for data synchronization.
 - Connectivity layer: Monitors online/offline state using NetInfo and exposes hooks for UI components.
 - Feature repositories: Patient and Assessment modules enqueue sync operations after local writes.
 - UI: Displays connectivity status and per-item sync status with retry actions.
@@ -51,6 +67,12 @@ SCHEMA["Drizzle Schema"]
 end
 subgraph "Sync Engine"
 ENGINE["Sync Engine"]
+RPC["RPC Functions"]
+end
+subgraph "Supabase Backend"
+PG["PostgreSQL Database"]
+STORAGE["Storage Bucket"]
+RLS["Row Level Security"]
 end
 subgraph "Network"
 NETINFO["NetInfo Wrapper"]
@@ -62,6 +84,9 @@ DB --> SCHEMA
 ENGINE --> DB
 ENGINE --> NETINFO
 ENGINE --> SUPABASE
+SUPABASE --> PG
+SUPABASE --> STORAGE
+PG --> RLS
 ```
 
 **Diagram sources**
@@ -70,6 +95,8 @@ ENGINE --> SUPABASE
 - [syncEngine.ts:55-110](file://src/features/sync/syncEngine.ts#L55-L110)
 - [netinfo.ts:15-34](file://src/lib/netinfo.ts#L15-L34)
 - [supabase.ts:1-19](file://src/lib/supabase.ts#L1-L19)
+- [001_initial_schema.sql:40-101](file://supabase/migrations/001_initial_schema.sql#L40-L101)
+- [003_storage_bucket.sql:7-17](file://supabase/migrations/003_storage_bucket.sql#L7-L17)
 
 **Section sources**
 - [schema.ts:77-92](file://src/db/schema.ts#L77-L92)
@@ -80,7 +107,9 @@ ENGINE --> SUPABASE
 
 ## Core Components
 - Outbox table (sync_queue): Stores entity changes to be pushed to Supabase. Each row tracks entity type, operation, payload, attempt count, last attempted timestamp, and status transitions.
-- Sync engine: Reads pending items, marks them in_progress, attempts upload, updates to done or failed, applies exponential backoff, and supports manual retry.
+- Sync engine: Reads pending items, marks them in_progress, attempts upload via Supabase RPC functions, updates statuses, applies exponential backoff, and supports manual retry.
+- Supabase RPC functions: Server-side functions (upsert_patient, upsert_assessment) handle data synchronization with proper validation and audit logging.
+- Storage bucket: Secure lesion-images bucket with Row Level Security policies for image upload and access control.
 - Connectivity monitoring: Subscribes to NetInfo events to detect online/offline transitions and provides current connectivity state.
 - Feature integration: Patient and Assessment repositories write locally first and enqueue an outbox entry for later sync.
 - UI feedback: Connectivity banner shows offline state; sync queue item component displays per-item status and retry action.
@@ -88,6 +117,8 @@ ENGINE --> SUPABASE
 **Section sources**
 - [schema.ts:77-92](file://src/db/schema.ts#L77-L92)
 - [syncEngine.ts:24-125](file://src/features/sync/syncEngine.ts#L24-L125)
+- [004_functions_and_analytics.sql:9-65](file://supabase/migrations/004_functions_and_analytics.sql#L9-L65)
+- [003_storage_bucket.sql:7-80](file://supabase/migrations/003_storage_bucket.sql#L7-L80)
 - [netinfo.ts:15-43](file://src/lib/netinfo.ts#L15-L43)
 - [repository.ts (patients):44-101](file://src/features/patients/repository.ts#L44-L101)
 - [repository.ts (assessments):53-123](file://src/features/assessments/repository.ts#L53-L123)
@@ -95,10 +126,12 @@ ENGINE --> SUPABASE
 - [ConnectivityBanner.tsx:9-28](file://src/components/ui/ConnectivityBanner.tsx#L9-L28)
 
 ## Architecture Overview
-DermSight uses an outbox pattern to decouple local writes from network operations:
+DermSight uses an outbox pattern to decouple local writes from network operations with production-ready Supabase integration:
 - Local writes are immediate and persistent in SQLite.
 - A sync queue records each change as an outbox entry.
-- The sync engine processes outbox entries when the device is online, marking states and applying retries with exponential backoff.
+- The sync engine processes outbox entries when the device is online, calling Supabase RPC functions for data synchronization.
+- Images are uploaded to the secure lesion-images storage bucket before assessment sync.
+- Row Level Security ensures data isolation between health workers.
 - UI remains responsive; it never blocks on network calls.
 
 ```mermaid
@@ -109,6 +142,7 @@ participant DB as "SQLite"
 participant Engine as "Sync Engine"
 participant Net as "NetInfo"
 participant SB as "Supabase"
+participant Storage as "Storage Bucket"
 UI->>Repo : Create/Update Entity
 Repo->>DB : Insert/Update Row
 Repo->>DB : Enqueue Outbox Entry
@@ -119,15 +153,16 @@ alt Online
 Engine->>DB : Select Pending Items
 loop For each item
 Engine->>DB : Mark in_progress
-Engine->>SB : Upload payload
-alt Success
+Engine->>SB : Call RPC Function
+alt Assessment with Image
+SB->>Storage : Upload Image
+Storage-->>SB : Return URL
+SB-->>Engine : Remote ID
+else Patient or Assessment
+SB-->>Engine : Remote ID
+end
+Engine->>DB : Update remote_id & sync_status
 Engine->>DB : Mark done
-else Failure
-Engine->>DB : Increment attemptCount
-Engine->>DB : Set status pending or failed
-Engine->>Engine : Wait exponential backoff
-end
-end
 else Offline
 Engine-->>UI : Skip sync (no work)
 end
@@ -137,8 +172,142 @@ end
 - [repository.ts (patients):44-101](file://src/features/patients/repository.ts#L44-L101)
 - [repository.ts (assessments):53-123](file://src/features/assessments/repository.ts#L53-L123)
 - [syncEngine.ts:55-110](file://src/features/sync/syncEngine.ts#L55-L110)
+- [syncEngine.ts:148-200](file://src/features/sync/syncEngine.ts#L148-L200)
 - [netinfo.ts:15-34](file://src/lib/netinfo.ts#L15-L34)
 - [supabase.ts:1-19](file://src/lib/supabase.ts#L1-L19)
+
+## Supabase Backend Integration
+
+### Database Schema and Migrations
+The Supabase backend consists of a PostgreSQL database with comprehensive schema design:
+
+**Health Workers**: Mirrors local users table with authentication integration via supabase_user_id. Includes region tracking and timestamps for profile management.
+
+**Patients**: Synced from local SQLite with local_id as stable identifier for deduplication. Uses unique indexes on (created_by, local_id) to prevent duplicate syncs and includes geographic coordinates and capture metadata.
+
+**Assessments**: Lesion screening results with comprehensive ABCD scoring, risk tier classification, and confidence scores. Links to patients via foreign key relationships and stores both local URIs and remote storage URLs.
+
+**Sync Log**: Server-side audit trail tracking all sync operations with worker identification, entity types, operations, and error messages for debugging and monitoring.
+
+```mermaid
+erDiagram
+HEALTH_WORKERS {
+uuid id PK
+uuid supabase_user_id FK
+text full_name
+text region
+timestamptz created_at
+timestamptz updated_at
+}
+PATIENTS {
+uuid id PK
+text local_id
+text first_name
+text last_name
+date date_of_birth
+enum sex
+text phone
+text address
+text notes
+double precision latitude
+double precision longitude
+timestamptz captured_at
+uuid created_by FK
+timestamptz created_at
+timestamptz updated_at
+timestamptz synced_at
+}
+ASSESSMENTS {
+uuid id PK
+text local_id
+uuid patient_id FK
+text image_local_uri
+text image_remote_url
+enum predicted_class
+jsonb class_probabilities
+double precision abcd_asymmetry
+double precision abcd_border
+double precision abcd_color
+double precision abcd_diameter
+enum risk_tier
+double precision confidence_score
+text model_version
+text body_location
+double precision latitude
+double precision longitude
+timestamptz captured_at
+uuid created_by FK
+timestamptz created_at
+timestamptz synced_at
+}
+SYNC_LOG {
+bigint id PK
+uuid worker_id FK
+text entity_type
+text entity_local_id
+text operation
+text status
+text error_message
+timestamptz synced_at
+}
+HEALTH_WORKERS ||--o{ PATIENTS : "created by"
+HEALTH_WORKERS ||--o{ ASSESSMENTS : "created by"
+PATIENTS ||--o{ ASSESSMENTS : "has many"
+HEALTH_WORKERS ||--o{ SYNC_LOG : "performed by"
+```
+
+**Diagram sources**
+- [001_initial_schema.sql:19-26](file://supabase/migrations/001_initial_schema.sql#L19-L26)
+- [001_initial_schema.sql:40-57](file://supabase/migrations/001_initial_schema.sql#L40-L57)
+- [001_initial_schema.sql:79-101](file://supabase/migrations/001_initial_schema.sql#L79-L101)
+- [001_initial_schema.sql:125-134](file://supabase/migrations/001_initial_schema.sql#L125-L134)
+
+### Row Level Security Policies
+Comprehensive RLS policies ensure data isolation between health workers:
+
+**Health Workers**: Workers can read, update, and insert their own profiles using auth.uid() for identity verification.
+
+**Patients**: Workers can only access patients they created, with SELECT, INSERT, UPDATE, and DELETE operations restricted by created_by relationship.
+
+**Assessments**: Similar patient-based access control ensuring workers can only manage assessments they created.
+
+**Sync Log**: Workers can view their own sync log entries for debugging and audit purposes.
+
+**Helper Function**: get_worker_id() resolves the health worker ID from the authenticated user context for use in other functions and policies.
+
+### Storage Bucket Configuration
+The lesion-images storage bucket provides secure image storage with comprehensive security policies:
+
+**Bucket Configuration**: Private bucket with 10MB file size limit supporting JPEG, PNG, HEIC, and HEIF formats.
+
+**Security Policies**: 
+- Upload policy: Workers can only upload images to their own folder path ({worker_id}/{assessment_local_id}.jpg)
+- Read policy: Workers can only access images from their own folders
+- Update/Delete policies: Workers can modify or delete their own images
+
+**Access Control**: All storage operations verify worker identity through Supabase authentication and enforce folder isolation.
+
+**Section sources**
+- [001_initial_schema.sql:19-161](file://supabase/migrations/001_initial_schema.sql#L19-L161)
+- [002_rls_policies.sql:7-159](file://supabase/migrations/002_rls_policies.sql#L7-L159)
+- [003_storage_bucket.sql:7-80](file://supabase/migrations/003_storage_bucket.sql#L7-L80)
+
+### RPC Functions for Data Synchronization
+Server-side RPC functions handle data synchronization with proper validation and audit logging:
+
+**upsert_patient**: Creates or updates patient records using local_id + worker_id for deduplication. Returns the remote UUID for client-side reference mapping. Validates worker identity and logs all sync operations.
+
+**upsert_assessment**: Creates or updates assessment records requiring the patient to already exist remotely. Handles image remote URL updates and maintains referential integrity. Includes comprehensive field validation and audit logging.
+
+**get_worker_stats**: Dashboard statistics function returning summary metrics for authenticated workers including patient counts, assessment breakdowns by risk tier, and recent activity.
+
+**get_recent_assessments**: Returns recent assessments for dashboard display with patient name resolution and risk classification.
+
+**Section sources**
+- [004_functions_and_analytics.sql:9-65](file://supabase/migrations/004_functions_and_analytics.sql#L9-L65)
+- [004_functions_and_analytics.sql:71-150](file://supabase/migrations/004_functions_and_analytics.sql#L71-L150)
+- [004_functions_and_analytics.sql:154-183](file://supabase/migrations/004_functions_and_analytics.sql#L154-L183)
+- [004_functions_and_analytics.sql:186-217](file://supabase/migrations/004_functions_and_analytics.sql#L186-L217)
 
 ## Detailed Component Analysis
 
@@ -156,9 +325,10 @@ StatusPending --> |Yes| WaitForSync["Wait for Sync Engine"]
 StatusPending --> |No| End(["Done"])
 WaitForSync --> Process["Sync Engine Processes Item"]
 Process --> UpdateStatus["Mark in_progress"]
-UpdateStatus --> AttemptUpload["Attempt Upload to Supabase"]
+UpdateStatus --> AttemptUpload["Attempt Upload to Supabase via RPC"]
 AttemptUpload --> Success{"Success?"}
-Success --> |Yes| MarkDone["Mark done"]
+Success --> |Yes| StoreRemoteId["Store remote_id in local table"]
+StoreRemoteId --> MarkDone["Mark done"]
 Success --> |No| RetryLogic["Increment attemptCount<br/>Set pending or failed"]
 RetryLogic --> Backoff["Exponential Backoff Delay"]
 Backoff --> WaitForSync
@@ -176,13 +346,14 @@ MarkDone --> End
 - [repository.ts (patients):44-101](file://src/features/patients/repository.ts#L44-L101)
 - [repository.ts (assessments):53-123](file://src/features/assessments/repository.ts#L53-L123)
 
-### Sync Engine: Processing, Retry, and Backoff
+### Sync Engine: Production-Ready Supabase Integration
 - runSync checks connectivity; if offline, returns skipped counts without processing.
 - For each pending item:
   - Marks status as in_progress and updates last_attempted_at.
-  - Attempts upload (currently simulated).
-  - On success, marks status as done and increments success counter.
-  - On failure, increments attemptCount, sets status to pending or failed based on MAX_RETRIES, updates last_attempted_at, and waits with exponential backoff capped at a maximum delay.
+  - Calls appropriate Supabase RPC function (upsert_patient or upsert_assessment).
+  - For assessments with images, uploads to storage bucket first and includes remote URL.
+  - On success, stores remote_id in local table, updates sync_status to "synced", marks status as done.
+  - On failure, increments attemptCount, sets status to pending or failed based on MAX_RETRIES, updates last_attempted_at, and waits with exponential backoff capped at maximum delay.
 - retrySyncItem resets a specific failed item to pending with zero attempts.
 
 ```mermaid
@@ -192,14 +363,20 @@ CheckOnline --> |No| ReturnSkip["Return {success:0,failed:0,skipped:N}"]
 CheckOnline --> |Yes| FetchPending["Select pending items"]
 FetchPending --> LoopItems{"For each item"}
 LoopItems --> MarkInProg["Update status=in_progress,<br/>last_attempted_at=now"]
-MarkInProg --> TryUpload["Attempt upload"]
-TryUpload --> UploadOK{"Success?"}
-UploadOK --> |Yes| MarkDone["Update status=done,<br/>success++"]
-UploadOK --> |No| IncAttempts["attemptCount++"]
+MarkInProg --> TryRPC["Call Supabase RPC Function"]
+TryRPC --> UploadImage{"Assessment with image?"}
+UploadImage --> |Yes| UploadToStorage["Upload to lesion-images bucket"]
+UploadToStorage --> GetURL["Get public URL"]
+GetURL --> ContinueRPC["Continue with RPC call"]
+UploadImage --> |No| ContinueRPC
+ContinueRPC --> RPCSuccess{"RPC Success?"}
+RPCSuccess --> |Yes| StoreRemoteId["Store remote_id,<br/>update sync_status='synced'"]
+StoreRemoteId --> MarkDone["Update status=done,<br/>success++"]
+RPCSuccess --> |No| IncAttempts["attemptCount++"]
 IncAttempts --> MaxReached{"attemptCount >= MAX_RETRIES?"}
 MaxReached --> |Yes| MarkFailed["Update status=failed,<br/>failed++"]
 MaxReached --> |No| KeepPending["Update status=pending"]
-MarkFailed --> Backoff["Delay = BASE_DELAY_MS * 2^attemptCount<br/>capped at max"]
+MarkFailed --> Backoff["Delay = BASE_DELAY_MS * 2^attemptCount<br/>capped at 30s"]
 KeepPending --> Backoff
 Backoff --> LoopItems
 MarkDone --> LoopItems
@@ -209,10 +386,13 @@ LoopItems --> |End| ReturnResult["Return {success,failed,skipped:0}"]
 **Diagram sources**
 - [syncEngine.ts:55-110](file://src/features/sync/syncEngine.ts#L55-L110)
 - [syncEngine.ts:115-125](file://src/features/sync/syncEngine.ts#L115-L125)
+- [syncEngine.ts:148-200](file://src/features/sync/syncEngine.ts#L148-L200)
+- [syncEngine.ts:206-244](file://src/features/sync/syncEngine.ts#L206-L244)
 
 **Section sources**
 - [syncEngine.ts:55-110](file://src/features/sync/syncEngine.ts#L55-L110)
 - [syncEngine.ts:115-125](file://src/features/sync/syncEngine.ts#L115-L125)
+- [syncEngine.ts:148-200](file://src/features/sync/syncEngine.ts#L148-L200)
 
 ### Network Connectivity Monitoring and Auto Triggering
 - subscribeToConnectivity listens to NetInfo events and notifies subscribers when connection state changes.
@@ -303,6 +483,11 @@ class SyncEngine {
 +runSync()
 +retrySyncItem(itemId)
 }
+class SupabaseClient {
++rpc("upsert_patient")
++rpc("upsert_assessment")
++storage.from("lesion-images")
+}
 class SQLiteSchema {
 +patients
 +assessments
@@ -311,6 +496,7 @@ class SQLiteSchema {
 PatientsRepository --> SQLiteSchema : "writes"
 AssessmentsRepository --> SQLiteSchema : "writes"
 SyncEngine --> SQLiteSchema : "reads/writes"
+SyncEngine --> SupabaseClient : "RPC calls"
 ```
 
 **Diagram sources**
@@ -318,6 +504,7 @@ SyncEngine --> SQLiteSchema : "reads/writes"
 - [repository.ts (assessments):53-123](file://src/features/assessments/repository.ts#L53-L123)
 - [schema.ts:77-92](file://src/db/schema.ts#L77-L92)
 - [syncEngine.ts:24-125](file://src/features/sync/syncEngine.ts#L24-L125)
+- [syncEngine.ts:148-200](file://src/features/sync/syncEngine.ts#L148-L200)
 
 **Section sources**
 - [repository.ts (patients):44-101](file://src/features/patients/repository.ts#L44-L101)
@@ -327,7 +514,7 @@ SyncEngine --> SQLiteSchema : "reads/writes"
 - Sync engine depends on:
   - SQLite client for reading/writing sync_queue.
   - NetInfo wrapper for connectivity checks.
-  - Supabase client for actual uploads (placeholder currently).
+  - Supabase client for RPC calls and storage operations.
 - Feature repositories depend on:
   - SQLite client and schema for writing entities and enqueueing outbox entries.
 - UI depends on:
@@ -341,6 +528,8 @@ DB --> Schema["Drizzle Schema"]
 Engine["Sync Engine"] --> DB
 Engine --> NetInfo["NetInfo Wrapper"]
 Engine --> Supabase["Supabase Client"]
+Supabase --> RPC["RPC Functions"]
+Supabase --> Storage["Storage Bucket"]
 UI["ConnectivityBanner / SyncQueueItem"] --> Hooks["useConnectivity / useSyncStatus"]
 Hooks --> NetInfo
 ```
@@ -367,39 +556,48 @@ Hooks --> NetInfo
 
 ## Performance Considerations
 - Batch processing: The sync engine iterates pending items sequentially. For large datasets, consider batching reads and writes to reduce transaction overhead.
-- Exponential backoff: Prevents overwhelming the server during transient failures and reduces network churn.
+- Exponential backoff: Prevents overwhelming the server during transient failures and reduces network churn with 30-second maximum delay cap.
 - Polling interval: useSyncStatus polls every 5 seconds; adjust based on expected sync volume and battery constraints.
 - Database indexes: Ensure appropriate indexes on sync_queue.status and sync_queue.created_at to speed up queries for pending items and ordering.
 - Payload size: Avoid overly large payloads in sync_queue; consider chunking images or storing metadata only and uploading assets separately.
 - Concurrency: Current implementation processes one item at a time; adding controlled concurrency can improve throughput while respecting rate limits.
-
-[No sources needed since this section provides general guidance]
+- Image uploads: Large images may impact sync performance; consider compression or progressive loading strategies.
+- Storage bucket limits: 10MB per image limit enforced by Supabase configuration; implement client-side validation to prevent oversized uploads.
+- RPC function efficiency: Server-side functions are optimized with proper indexing and minimal round trips; leverage existing functions rather than creating custom endpoints.
 
 ## Troubleshooting Guide
 - No sync happening:
   - Verify connectivity via useConnectivity and ensure runSync is triggered when online.
   - Check pending count with getPendingCount and inspect sync_queue entries.
+  - Validate Supabase client configuration in supabase.ts with correct URL and anon key.
 - Frequent failures:
   - Inspect attemptCount and lastAttemptedAt for problematic items.
-  - Validate Supabase configuration and credentials in supabase.ts.
-  - Review error paths in runSync and ensure simulateSyncUpload is replaced with real network calls.
+  - Check Supabase RPC function errors and validate input parameters match function signatures.
+  - Review storage bucket permissions and worker authentication for image uploads.
+  - Verify Row Level Security policies allow the current worker to perform operations.
 - Partial sync scenarios:
   - Some items may succeed while others fail; use getAllSyncItems to audit all entries.
   - Use retrySyncItem to reset failed items and reprocess.
+  - Check sync_log table on Supabase for detailed error information and timestamps.
 - UI not reflecting state:
   - Confirm useSyncStatus polling and triggerSync usage.
   - Ensure ConnectivityBanner is mounted and subscribed to connectivity changes.
+  - Verify remote_id updates are properly stored in local tables after successful sync.
+- Authentication issues:
+  - Ensure health worker profile exists in Supabase database.
+  - Verify auth.uid() resolves correctly in RPC functions.
+  - Check that worker_id lookup succeeds in get_worker_id() function.
 
 **Section sources**
 - [syncEngine.ts:55-125](file://src/features/sync/syncEngine.ts#L55-L125)
+- [syncEngine.ts:148-200](file://src/features/sync/syncEngine.ts#L148-L200)
 - [useSyncStatus.ts:9-45](file://src/hooks/useSyncStatus.ts#L9-L45)
 - [ConnectivityBanner.tsx:9-28](file://src/components/ui/ConnectivityBanner.tsx#L9-L28)
 - [supabase.ts:1-19](file://src/lib/supabase.ts#L1-L19)
+- [002_rls_policies.sql:153-159](file://supabase/migrations/002_rls_policies.sql#L153-L159)
 
 ## Conclusion
-DermSight’s offline-first synchronization leverages an outbox pattern to guarantee eventual consistency between local SQLite and Supabase. The sync engine manages queue processing, retry logic with exponential backoff, and clear status transitions. Connectivity monitoring enables automatic sync triggering, while UI components provide transparent feedback. Integrating patient and assessment repositories ensures that all critical data changes are captured and synchronized reliably. Future enhancements should replace the simulated upload with actual Supabase operations, optimize batch processing, and refine polling intervals for better performance and battery efficiency.
-
-[No sources needed since this section summarizes without analyzing specific files]
+DermSight's offline-first synchronization leverages a production-ready outbox pattern to guarantee eventual consistency between local SQLite and Supabase backend. The sync engine manages queue processing, retry logic with exponential backoff, and clear status transitions while integrating seamlessly with Supabase RPC functions for data synchronization. Comprehensive Row Level Security ensures data isolation between health workers, while the secure storage bucket handles lesion image uploads with proper access controls. Connectivity monitoring enables automatic sync triggering, while UI components provide transparent feedback. The integration with patient and assessment repositories ensures that all critical data changes are captured and synchronized reliably. Future enhancements should focus on optimizing batch processing for large datasets, implementing real-time sync notifications, and expanding analytics capabilities through additional RPC functions.
 
 ## Appendices
 
@@ -484,3 +682,22 @@ USERS ||--o{ ASSESSMENTS : "created by"
 **Section sources**
 - [index.ts:5-8](file://src/types/index.ts#L5-L8)
 - [index.ts:66-76](file://src/types/index.ts#L66-L76)
+
+### Supabase Backend Architecture
+The complete Supabase backend architecture includes:
+
+**Database Schema**: PostgreSQL database with health_workers, patients, assessments, and sync_log tables with comprehensive indexing and constraints.
+
+**Security Layer**: Row Level Security policies ensuring data isolation between health workers, with helper functions for worker identity resolution.
+
+**Storage Layer**: Secure lesion-images bucket with 10MB file limits and MIME type restrictions, organized by worker ID for data isolation.
+
+**API Layer**: RPC functions providing upsert operations for patients and assessments, along with analytics functions for dashboard reporting.
+
+**Audit Trail**: Server-side sync logging capturing all synchronization operations with error tracking and timestamps for debugging and compliance.
+
+**Section sources**
+- [001_initial_schema.sql:1-161](file://supabase/migrations/001_initial_schema.sql#L1-L161)
+- [002_rls_policies.sql:1-159](file://supabase/migrations/002_rls_policies.sql#L1-L159)
+- [003_storage_bucket.sql:1-80](file://supabase/migrations/003_storage_bucket.sql#L1-L80)
+- [004_functions_and_analytics.sql:1-217](file://supabase/migrations/004_functions_and_analytics.sql#L1-L217)
