@@ -21,10 +21,12 @@ import {
 } from "react-native";
 
 export default function ReviewScreen() {
-  const { patientId, imageUri } = useLocalSearchParams<{
+  const params = useLocalSearchParams<{
     patientId: string;
     imageUri?: string;
   }>();
+  const patientId = params.patientId;
+  const imageUri = params.imageUri ? decodeURIComponent(params.imageUri) : undefined;
   const router = useRouter();
   const [analyzing, setAnalyzing] = useState(false);
 

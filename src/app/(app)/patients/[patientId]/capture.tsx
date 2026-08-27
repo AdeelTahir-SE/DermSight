@@ -93,7 +93,7 @@ export default function CaptureScreen() {
       if (photo?.uri) {
         router.push({
           pathname: `/(app)/patients/${patientId}/review`,
-          params: { imageUri: photo.uri, patientId },
+          params: { imageUri: encodeURIComponent(photo.uri) },
         } as Href);
       }
     } catch (error) {

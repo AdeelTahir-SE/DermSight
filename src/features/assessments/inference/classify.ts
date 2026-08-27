@@ -10,7 +10,7 @@ import { getRiskTierForClass } from "@/constants/riskLevels";
 import { getInferenceBaseUrl } from "@/ml/inferenceUrl";
 import { MODEL_OUTPUT_LABELS, MODEL_VERSION } from "@/ml/labels";
 import type { DiagnosisClass, InferenceResult } from "@/types";
-import * as FileSystem from "expo-file-system";
+import { File } from "expo-file-system";
 export { MODEL_VERSION };
 
 export class InferenceError extends Error {
@@ -52,13 +52,11 @@ function toInferenceResult(data: ServerInferenceResponse): InferenceResult {
 }
 
 async function imageUriToBase64(imageUri: string): Promise<string> {
-  const fileInfo = await FileSystem.getInfoAsync(imageUri);
-  if (!fileInfo.exists) {
+  const file = new File(imageUri);
+  if (!file.exists) {
     throw new InferenceError(`Captured image file was not found on device (URI: ${imageUri}).`);
   }
-  return await FileSystem.readAsStringAsync(imageUri, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
+  return file.base64();
 }
 
 /**
