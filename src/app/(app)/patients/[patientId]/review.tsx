@@ -1,18 +1,19 @@
 /**
  * Image Review / Retake screen — confirm or retake before running inference.
+ * Displays the captured photo from expo-camera for quality check.
  */
 
 import { Button } from "@/components/ui/Button";
 import { runInference } from "@/features/assessments/inference/classify";
+import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    Pressable,
-    ScrollView,
-    Text,
-    View,
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
 } from "react-native";
 
 export default function ReviewScreen() {
@@ -66,12 +67,13 @@ export default function ReviewScreen() {
           </Text>
 
           {/* Captured image preview */}
-          <View className="w-full aspect-square bg-gray-100 rounded-2xl mb-4 overflow-hidden">
+          <View className="w-full aspect-square bg-gray-100 rounded-2xl mb-4 overflow-hidden border border-gray-200">
             {imageUri ? (
               <Image
                 source={{ uri: imageUri }}
-                className="w-full h-full"
-                resizeMode="cover"
+                style={{ width: "100%", height: "100%" }}
+                contentFit="cover"
+                transition={200}
               />
             ) : (
               <View className="flex-1 items-center justify-center">

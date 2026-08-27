@@ -6,7 +6,7 @@
 import { ConnectivityBanner } from "@/components/ui/ConnectivityBanner";
 import { Image } from "expo-image";
 import { Tabs } from "expo-router";
-import { ImageSourcePropType, Text, View } from "react-native";
+import { ImageSourcePropType, Platform, Text, View } from "react-native";
 
 function TabIcon({
   icon,
@@ -18,14 +18,22 @@ function TabIcon({
   focused: boolean;
 }) {
   return (
-    <View className="items-center justify-center py-1">
+    <View className="items-center justify-center" style={{ width: 64 }}>
+      {/* Active indicator dot */}
+      <View
+        className={`w-1.5 h-1.5 rounded-full mb-1 ${
+          focused ? "bg-primary" : "bg-transparent"
+        }`}
+      />
       <Image
         source={icon}
-        style={{ width: 24, height: 24, opacity: focused ? 1 : 0.4 }}
+        style={{ width: 22, height: 22, opacity: focused ? 1 : 0.45 }}
         contentFit="contain"
       />
       <Text
-        className={`text-xs mt-0.5 ${focused ? "text-primary font-medium" : "text-gray-400"}`}
+        className={`text-[10px] mt-1 ${
+          focused ? "text-primary font-semibold" : "text-gray-400 font-medium"
+        }`}
       >
         {label}
       </Text>
@@ -34,6 +42,8 @@ function TabIcon({
 }
 
 export default function AppLayout() {
+  const isIOS = Platform.OS === "ios";
+
   return (
     <View className="flex-1 bg-gray-50">
       <ConnectivityBanner />
@@ -43,13 +53,16 @@ export default function AppLayout() {
           tabBarStyle: {
             backgroundColor: "#FFFFFF",
             borderTopWidth: 1,
-            borderTopColor: "#F1F5F5",
+            borderTopColor: "#F3F4F6",
             elevation: 0,
-            height: 70,
-            paddingBottom: 8,
-            paddingTop: 8,
+            shadowOpacity: 0,
+            height: isIOS ? 82 : 64,
+            paddingBottom: isIOS ? 20 : 8,
+            paddingTop: 6,
           },
           tabBarShowLabel: false,
+          tabBarActiveTintColor: "#0D9E94",
+          tabBarInactiveTintColor: "#9CA3AF",
         }}
       >
         <Tabs.Screen

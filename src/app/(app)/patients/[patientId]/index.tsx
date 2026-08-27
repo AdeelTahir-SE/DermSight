@@ -8,7 +8,7 @@ import { getAssessmentsByPatient } from "@/features/assessments/repository";
 import { getPatientById } from "@/features/patients/repository";
 import type { Assessment, Patient } from "@/types";
 import { formatDate, formatDateTime } from "@/utils/date";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
@@ -143,7 +143,7 @@ export default function PatientDetailScreen() {
                 router.push({
                   pathname: `/(app)/patients/${patientId}/result`,
                   params: { assessmentId: assessment.id },
-                });
+                } as Href);
               }}
               className="flex-row items-center py-3 border-b border-gray-50"
             >

@@ -10,13 +10,19 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DIAGNOSIS_LABELS } from "@/constants/riskLevels";
 import type { InferenceResult } from "@/types";
+import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 export default function ResultScreen() {
-  const { result: resultParam, patientId } = useLocalSearchParams<{
+  const {
+    result: resultParam,
+    patientId,
+    imageUri,
+  } = useLocalSearchParams<{
     result?: string;
     patientId: string;
+    imageUri?: string;
   }>();
   const router = useRouter();
 
@@ -68,6 +74,21 @@ export default function ResultScreen() {
               specialist for confirmation.
             </Text>
           </View>
+
+          {/* Captured Lesion Image */}
+          {imageUri ? (
+            <View
+              className="w-full rounded-2xl overflow-hidden border border-gray-200 bg-gray-100"
+              style={{ height: 200 }}
+            >
+              <Image
+                source={{ uri: imageUri }}
+                style={{ width: "100%", height: "100%" }}
+                contentFit="cover"
+                transition={300}
+              />
+            </View>
+          ) : null}
 
           {/* Risk Tier Badge */}
           <RiskTierBadge riskTier={result.riskTier} showAction />
