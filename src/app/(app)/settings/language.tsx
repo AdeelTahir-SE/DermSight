@@ -2,20 +2,20 @@
  * Language selection screen.
  */
 
-import React, { useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
-import i18n from '@/lib/i18n';
+import i18n from "@/lib/i18n";
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import { Pressable, Text, View } from "react-native";
 
 const LANGUAGES = [
-  { code: 'en', name: 'English', nativeName: 'English' },
-  { code: 'fr', name: 'French', nativeName: 'Français' },
-  { code: 'sw', name: 'Swahili', nativeName: 'Kiswahili' },
+  { code: "en", name: "English", nativeName: "English" },
+  { code: "fr", name: "French", nativeName: "Français" },
+  { code: "sw", name: "Swahili", nativeName: "Kiswahili" },
 ];
 
 export default function LanguageScreen() {
   const router = useRouter();
-  const [selected, setSelected] = useState(i18n.language || 'en');
+  const [selected, setSelected] = useState(i18n.language || "en");
 
   const handleSelect = (code: string) => {
     setSelected(code);
@@ -40,14 +40,16 @@ export default function LanguageScreen() {
             onPress={() => handleSelect(lang.code)}
             className={`flex-row items-center p-4 rounded-2xl mb-2 border ${
               selected === lang.code
-                ? 'border-primary bg-primary-50'
-                : 'border-gray-100 bg-white'
+                ? "border-primary bg-primary-50"
+                : "border-gray-100 bg-white"
             }`}
           >
             <View className="flex-1">
-              <Text className={`text-base font-medium ${
-                selected === lang.code ? 'text-primary' : 'text-navy'
-              }`}>
+              <Text
+                className={`text-base font-medium ${
+                  selected === lang.code ? "text-primary" : "text-navy"
+                }`}
+              >
                 {lang.name}
               </Text>
               <Text className="text-sm text-gray-500">{lang.nativeName}</Text>

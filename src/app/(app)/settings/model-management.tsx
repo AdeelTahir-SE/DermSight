@@ -2,9 +2,8 @@
  * Model management screen — model version/update info.
  */
 
-import React from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter } from "expo-router";
+import { Pressable, Text, View } from "react-native";
 
 export default function ModelManagementScreen() {
   const router = useRouter();
@@ -23,7 +22,9 @@ export default function ModelManagementScreen() {
       <View className="p-5">
         {/* Current Model */}
         <View className="bg-white rounded-2xl p-5 border border-gray-100 mb-4">
-          <Text className="text-sm font-semibold text-navy mb-3">Current Model</Text>
+          <Text className="text-sm font-semibold text-navy mb-3">
+            Current Model
+          </Text>
 
           <View className="flex-row justify-between py-2 border-b border-gray-50">
             <Text className="text-sm text-gray-500">Version</Text>
@@ -31,11 +32,15 @@ export default function ModelManagementScreen() {
           </View>
           <View className="flex-row justify-between py-2 border-b border-gray-50">
             <Text className="text-sm text-gray-500">Architecture</Text>
-            <Text className="text-sm font-medium text-navy">H-CBM (EfficientNet-B0)</Text>
+            <Text className="text-sm font-medium text-navy">
+              H-CBM (EfficientNet-B0)
+            </Text>
           </View>
           <View className="flex-row justify-between py-2 border-b border-gray-50">
             <Text className="text-sm text-gray-500">Training Dataset</Text>
-            <Text className="text-sm font-medium text-navy">HAM10000 (10,015 images)</Text>
+            <Text className="text-sm font-medium text-navy">
+              HAM10000 (10,015 images)
+            </Text>
           </View>
           <View className="flex-row justify-between py-2 border-b border-gray-50">
             <Text className="text-sm text-gray-500">Quantization</Text>
@@ -51,9 +56,9 @@ export default function ModelManagementScreen() {
         <View className="bg-primary-50 rounded-2xl p-4 flex-row items-start">
           <Text className="text-sm mr-2">ℹ️</Text>
           <Text className="text-xs text-primary-700 flex-1">
-            The on-device ML model classifies skin lesions into 7 diagnostic categories
-            and provides ABCD explainability scores. Model updates can be downloaded
-            when connected to the internet.
+            The on-device ML model classifies skin lesions into 7 diagnostic
+            categories and provides ABCD explainability scores. Model updates
+            can be downloaded when connected to the internet.
           </Text>
         </View>
       </View>

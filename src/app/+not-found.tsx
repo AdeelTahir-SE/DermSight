@@ -2,8 +2,8 @@
  * 404 Not Found screen.
  */
 
-import { View, Text, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter } from "expo-router";
+import { Pressable, Text, View } from "react-native";
 
 export default function NotFoundScreen() {
   const router = useRouter();
@@ -16,7 +16,7 @@ export default function NotFoundScreen() {
         The page you're looking for doesn't exist.
       </Text>
       <Pressable
-        onPress={() => router.replace('/(app)/home')}
+        onPress={() => router.replace("/(app)/home")}
         className="bg-primary px-6 py-3 rounded-xl"
       >
         <Text className="text-white font-semibold">Go Home</Text>
