@@ -5,6 +5,7 @@
 import { db } from "@/db/client";
 import { assessments, syncQueue } from "@/db/schema";
 import type { Assessment, DiagnosisClass, InferenceResult } from "@/types";
+import { MODEL_VERSION } from "@/ml/labels";
 import { generateUUID } from "@/utils/uuid";
 import { desc, eq } from "drizzle-orm";
 
@@ -73,7 +74,7 @@ export async function createAssessment(
     abcdDiameter: result.abcdScores.diameter,
     riskTier: result.riskTier,
     confidenceScore: result.confidenceScore,
-    modelVersion: "1.0.0",
+    modelVersion: MODEL_VERSION,
     bodyLocation: bodyLocation || null,
     latitude: null,
     longitude: null,

@@ -1,56 +1,62 @@
-# Welcome to your Expo app 👋
+# DermSight
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Offline-first skin-lesion screening for community health workers. Expo SDK 57 + a trained Hybrid CBM (HAM10000) that returns a 7-class diagnosis and ABCD scores.
 
-## Get started
+## Prerequisites
 
-1. Install dependencies
+- Node.js 20+
+- Python 3.10+ with **PyTorch**, **torchvision**, and **Pillow** (`pip install -r ml/requirements.txt`)
+- Expo Go on a phone, or an Android emulator
 
-   ```bash
-   npm install
-   ```
+Weights live at `ml/weights/best_cbm_full.pth` (moved out of `src/` so Metro does not bundle them).
 
-2. Start the app
+## Run the app (two terminals)
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+**Terminal 1 — model server** (required for Analyze; this is the real PyTorch model):
 
 ```bash
-npm run reset-project
+python scripts/ml/serve.py
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Wait until you see `Model ready.` then `listening on http://0.0.0.0:8765`.
 
-### Other setup steps
+**Terminal 2 — Expo:**
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+npm install
+npx expo start
+```
 
-## Learn more
+Scan the QR code with **Expo Go** (same Wi‑Fi as the PC). The app sends the photo to `http://<your-pc-ip>:8765`.
 
-To learn more about developing your project with Expo, look at the following resources:
+Optional override:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+# PowerShell
+$env:EXPO_PUBLIC_INFERENCE_URL="http://192.168.1.10:8765"
+npx expo start
+```
 
-## Join the community
+### Test the model without the app
 
-Join our community of developers creating universal apps.
+```bash
+python scripts/ml/infer_cli.py path\to\lesion.jpg
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Or open `http://127.0.0.1:8765/health` in a browser.
+
+### In-app test path
+
+1. Complete PIN setup / login.
+2. Patients → New patient → save.
+3. Open the patient → capture a lesion (or use a dermoscopic photo).
+4. Review → **Use Image & Analyze**.
+5. Result screen should show a real class distribution + ABCD bars (not random mock scores).
+
+If Analyze fails, the server is not running or the phone cannot reach the PC (firewall / different network). Allow TCP port **8765**.
+
+## Notes
+
+- SAM 2 is **not** used at inference time; it was only used while training ABCD labels.
+- Label order matches the notebook: `nv, mel, bkl, bcc, akiec, vasc, df`.
+- On-device TFLite (no Python server) is the next step; `python scripts/ml/export_onnx.py` writes an ONNX graph for that conversion.

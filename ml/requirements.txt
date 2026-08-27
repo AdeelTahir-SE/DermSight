@@ -1,0 +1,6 @@
+# Python side of the H-CBM (training weights → local inference / ONNX export)
+# Install into the same environment that already has PyTorch, or:
+#   pip install -r ml/requirements.txt
+torch>=2.0
+torchvision>=0.15
+pillow>=10.0

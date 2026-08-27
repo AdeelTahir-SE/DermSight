@@ -28,7 +28,7 @@ export default function ModelManagementScreen() {
 
           <View className="flex-row justify-between py-2 border-b border-gray-50">
             <Text className="text-sm text-gray-500">Version</Text>
-            <Text className="text-sm font-medium text-navy">1.0.0</Text>
+            <Text className="text-sm font-medium text-navy">h-cbm-full-1.0</Text>
           </View>
           <View className="flex-row justify-between py-2 border-b border-gray-50">
             <Text className="text-sm text-gray-500">Architecture</Text>
@@ -43,12 +43,16 @@ export default function ModelManagementScreen() {
             </Text>
           </View>
           <View className="flex-row justify-between py-2 border-b border-gray-50">
-            <Text className="text-sm text-gray-500">Quantization</Text>
-            <Text className="text-sm font-medium text-navy">INT8</Text>
+            <Text className="text-sm text-gray-500">Runtime</Text>
+            <Text className="text-sm font-medium text-navy">
+              PyTorch (local server)
+            </Text>
           </View>
           <View className="flex-row justify-between py-2">
-            <Text className="text-sm text-gray-500">Size</Text>
-            <Text className="text-sm font-medium text-navy">~6.2 MB</Text>
+            <Text className="text-sm text-gray-500">Weights</Text>
+            <Text className="text-sm font-medium text-navy">
+              best_cbm_full.pth (~18 MB)
+            </Text>
           </View>
         </View>
 
@@ -56,9 +60,9 @@ export default function ModelManagementScreen() {
         <View className="bg-primary-50 rounded-2xl p-4 flex-row items-start">
           <Text className="text-sm mr-2">ℹ️</Text>
           <Text className="text-xs text-primary-700 flex-1">
-            The on-device ML model classifies skin lesions into 7 diagnostic
-            categories and provides ABCD explainability scores. Model updates
-            can be downloaded when connected to the internet.
+            The trained H-CBM classifies lesions into 7 HAM10000 classes and
+            returns ABCD scores. In this Expo Go build, inference runs on the
+            local Python server (python scripts/ml/serve.py).
           </Text>
         </View>
       </View>

@@ -60,7 +60,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "ml:serve": "python scripts/ml/serve.py",
+    "ml:export": "python scripts/ml/export_onnx.py"
   },
   "private": true
 }

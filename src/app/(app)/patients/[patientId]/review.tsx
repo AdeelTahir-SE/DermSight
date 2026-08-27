@@ -4,12 +4,16 @@
  */
 
 import { Button } from "@/components/ui/Button";
-import { runInference } from "@/features/assessments/inference/classify";
+import {
+  InferenceError,
+  runInference,
+} from "@/features/assessments/inference/classify";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   Text,
@@ -38,7 +42,11 @@ export default function ReviewScreen() {
         },
       } as Href);
     } catch (e) {
-      console.error("Analysis failed:", e);
+      const message =
+        e instanceof InferenceError
+          ? e.message
+          : "Analysis failed. Check that the model server is running.";
+      Alert.alert("Could not analyze image", message);
     } finally {
       setAnalyzing(false);
     }
