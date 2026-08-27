@@ -3,11 +3,11 @@ schema_version: 1
 locale: en-US
 branch: main
 nodes_managed: true
-exported_at: "2026-08-27T10:20:04Z"
+exported_at: "2026-08-27T11:20:16Z"
 modules:
     "":
-        dir_name: DermSight — Offline-First Dermatology Screening App (Expo Root)
-        title: DermSight — Offline-First Dermatology Screening App (Expo Root)
+        dir_name: DermSight Expo App Root & Build Configuration
+        title: DermSight Expo App Root & Build Configuration
         scope:
             - README.md
             - ARCHITECTURE.md

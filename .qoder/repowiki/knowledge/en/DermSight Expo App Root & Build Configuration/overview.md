@@ -1,0 +1,1 @@
+Root of the DermSight React Native/Expo project that provides offline-first, on-device dermatological risk screening for community health workers with background sync to Supabase.

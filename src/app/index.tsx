@@ -9,7 +9,13 @@ import { useAuthStore } from "@/features/auth/store";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Dimensions, ScrollView, Text, View } from "react-native";
+import {
+  Dimensions,
+  ImageSourcePropType,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -99,17 +105,17 @@ export default function SplashScreen() {
 
             {/* Feature cards */}
             <FeatureCard
-              icon="🧠"
+              icon={require("../../assets/icons/ai-chip.png")}
               title="AI-Powered Assessment"
               description="On-device AI analyzes skin lesions and provides risk level with ABCD scores and insights."
             />
             <FeatureCard
-              icon="☁️"
+              icon={require("../../assets/icons/offline-cloud.png")}
               title="Works Offline"
               description="Use the app anytime, anywhere. Your data stays private and secure on your device."
             />
             <FeatureCard
-              icon="🔄"
+              icon={require("../../assets/icons/upload-cloud.png")}
               title="Sync When Online"
               description="Data syncs automatically when internet is available to keep records up to date."
             />
@@ -132,17 +138,17 @@ export default function SplashScreen() {
             </Text>
 
             <PermissionRow
-              icon="📷"
+              icon={require("../../assets/icons/camera.png")}
               label="Camera"
               description="Capture clear images of skin lesions for assessment."
             />
             <PermissionRow
-              icon="💾"
+              icon={require("../../assets/icons/image.png")}
               label="Photos & Storage"
               description="Save images and records securely on your device."
             />
             <PermissionRow
-              icon="📍"
+              icon={require("../../assets/icons/location-pin.png")}
               label="Location (Optional)"
               description="Add location to patient records for better follow-up."
             />
@@ -193,14 +199,18 @@ function FeatureCard({
   title,
   description,
 }: {
-  icon: string;
+  icon: ImageSourcePropType;
   title: string;
   description: string;
 }) {
   return (
     <View className="flex-row bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm">
       <View className="w-10 h-10 rounded-xl bg-primary-50 items-center justify-center mr-3">
-        <Text className="text-xl">{icon}</Text>
+        <Image
+          source={icon}
+          style={{ width: 24, height: 24 }}
+          contentFit="contain"
+        />
       </View>
       <View className="flex-1">
         <Text className="text-sm font-semibold text-navy mb-0.5">{title}</Text>
@@ -215,14 +225,18 @@ function PermissionRow({
   label,
   description,
 }: {
-  icon: string;
+  icon: ImageSourcePropType;
   label: string;
   description: string;
 }) {
   return (
     <View className="flex-row items-center bg-white border border-gray-100 rounded-2xl p-4 mb-3">
       <View className="w-10 h-10 rounded-xl bg-gray-50 items-center justify-center mr-3">
-        <Text className="text-xl">{icon}</Text>
+        <Image
+          source={icon}
+          style={{ width: 24, height: 24 }}
+          contentFit="contain"
+        />
       </View>
       <View className="flex-1">
         <Text className="text-sm font-medium text-navy">{label}</Text>
