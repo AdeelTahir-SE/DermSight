@@ -1,13 +1,16 @@
 /**
  * Sync engine — orchestrates outbox → Supabase push/pull.
  * UI never waits on network; all sync happens in background.
+ * Calls server-side RPC functions defined in supabase/migrations/004.
  */
 
 import { db } from "@/db/client";
-import { syncQueue } from "@/db/schema";
+import { assessments, patients, syncQueue } from "@/db/schema";
 import { isConnected } from "@/lib/netinfo";
+import { supabase } from "@/lib/supabase";
 import type { SyncQueueItem } from "@/types";
 import { eq } from "drizzle-orm";
+import * as FileSystem from "expo-file-system";
 
 const MAX_RETRIES = 5;
 const BASE_DELAY_MS = 1000;
@@ -73,9 +76,23 @@ export async function runSync(): Promise<SyncResult> {
         .where(eq(syncQueue.id, item.id))
         .run();
 
-      // TODO: Implement actual Supabase upload logic
-      // For now, mark as done (mock sync success)
-      await simulateSyncUpload(item);
+      // Push entity to Supabase via RPC
+      const remoteId = await uploadToSupabase(item);
+
+      // Store the remote ID back in the local table
+      if (remoteId) {
+        if (item.entityType === "patient") {
+          db.update(patients)
+            .set({ remoteId, syncStatus: "synced" })
+            .where(eq(patients.id, item.entityId))
+            .run();
+        } else if (item.entityType === "assessment") {
+          db.update(assessments)
+            .set({ remoteId, syncStatus: "synced" })
+            .where(eq(assessments.id, item.entityId))
+            .run();
+        }
+      }
 
       db.update(syncQueue)
         .set({ status: "done" })
@@ -124,9 +141,118 @@ export async function retrySyncItem(itemId: number): Promise<boolean> {
   }
 }
 
-async function simulateSyncUpload(_item: SyncQueueItem): Promise<void> {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
+/**
+ * Upload an entity to Supabase using RPC functions.
+ * Returns the remote UUID assigned by the server.
+ */
+async function uploadToSupabase(item: SyncQueueItem): Promise<string | null> {
+  const payload = JSON.parse(item.payload);
+
+  if (item.entityType === "patient") {
+    const { data, error } = await supabase.rpc("upsert_patient", {
+      p_local_id: payload.id,
+      p_first_name: payload.firstName,
+      p_last_name: payload.lastName,
+      p_date_of_birth: payload.dateOfBirth,
+      p_sex: payload.sex,
+      p_phone: payload.phone ?? null,
+      p_address: payload.address ?? null,
+      p_notes: payload.notes ?? null,
+      p_latitude: payload.latitude ?? null,
+      p_longitude: payload.longitude ?? null,
+      p_captured_at: payload.capturedAt,
+    });
+    if (error) throw new Error(`Patient sync failed: ${error.message}`);
+    return data as string;
+  }
+
+  if (item.entityType === "assessment") {
+    // Upload image first if we have a local URI
+    let imageRemoteUrl: string | null = null;
+    if (payload.imageLocalUri) {
+      imageRemoteUrl = await uploadImage(payload);
+    }
+
+    const { data, error } = await supabase.rpc("upsert_assessment", {
+      p_local_id: payload.id,
+      p_patient_local_id: payload.patientId,
+      p_image_local_uri: payload.imageLocalUri,
+      p_image_remote_url: imageRemoteUrl,
+      p_predicted_class: payload.predictedClass,
+      p_class_probabilities: payload.classProbabilities,
+      p_abcd_asymmetry: payload.abcdAsymmetry,
+      p_abcd_border: payload.abcdBorder,
+      p_abcd_color: payload.abcdColor,
+      p_abcd_diameter: payload.abcdDiameter,
+      p_risk_tier: payload.riskTier,
+      p_confidence_score: payload.confidenceScore,
+      p_model_version: payload.modelVersion,
+      p_body_location: payload.bodyLocation ?? null,
+      p_latitude: payload.latitude ?? null,
+      p_longitude: payload.longitude ?? null,
+      p_captured_at: payload.capturedAt,
+    });
+    if (error) throw new Error(`Assessment sync failed: ${error.message}`);
+    return data as string;
+  }
+
+  return null;
+}
+
+/**
+ * Upload a lesion image to Supabase Storage.
+ * Path pattern: {worker_id}/{assessment_local_id}.jpg
+ */
+async function uploadImage(
+  assessmentPayload: Record<string, any>,
+): Promise<string | null> {
+  try {
+    const localUri = assessmentPayload.imageLocalUri;
+    if (!localUri) return null;
+
+    // Read the file as base64
+    const base64 = await FileSystem.readAsStringAsync(localUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    const workerId = assessmentPayload.createdBy;
+    const assessmentId = assessmentPayload.id;
+    const filePath = `${workerId}/${assessmentId}.jpg`;
+
+    const { data, error } = await supabase.storage
+      .from("lesion-images")
+      .upload(filePath, decode(base64), {
+        contentType: "image/jpeg",
+        upsert: true,
+      });
+
+    if (error) {
+      console.warn("Image upload failed:", error.message);
+      return null;
+    }
+
+    // Get the public or signed URL
+    const { data: urlData } = supabase.storage
+      .from("lesion-images")
+      .getPublicUrl(data.path);
+
+    return urlData.publicUrl;
+  } catch (e) {
+    console.warn("Image upload error:", e);
+    return null;
+  }
+}
+
+/**
+ * Decode a base64 string to a Uint8Array for Supabase upload.
+ */
+function decode(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
 }
 
 function mapRow(row: any): SyncQueueItem {

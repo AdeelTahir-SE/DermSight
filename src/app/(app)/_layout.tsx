@@ -23,7 +23,6 @@ function TabIcon({
         source={icon}
         style={{ width: 24, height: 24, opacity: focused ? 1 : 0.4 }}
         contentFit="contain"
-        tintColor={focused ? "#0D9E94" : "#9CA3AF"}
       />
       <Text
         className={`text-xs mt-0.5 ${focused ? "text-primary font-medium" : "text-gray-400"}`}
