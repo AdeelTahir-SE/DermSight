@@ -11,8 +11,8 @@ export const patientFormSchema = z.object({
     .string()
     .min(1, "Date of birth is required")
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD format"),
-  sex: z.enum(["male", "female", "other"], {
-    errorMap: () => ({ message: "Please select a gender" }),
+  sex: z.enum(["male", "female", "other"]).refine(Boolean, {
+    message: "Please select a gender",
   }),
   phone: z.string().optional(),
   address: z.string().optional(),

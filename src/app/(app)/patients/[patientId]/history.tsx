@@ -7,7 +7,7 @@ import { DIAGNOSIS_LABELS } from "@/constants/riskLevels";
 import { getAssessmentsByPatient } from "@/features/assessments/repository";
 import type { Assessment } from "@/types";
 import { formatDateTime } from "@/utils/date";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useEffect, useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 
@@ -63,7 +63,7 @@ export default function HistoryScreen() {
                   }),
                   patientId,
                 },
-              })
+              } as Href)
             }
             className="bg-white mx-5 mt-3 p-4 rounded-2xl border border-gray-100"
           >

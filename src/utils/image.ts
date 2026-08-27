@@ -1,19 +1,21 @@
 /**
  * Image utilities — compression and path helpers for local storage.
+ * Uses the new expo-file-system v57 API (Paths, File, Directory).
  */
 
-import * as FileSystem from "expo-file-system";
+import { Directory, File, Paths } from "expo-file-system";
+
+const IMAGE_DIR_NAME = "dermsight_images";
 
 /**
  * Ensure a directory exists for storing assessment images.
  */
 export async function ensureImageDirectory(): Promise<string> {
-  const dir = `${FileSystem.documentDirectory}dermsight_images/`;
-  const info = await FileSystem.getInfoAsync(dir);
-  if (!info.exists) {
-    await FileSystem.makeDirectoryAsync(dir, { intermediates: true });
+  const dir = new Directory(Paths.document, IMAGE_DIR_NAME);
+  if (!dir.exists) {
+    dir.create({ intermediates: true });
   }
-  return dir;
+  return dir.uri;
 }
 
 /**
@@ -23,19 +25,23 @@ export async function saveImageLocally(
   sourceUri: string,
   assessmentId: string,
 ): Promise<string> {
-  const dir = await ensureImageDirectory();
-  const destUri = `${dir}${assessmentId}.jpg`;
-  await FileSystem.copyAsync({ from: sourceUri, to: destUri });
-  return destUri;
+  const dir = new Directory(Paths.document, IMAGE_DIR_NAME);
+  if (!dir.exists) {
+    dir.create({ intermediates: true });
+  }
+  const source = new File(sourceUri);
+  const dest = new File(dir, `${assessmentId}.jpg`);
+  await source.copy(dest);
+  return dest.uri;
 }
 
 /**
  * Delete a locally stored image.
  */
 export async function deleteLocalImage(imageUri: string): Promise<void> {
-  const info = await FileSystem.getInfoAsync(imageUri);
-  if (info.exists) {
-    await FileSystem.deleteAsync(imageUri);
+  const file = new File(imageUri);
+  if (file.exists) {
+    file.delete();
   }
 }
 
@@ -43,9 +49,10 @@ export async function deleteLocalImage(imageUri: string): Promise<void> {
  * Get file size in KB for display.
  */
 export async function getFileSizeKB(uri: string): Promise<number> {
-  const info = await FileSystem.getInfoAsync(uri, { size: true });
-  if (info.exists && info.size !== undefined) {
-    return Math.round(info.size / 1024);
+  const file = new File(uri);
+  if (file.exists) {
+    const info = file.info();
+    return Math.round((info.size ?? 0) / 1024);
   }
   return 0;
 }
