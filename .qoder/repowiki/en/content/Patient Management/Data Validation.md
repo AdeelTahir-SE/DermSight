@@ -13,6 +13,12 @@
 - [en.json](file://assets/locales/en.json)
 </cite>
 
+## Update Summary
+**Changes Made**
+- Updated Patient Form Schema section to document the enhanced gender field validation using Zod's refine method
+- Enhanced validation rules summary to reflect improved error messaging for sex field selection
+- Updated troubleshooting guide to include guidance on refined validation errors
+
 ## Table of Contents
 1. Introduction
 2. Project Structure
@@ -65,17 +71,17 @@ UI --> I18n["i18n Config<br/>i18n.ts + en.json"]
 - [en.json:66-97](file://assets/locales/en.json#L66-L97)
 
 ## Core Components
-- Form schema: A Zod-based schema defines required fields, formats, and allowed values for patient data.
-- Form screen: The new patient screen implements a simple client-side validator that checks required fields and displays inline errors.
-- Input component: Renders inputs with label, icon, focus state, and error display.
-- Repository: Persists validated data into a local SQLite database with schema-level constraints.
-- Date utilities: Provide age calculation and date formatting used elsewhere in the app.
-- i18n: Centralized internationalization setup; locale files contain labels and messages.
+- Form schema: A Zod-based schema defines required fields, formats, and allowed values for patient data with enhanced validation for gender selection
+- Form screen: The new patient screen implements a simple client-side validator that checks required fields and displays inline errors
+- Input component: Renders inputs with label, icon, focus state, and error display
+- Repository: Persists validated data into a local SQLite database with schema-level constraints
+- Date utilities: Provide age calculation and date formatting used elsewhere in the app
+- i18n: Centralized internationalization setup; locale files contain labels and messages
 
 Key responsibilities:
 - Enforce presence of required fields before submission
 - Validate date-of-birth format at the schema level
-- Constrain sex to an allowed set
+- Constrain sex to an allowed set with refined validation for better error messaging
 - Persist only valid records via repository and schema constraints
 - Display user-friendly, localized error messages
 
@@ -118,13 +124,16 @@ Screen->>Screen : navigate back / show success
 ### Patient Form Schema (Zod)
 - Required fields: first name, last name, date of birth, sex
 - Date of birth must match YYYY-MM-DD format
-- Sex is restricted to a specific enum
+- Sex is restricted to a specific enum with enhanced validation using Zod's refine method for better error messaging
 - Optional fields: phone, address, notes
 - Provides a TypeScript type derived from the schema
 
+**Updated** The sex field now uses `.refine(Boolean, { message: "Please select a gender" })` to provide more descriptive error messages when no gender is selected, improving user experience during form validation.
+
 Notes:
-- The schema centralizes validation rules and can be reused across screens or libraries.
-- Error messages are embedded in the schema and can be localized by mapping keys.
+- The schema centralizes validation rules and can be reused across screens or libraries
+- Error messages are embedded in the schema and can be localized by mapping keys
+- The refined validation ensures consistent error handling for empty or invalid gender selections
 
 **Section sources**
 - [validation.ts:7-20](file://src/features/patients/validation.ts#L7-L20)
@@ -140,6 +149,7 @@ Behavior highlights:
 - Trims whitespace for names before saving
 - Converts empty optional fields to undefined before persistence
 - Uses a loading state during save
+- Validates gender selection with the refined error message
 
 **Section sources**
 - [new.tsx:34-67](file://src/app/(app)/patients/new.tsx#L34-L67)
@@ -153,7 +163,8 @@ Behavior highlights:
 
 Integration points:
 - Each form field passes its error string to the component
-- Errors are produced by the screen’s validator and mapped to fields
+- Errors are produced by the screen's validator and mapped to fields
+- Gender selection errors are displayed with the refined message
 
 **Section sources**
 - [Input.tsx:8-22](file://src/components/ui/Input.tsx#L8-L22)
@@ -195,6 +206,7 @@ Usage considerations:
 Localization strategy:
 - Replace hardcoded messages with i18n keys
 - Use dynamic interpolation for placeholders where needed
+- The refined gender validation message can be integrated with i18n for multi-language support
 
 **Section sources**
 - [i18n.ts:12-26](file://src/lib/i18n.ts#L12-L26)
@@ -230,16 +242,16 @@ i18n_ts --> en_json["en.json"]
 - Debounce heavy computations if adding real-time validations (e.g., complex regexes)
 - Keep error messages lightweight; avoid expensive computations in validators
 - Prefer schema-level constraints to prevent invalid writes to the database
-
-[No sources needed since this section provides general guidance]
+- The refined validation approach adds minimal overhead while providing better user feedback
 
 ## Troubleshooting Guide
 Common issues and resolutions:
 - Missing required fields: Ensure all required fields are filled; the screen validator will block submission and show inline errors
 - Incorrect date format: The schema requires YYYY-MM-DD; adjust input handling or provide a date picker to enforce format
-- Invalid gender selection: The sex field must be one of the allowed values; use the provided selector to avoid manual entry errors
+- **Enhanced** Invalid gender selection: The sex field now uses refined validation with the message "Please select a gender"; use the provided selector to avoid manual entry errors and ensure proper validation feedback
 - Save failures: Check repository and database constraints; schema-level not-null and enum constraints will reject invalid data
 - Localization gaps: If error messages appear untranslated, map schema messages to i18n keys and ensure the correct locale is active
+- **New** Refined validation errors: When using Zod's refine method, ensure error messages are properly handled in the UI layer for consistent user experience
 
 **Section sources**
 - [new.tsx:34-42](file://src/app/(app)/patients/new.tsx#L34-L42)
@@ -250,24 +262,23 @@ Common issues and resolutions:
 ## Conclusion
 DermSight employs a layered validation approach:
 - Client-side checks for immediate user feedback
-- A centralized Zod schema for consistent rules
+- A centralized Zod schema for consistent rules with enhanced gender validation
 - Database constraints to guarantee data integrity
 - Localized messages for accessibility and usability
 
 To further improve:
 - Integrate the Zod schema directly into the form library for unified validation
-- Localize all error messages through i18n
+- Localize all error messages through i18n, including refined validation messages
 - Add robust phone number and address validation patterns aligned with regional formats
 - Implement real-time validation with debounced checks for better UX
-
-[No sources needed since this section summarizes without analyzing specific files]
+- Expand refined validation techniques for other complex field validations
 
 ## Appendices
 
 ### Validation Rules Summary
 - Required fields: first name, last name, date of birth, sex
 - Date of birth format: YYYY-MM-DD
-- Sex: restricted to male, female, other
+- Sex: restricted to male, female, other with refined validation for better error messaging
 - Optional fields: phone, address, notes
 - Database constraints: not-null for required fields, enums for sex and sync status, foreign key references
 
@@ -279,7 +290,26 @@ To further improve:
 - Map schema error messages to i18n keys
 - Use locale files to store translated messages
 - Update the form screen to render localized errors dynamically
+- **Enhanced** Include refined validation messages in localization strategy for consistent multi-language support
 
 **Section sources**
 - [i18n.ts:12-26](file://src/lib/i18n.ts#L12-L26)
 - [en.json:66-97](file://assets/locales/en.json#L66-L97)
+
+### Zod Refine Method Implementation
+The enhanced validation uses Zod's refine method to provide custom validation logic and error messages:
+
+```typescript
+sex: z.enum(["male", "female", "other"]).refine(Boolean, {
+  message: "Please select a gender",
+}),
+```
+
+This approach allows for:
+- Custom validation logic beyond basic type checking
+- Descriptive error messages for better user experience
+- Consistent validation behavior across the application
+- Easy integration with existing form validation patterns
+
+**Section sources**
+- [validation.ts:14-16](file://src/features/patients/validation.ts#L14-L16)

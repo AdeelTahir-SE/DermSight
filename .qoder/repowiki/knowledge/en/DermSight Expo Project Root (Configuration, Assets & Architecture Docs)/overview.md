@@ -1,1 +1,0 @@
-Root configuration and asset scaffold for the DermSight Expo/React Native app — an offline-first, on-device dermatological risk screening tool for community health workers with background Supabase sync.

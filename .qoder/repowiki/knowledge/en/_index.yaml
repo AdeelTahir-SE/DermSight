@@ -3,7 +3,7 @@ schema_version: 1
 locale: en-US
 branch: main
 nodes_managed: true
-exported_at: "2026-08-27T11:50:34Z"
+exported_at: "2026-08-27T13:03:57Z"
 modules:
     "":
         dir_name: DermSight Expo Project Root (Configuration, Assets & Architecture Docs)

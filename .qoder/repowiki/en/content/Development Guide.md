@@ -17,7 +17,15 @@
 - [src/db/schema.ts](file://src/db/schema.ts)
 - [src/features/assessments/inference/classify.ts](file://src/features/assessments/inference/classify.ts)
 - [src/lib/supabase.ts](file://src/lib/supabase.ts)
+- [src/utils/image.ts](file://src/utils/image.ts)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Removed references to reset-project script functionality that was deleted from the codebase
+- Updated development environment setup to reflect removal of sharp dependency and related image processing scripts
+- Simplified image processing documentation to use native Expo File System APIs
+- Updated troubleshooting section to remove outdated image processing issues
 
 ## Table of Contents
 1. Introduction
@@ -32,7 +40,7 @@
 10. Appendices
 
 ## Introduction
-This guide explains how to set up the development environment, build and run DermSight, understand its code organization and standards, debug and profile performance, test effectively, follow Git workflows, and deploy builds for development, staging, and production. It is written for contributors with varying experience levels and focuses on practical steps grounded in the repository’s configuration and source files.
+This guide explains how to set up the development environment, build and run DermSight, understand its code organization and standards, debug and profile performance, test effectively, follow Git workflows, and deploy builds for development, staging, and production. It is written for contributors with varying experience levels and focuses on practical steps grounded in the repository's configuration and source files.
 
 ## Project Structure
 DermSight is an Expo-based React Native application using file-based routing via expo-router. The app directory defines routes and screens; shared logic lives under src organized by features, libraries, database schema, ML assets, hooks, constants, types, and utilities. Styling uses NativeWind (Tailwind for React Native), and Metro is configured to integrate NativeWind with a global CSS entry.
@@ -219,6 +227,25 @@ Tier --> Return["Return InferenceResult"]
 **Section sources**
 - [src/features/assessments/inference/classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
 
+### Image Management
+- Uses native Expo File System v57 API for efficient image storage and management
+- Images are copied directly to app's private document directory without external compression libraries
+- Simple file operations for creating directories, copying images, and managing file sizes
+
+```mermaid
+flowchart TD
+A["Capture Image"] --> B["Ensure Directory Exists"]
+B --> C["Copy to Private Storage"]
+C --> D["Return File URI"]
+D --> E["Display/Upload"]
+```
+
+**Diagram sources**
+- [src/utils/image.ts:1-59](file://src/utils/image.ts#L1-L59)
+
+**Section sources**
+- [src/utils/image.ts:1-59](file://src/utils/image.ts#L1-L59)
+
 ## Dependency Analysis
 - Framework and runtime: Expo SDK, React Native, expo-router for navigation and file-based routing.
 - Styling: NativeWind v4 integrated via Metro and Babel presets; Tailwind config extends theme tokens.
@@ -227,6 +254,7 @@ Tier --> Return["Return InferenceResult"]
 - Networking and backend: Supabase client for sync; NetInfo triggers background sync tasks.
 - Security: expo-secure-store for sensitive data (tokens, PIN hash).
 - ML: On-device TFLite inference via fast-tflite (planned); current classify module is a mock.
+- **Updated**: Image processing now uses native expo-file-system APIs instead of external dependencies like sharp.
 
 ```mermaid
 graph LR
@@ -237,6 +265,7 @@ RN --> DB["expo-sqlite + Drizzle"]
 RN --> ML["fast-tflite (TFLite)"]
 RN --> Net["@react-native-community/netinfo"]
 RN --> Sync["expo-task-manager + background-fetch"]
+RN --> FS["expo-file-system"]
 Sync --> API["@supabase/supabase-js"]
 ```
 
@@ -246,6 +275,7 @@ Sync --> API["@supabase/supabase-js"]
 - [babel.config.js:1-7](file://babel.config.js#L1-L7)
 - [tailwind.config.js:1-45](file://tailwind.config.js#L1-L45)
 - [src/lib/supabase.ts:1-19](file://src/lib/supabase.ts#L1-L19)
+- [src/utils/image.ts:1-59](file://src/utils/image.ts#L1-L59)
 
 **Section sources**
 - [package.json:1-66](file://package.json#L1-L66)
@@ -253,16 +283,15 @@ Sync --> API["@supabase/supabase-js"]
 - [babel.config.js:1-7](file://babel.config.js#L1-L7)
 - [tailwind.config.js:1-45](file://tailwind.config.js#L1-L45)
 - [src/lib/supabase.ts:1-19](file://src/lib/supabase.ts#L1-L19)
+- [src/utils/image.ts:1-59](file://src/utils/image.ts#L1-L59)
 
 ## Performance Considerations
 - Offline-first architecture ensures UI responsiveness by reading/writing local SQLite only.
 - Background sync avoids blocking user interactions; use exponential backoff and retry strategies for failed syncs.
 - Model inference should be cached and reused where possible; ensure TFLite interpreter instance is loaded once and reused.
-- Image compression before local storage reduces disk usage and improves sync speed.
+- **Updated**: Image handling now uses native File System APIs for optimal performance without external compression overhead.
 - Use profiling tools (Expo DevTools, Flipper, React Profiler) to identify heavy re-renders and long tasks.
 - Keep bundle size small; avoid unnecessary dependencies and lazy-load heavy modules.
-
-[No sources needed since this section provides general guidance]
 
 ## Troubleshooting Guide
 Common issues and resolutions:
@@ -271,6 +300,7 @@ Common issues and resolutions:
 - Permissions not granted: Confirm app.json declares camera and location permissions; request runtime permissions in-app before use.
 - Sync failures: Inspect sync_queue status and attempt counts; check network connectivity and Supabase credentials.
 - Model availability: If using real TFLite model, ensure the .tflite asset is bundled and loader checks for presence before inference.
+- **Updated**: Image storage issues: Verify expo-file-system permissions and directory creation; use ensureImageDirectory() function before saving images.
 
 **Section sources**
 - [metro.config.js:1-6](file://metro.config.js#L1-L6)
@@ -278,11 +308,10 @@ Common issues and resolutions:
 - [tsconfig.json:1-20](file://tsconfig.json#L1-L20)
 - [app.json:1-70](file://app.json#L1-L70)
 - [src/lib/supabase.ts:1-19](file://src/lib/supabase.ts#L1-L19)
+- [src/utils/image.ts:1-59](file://src/utils/image.ts#L1-L59)
 
 ## Conclusion
 DermSight combines Expo tooling, offline-first data persistence, on-device ML, and background sync to deliver a robust screening tool for community health workers. By following the setup, build, and development practices outlined here, contributors can efficiently extend features, maintain code quality, and optimize performance across mobile platforms.
-
-[No sources needed since this section summarizes without analyzing specific files]
 
 ## Appendices
 
@@ -290,6 +319,7 @@ DermSight combines Expo tooling, offline-first data persistence, on-device ML, a
 - Install Node.js and npm/yarn as per Expo requirements.
 - Clone the repository and install dependencies using the project scripts.
 - Configure environment variables for Supabase if syncing remotely.
+- **Updated**: No additional image processing dependencies required; all image handling uses native Expo APIs.
 
 **Section sources**
 - [README.md:1-57](file://README.md#L1-L57)
@@ -321,21 +351,15 @@ DermSight combines Expo tooling, offline-first data persistence, on-device ML, a
 - Leverage Expo DevTools and React Native Debugger for inspecting state and network calls.
 - Add error boundaries around critical screens to capture and display runtime errors gracefully.
 
-[No sources needed since this section provides general guidance]
-
 ### Testing Approaches
 - Unit tests: Test pure functions (e.g., risk mapping, validation schemas) with Jest.
 - Integration tests: Validate repository methods against an in-memory SQLite instance.
 - End-to-end tests: Use Detox for automated flows like login, patient creation, and assessment result viewing.
 
-[No sources needed since this section provides general guidance]
-
 ### Git Workflow and Code Review
 - Branching strategy: Use feature branches per ticket; merge via pull requests with reviews.
 - Commit messages: Follow conventional commits for clarity and changelog generation.
 - Code review checklist: Verify type safety, error handling, accessibility, and performance considerations.
-
-[No sources needed since this section provides general guidance]
 
 ### Deployment Considerations
 - Development builds: Run with Expo Dev Client for native module support.
