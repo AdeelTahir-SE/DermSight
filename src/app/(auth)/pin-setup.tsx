@@ -111,8 +111,7 @@ export default function PinSetupScreen() {
       <View className="bg-primary-50 rounded-xl p-4 mb-6 flex-row items-center">
         <Text className="text-lg mr-3">ℹ️</Text>
         <Text className="text-xs text-primary-700 flex-1">
-          Your PIN keeps your data private. You'll use this PIN to unlock the
-          app.
+          {"Your PIN keeps your data private. You'll use this PIN to unlock the app."}
         </Text>
       </View>
 

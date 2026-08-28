@@ -30,9 +30,14 @@ export function useSyncStatus() {
   }, [isSyncing, isConnected, refreshCount]);
 
   useEffect(() => {
-    refreshCount();
+    const timer = setTimeout(() => {
+      refreshCount();
+    }, 0);
     const interval = setInterval(refreshCount, 5000);
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
   }, [refreshCount]);
 
   return {
