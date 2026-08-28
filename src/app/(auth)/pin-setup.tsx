@@ -10,7 +10,7 @@ import { Pressable, Text, View } from "react-native";
 
 export default function PinSetupScreen() {
   const router = useRouter();
-  const { setupPin, isLoading } = useAuthStore();
+  const { setupPin, isLoading, workerName: authWorkerName } = useAuthStore();
   const [step, setStep] = useState<"enter" | "confirm">("enter");
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
@@ -38,7 +38,7 @@ export default function PinSetupScreen() {
       return;
     }
 
-    await setupPin(pin, workerName);
+    await setupPin(pin, authWorkerName || workerName);
     router.replace("/(app)/home");
   };
 

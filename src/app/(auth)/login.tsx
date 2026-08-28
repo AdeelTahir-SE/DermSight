@@ -13,7 +13,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { loginWithPin, isLoading } = useAuthStore();
+  const { loginWithPin, loginWithEmail, pinSet, isLoading } = useAuthStore();
   const { isOffline } = useConnectivity();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,13 +35,25 @@ export default function LoginScreen() {
         setError("Incorrect PIN. Please try again.");
       }
     } else {
-      // For MVP, redirect to PIN login
-      if (!email.trim()) {
-        setError("Please enter your email or Worker ID.");
+      if (!email.trim() || !password.trim()) {
+        setError("Please enter both email/worker ID and password.");
         return;
       }
-      // Simulate login — in production this calls Supabase
-      router.replace("/(app)/home");
+      if (isOffline) {
+        setError("Email login requires an internet connection. Please use PIN login.");
+        return;
+      }
+      const success = await loginWithEmail(email.trim(), password);
+      if (success) {
+        const currentPinSet = useAuthStore.getState().pinSet;
+        if (currentPinSet) {
+          router.replace("/(app)/home");
+        } else {
+          router.replace("/(auth)/pin-setup");
+        }
+      } else {
+        setError("Incorrect email or password, or no health worker profile found.");
+      }
     }
   };
 
