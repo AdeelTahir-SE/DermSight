@@ -142,7 +142,11 @@ export default function PatientDetailScreen() {
               onPress={() => {
                 router.push({
                   pathname: `/(app)/patients/${patientId}/result`,
-                  params: { assessmentId: assessment.id },
+                  params: {
+                    assessmentId: assessment.id,
+                    imageUri: assessment.imageLocalUri,
+                    patientId,
+                  },
                 } as Href);
               }}
               className="flex-row items-center py-3 border-b border-gray-50"

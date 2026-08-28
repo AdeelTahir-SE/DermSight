@@ -49,18 +49,8 @@ export default function HistoryScreen() {
               router.push({
                 pathname: `/(app)/patients/${patientId}/result`,
                 params: {
-                  result: JSON.stringify({
-                    classProbabilities: item.classProbabilities,
-                    predictedClass: item.predictedClass,
-                    confidenceScore: item.confidenceScore,
-                    abcdScores: {
-                      asymmetry: item.abcdAsymmetry,
-                      border: item.abcdBorder,
-                      color: item.abcdColor,
-                      diameter: item.abcdDiameter,
-                    },
-                    riskTier: item.riskTier,
-                  }),
+                  assessmentId: item.id,
+                  imageUri: item.imageLocalUri,
                   patientId,
                 },
               } as Href)
