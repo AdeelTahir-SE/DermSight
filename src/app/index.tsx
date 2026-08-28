@@ -8,21 +8,21 @@ import { Button } from "@/components/ui/Button";
 import { useAuthStore } from "@/features/auth/store";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  Dimensions,
   ImageSourcePropType,
   ScrollView,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export default function SplashScreen() {
   const router = useRouter();
   const { isAuthenticated, pinSet, isInitialized } = useAuthStore();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const { width: screenWidth } = useWindowDimensions();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -37,7 +37,12 @@ export default function SplashScreen() {
 
   const handleGetStarted = () => {
     if (currentSlide < 2) {
-      setCurrentSlide(currentSlide + 1);
+      const nextSlide = currentSlide + 1;
+      setCurrentSlide(nextSlide);
+      scrollViewRef.current?.scrollTo({
+        x: nextSlide * screenWidth,
+        animated: true,
+      });
     } else {
       // Last onboarding slide — go to login or pin setup
       if (pinSet) {
@@ -51,12 +56,13 @@ export default function SplashScreen() {
   return (
     <View className="flex-1 bg-white">
       <ScrollView
+        ref={scrollViewRef}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={(e) => {
           const slide = Math.round(
-            e.nativeEvent.contentOffset.x / SCREEN_WIDTH,
+            e.nativeEvent.contentOffset.x / screenWidth,
           );
           setCurrentSlide(slide);
         }}
@@ -64,7 +70,7 @@ export default function SplashScreen() {
         {/* Slide 1: Welcome */}
         <View
           className="w-full items-center justify-center px-8"
-          style={{ width: SCREEN_WIDTH }}
+          style={{ width: screenWidth }}
         >
           <View className="flex-1 items-center justify-center">
             {/* Logo */}
@@ -93,7 +99,7 @@ export default function SplashScreen() {
         </View>
 
         {/* Slide 2: Features */}
-        <View className="px-8 justify-center" style={{ width: SCREEN_WIDTH }}>
+        <View className="px-8 justify-center" style={{ width: screenWidth }}>
           <View className="flex-1 justify-center">
             <Text className="text-2xl font-bold text-center mb-2">
               <Text className="text-navy">Smart Screening, </Text>
@@ -123,7 +129,7 @@ export default function SplashScreen() {
         </View>
 
         {/* Slide 3: Permissions */}
-        <View className="px-8 justify-center" style={{ width: SCREEN_WIDTH }}>
+        <View className="px-8 justify-center" style={{ width: screenWidth }}>
           <View className="flex-1 justify-center">
             {/* Shield icon */}
             <View className="w-20 h-20 rounded-full bg-primary-50 items-center justify-center self-center mb-6">
