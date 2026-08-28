@@ -67,6 +67,21 @@ export async function runSync(): Promise<SyncResult> {
 
   for (const item of pendingItems) {
     try {
+      // Optimization: Skip assessments whose patient has not synced yet
+      if (item.entityType === "assessment") {
+        const payload = JSON.parse(item.payload);
+        const patientRow = db
+          .select()
+          .from(patients)
+          .where(eq(patients.id, payload.patientId))
+          .get();
+
+        if (!patientRow || !patientRow.remoteId) {
+          // Keep it pending and check in the next cycle
+          continue;
+        }
+      }
+
       // Mark as in_progress
       db.update(syncQueue)
         .set({
@@ -210,9 +225,9 @@ async function uploadImage(
     const localUri = assessmentPayload.imageLocalUri;
     if (!localUri) return null;
 
-    // Read the file as base64 using new expo-file-system v57 API
+    // Read the file as Uint8Array using new expo-file-system v57 API
     const file = new File(localUri);
-    const base64 = await file.base64();
+    const bytes = await file.bytes();
 
     const workerId = assessmentPayload.createdBy;
     const assessmentId = assessmentPayload.id;
@@ -220,7 +235,7 @@ async function uploadImage(
 
     const { data, error } = await supabase.storage
       .from("lesion-images")
-      .upload(filePath, decode(base64), {
+      .upload(filePath, bytes, {
         contentType: "image/jpeg",
         upsert: true,
       });
@@ -240,18 +255,6 @@ async function uploadImage(
     console.warn("Image upload error:", e);
     return null;
   }
-}
-
-/**
- * Decode a base64 string to a Uint8Array for Supabase upload.
- */
-function decode(base64: string): Uint8Array {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
 }
 
 function mapRow(row: any): SyncQueueItem {
