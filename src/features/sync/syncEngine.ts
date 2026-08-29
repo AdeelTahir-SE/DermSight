@@ -184,35 +184,58 @@ export async function retrySyncItem(itemId: number): Promise<boolean> {
  * Returns the remote UUID assigned by the server.
  */
 async function uploadToSupabase(item: SyncQueueItem): Promise<string | null> {
-  const payload = JSON.parse(item.payload);
-
   if (item.entityType === "patient") {
+    const localPatient = db
+      .select()
+      .from(patients)
+      .where(eq(patients.id, item.entityId))
+      .get();
+
+    if (!localPatient) {
+      throw new Error(`Local patient with ID ${item.entityId} not found in SQLite. Cannot sync.`);
+    }
+
     const { data, error } = await supabase.rpc("upsert_patient", {
-      p_local_id: payload.id ?? null,
-      p_first_name: (payload.firstName || payload.first_name) ?? null,
-      p_last_name: (payload.lastName || payload.last_name) ?? null,
-      p_date_of_birth: (payload.dateOfBirth || payload.date_of_birth) ?? null,
-      p_sex: payload.sex ?? null,
-      p_phone: payload.phone ?? null,
-      p_address: payload.address ?? null,
-      p_notes: payload.notes ?? null,
-      p_latitude: payload.latitude ?? null,
-      p_longitude: payload.longitude ?? null,
-      p_captured_at: (payload.capturedAt || payload.captured_at) ?? null,
+      p_local_id: localPatient.id,
+      p_first_name: localPatient.firstName,
+      p_last_name: localPatient.lastName,
+      p_date_of_birth: localPatient.dateOfBirth,
+      p_sex: localPatient.sex,
+      p_phone: localPatient.phone ?? null,
+      p_address: localPatient.address ?? null,
+      p_notes: localPatient.notes ?? null,
+      p_latitude: localPatient.latitude ?? null,
+      p_longitude: localPatient.longitude ?? null,
+      p_captured_at: localPatient.capturedAt,
     });
     if (error) throw new Error(`Patient sync failed: ${error.message}`);
     return data as string;
   }
 
   if (item.entityType === "assessment") {
-    const localUri = payload.imageLocalUri || payload.image_local_uri;
-    // Upload image first if we have a local URI
-    let imageRemoteUrl: string | null = null;
-    if (localUri) {
-      imageRemoteUrl = await uploadImage(payload);
+    const localAssessment = db
+      .select()
+      .from(assessments)
+      .where(eq(assessments.id, item.entityId))
+      .get();
+
+    if (!localAssessment) {
+      throw new Error(`Local assessment with ID ${item.entityId} not found in SQLite. Cannot sync.`);
     }
 
-    let classProbs = payload.classProbabilities || payload.class_probabilities;
+    const localUri = localAssessment.imageLocalUri;
+    // Upload image first if we have a local URI
+    let imageRemoteUrl: string | null = localAssessment.imageRemoteUrl;
+    if (localUri && !imageRemoteUrl) {
+      // Create a temporary payload structure for uploadImage compatibility
+      imageRemoteUrl = await uploadImage({
+        imageLocalUri: localUri,
+        createdBy: localAssessment.createdBy,
+        id: localAssessment.id,
+      });
+    }
+
+    let classProbs = localAssessment.classProbabilities;
     if (typeof classProbs === "string") {
       try {
         classProbs = JSON.parse(classProbs);
@@ -221,36 +244,24 @@ async function uploadToSupabase(item: SyncQueueItem): Promise<string | null> {
       }
     }
 
-    let resolvedPatientId = payload.patientId || payload.patient_id || payload.patientLocalId || payload.patient_local_id;
-    if (!resolvedPatientId) {
-      const localAssessment = db
-        .select()
-        .from(assessments)
-        .where(eq(assessments.id, item.entityId))
-        .get();
-      if (localAssessment) {
-        resolvedPatientId = localAssessment.patientId;
-      }
-    }
-
     const { data, error } = await supabase.rpc("upsert_assessment", {
-      p_local_id: payload.id ?? null,
-      p_patient_local_id: resolvedPatientId ?? null,
-      p_image_local_uri: localUri ?? null,
-      p_image_remote_url: imageRemoteUrl || payload.imageRemoteUrl || payload.image_remote_url || null,
-      p_predicted_class: (payload.predictedClass || payload.predicted_class) ?? null,
-      p_class_probabilities: classProbs ?? null,
-      p_abcd_asymmetry: (payload.abcdAsymmetry || payload.abcd_asymmetry) ?? null,
-      p_abcd_border: (payload.abcdBorder || payload.abcd_border) ?? null,
-      p_abcd_color: (payload.abcdColor || payload.abcd_color) ?? null,
-      p_abcd_diameter: (payload.abcdDiameter || payload.abcd_diameter) ?? null,
-      p_risk_tier: (payload.riskTier || payload.risk_tier) ?? null,
-      p_confidence_score: (payload.confidenceScore || payload.confidence_score) ?? null,
-      p_model_version: (payload.modelVersion || payload.model_version) ?? null,
-      p_body_location: payload.bodyLocation ?? payload.body_location ?? null,
-      p_latitude: payload.latitude ?? null,
-      p_longitude: payload.longitude ?? null,
-      p_captured_at: (payload.capturedAt || payload.captured_at) ?? null,
+      p_local_id: localAssessment.id,
+      p_patient_local_id: localAssessment.patientId,
+      p_image_local_uri: localUri,
+      p_image_remote_url: imageRemoteUrl || localAssessment.imageRemoteUrl || null,
+      p_predicted_class: localAssessment.predictedClass,
+      p_class_probabilities: classProbs,
+      p_abcd_asymmetry: localAssessment.abcdAsymmetry,
+      p_abcd_border: localAssessment.abcdBorder,
+      p_abcd_color: localAssessment.abcdColor,
+      p_abcd_diameter: localAssessment.abcdDiameter,
+      p_risk_tier: localAssessment.riskTier,
+      p_confidence_score: localAssessment.confidenceScore,
+      p_model_version: localAssessment.modelVersion,
+      p_body_location: localAssessment.bodyLocation ?? null,
+      p_latitude: localAssessment.latitude ?? null,
+      p_longitude: localAssessment.longitude ?? null,
+      p_captured_at: localAssessment.capturedAt,
     });
     if (error) throw new Error(`Assessment sync failed: ${error.message}`);
     return data as string;
