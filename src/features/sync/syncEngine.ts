@@ -6,6 +6,8 @@
 
 import { db } from "@/db/client";
 import { assessments, patients, syncQueue } from "@/db/schema";
+import { useAssessmentsStore } from "@/features/assessments/store";
+import { usePatientsStore } from "@/features/patients/store";
 import { isConnected } from "@/lib/netinfo";
 import { supabase } from "@/lib/supabase";
 import type { SyncQueueItem } from "@/types";
@@ -159,6 +161,15 @@ export async function runSync(): Promise<SyncResult> {
         setTimeout(resolve, Math.min(delay, 30000)),
       );
     }
+  }
+
+  // Refresh Zustand stores from SQLite database so UI reflects the synced state
+  try {
+    usePatientsStore.getState().loadPatients();
+    useAssessmentsStore.getState().loadAll();
+    useAssessmentsStore.getState().loadCounts();
+  } catch (storeError) {
+    console.warn("Failed to refresh Zustand stores after sync:", storeError);
   }
 
   return { success, failed, skipped: 0 };
