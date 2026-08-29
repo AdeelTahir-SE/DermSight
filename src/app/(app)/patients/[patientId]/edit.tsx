@@ -9,7 +9,7 @@ import { usePatientsStore } from "@/features/patients/store";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, Platform, Pressable, ScrollView, Text, View } from "react-native";
 
 function formatDateForInput(isoDate: string): string {
   if (!isoDate) return "";
@@ -52,7 +52,11 @@ export default function EditPatientScreen() {
           setLoading(false);
         })
         .catch(() => {
-          Alert.alert("Error", "Failed to load patient details.");
+          if (Platform.OS === "web") {
+            window.alert("Failed to load patient details.");
+          } else {
+            Alert.alert("Error", "Failed to load patient details.");
+          }
           setLoading(false);
         });
     }
@@ -82,11 +86,20 @@ export default function EditPatientScreen() {
         notes: notes || undefined,
       });
       updatePatientInStore(updated);
-      Alert.alert("Success", "Patient details updated successfully.", [
-        { text: "OK", onPress: () => router.back() }
-      ]);
+      if (Platform.OS === "web") {
+        window.alert("Patient details updated successfully.");
+        router.back();
+      } else {
+        Alert.alert("Success", "Patient details updated successfully.", [
+          { text: "OK", onPress: () => router.back() }
+        ]);
+      }
     } catch (e) {
-      Alert.alert("Error", "Failed to update patient. Please try again.");
+      if (Platform.OS === "web") {
+        window.alert("Failed to update patient. Please try again.");
+      } else {
+        Alert.alert("Error", "Failed to update patient. Please try again.");
+      }
     } finally {
       setSaving(false);
     }
