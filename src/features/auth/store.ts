@@ -99,16 +99,38 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       // 2. Fetch the health worker profile from Supabase
-      const { data: worker, error: workerError } = await supabase
+      let worker = null;
+      const { data: existingWorker, error: workerError } = await supabase
         .from("health_workers")
         .select("*")
         .eq("supabase_user_id", data.user.id)
-        .single();
+        .maybeSingle();
 
-      if (workerError || !worker) {
-        console.warn("No health worker profile found for user:", data.user.id);
-        set({ isLoading: false });
-        return false;
+      if (existingWorker) {
+        worker = existingWorker;
+      } else {
+        // Fallback: If no profile exists (e.g. database trigger wasn't applied yet),
+        // create one dynamically using the user metadata populated on signup.
+        const fullName = data.user.user_metadata?.full_name || "Health Worker";
+        const region = data.user.user_metadata?.region || "Local";
+
+        console.warn("No health worker profile found. Creating fallback profile for user:", data.user.id);
+        const { data: newWorker, error: createError } = await supabase
+          .from("health_workers")
+          .insert({
+            supabase_user_id: data.user.id,
+            full_name: fullName,
+            region: region,
+          })
+          .select()
+          .single();
+
+        if (createError || !newWorker) {
+          console.error("Failed to create fallback profile on login:", createError);
+          set({ isLoading: false });
+          return false;
+        }
+        worker = newWorker;
       }
 
       // 3. Save details to SecureStorage
