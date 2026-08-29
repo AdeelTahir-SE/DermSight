@@ -36,6 +36,19 @@ export default function NewPatientScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleDobChange = (text: string) => {
+    // Remove non-digits
+    const cleaned = text.replace(/\D/g, "");
+    let formatted = cleaned;
+    if (cleaned.length > 2) {
+      formatted = `${cleaned.substring(0, 2)} / ${cleaned.substring(2, 4)}`;
+    }
+    if (cleaned.length > 4) {
+      formatted = `${cleaned.substring(0, 2)} / ${cleaned.substring(2, 4)} / ${cleaned.substring(4, 8)}`;
+    }
+    setDob(formatted);
+  };
+
   const handleSave = async () => {
     if (!validate()) return;
     setSaving(true);
@@ -54,7 +67,7 @@ export default function NewPatientScreen() {
       );
       addPatient(patient);
       router.back();
-    } catch (e) {
+    } catch {
       Alert.alert("Error", "Failed to save patient. Please try again.");
     } finally {
       setSaving(false);
@@ -63,161 +76,180 @@ export default function NewPatientScreen() {
 
   return (
     <ScrollView
-      className="flex-1 bg-white"
+      className="flex-1 bg-gray-50"
       showsVerticalScrollIndicator={false}
     >
       {/* Header */}
-      <View className="flex-row items-center px-5 py-4 border-b border-gray-100">
-        <Pressable onPress={() => router.back()} className="mr-3 p-1">
-          <Text className="text-xl">←</Text>
-        </Pressable>
-        <View>
-          <Text className="text-lg font-bold text-navy">
-            New Patient Registration
-          </Text>
-          <Text className="text-xs text-gray-500">Enter patient details.</Text>
+      <View className="bg-navy px-5 pt-12 pb-6 rounded-b-[28px] shadow-sm">
+        <View className="flex-row items-center">
+          <Pressable
+            onPress={() => router.back()}
+            className="mr-4 w-10 h-10 rounded-full bg-white/10 items-center justify-center border border-white/10"
+          >
+            <Text className="text-white text-xl">←</Text>
+          </Pressable>
+          <View>
+            <Text className="text-xl font-bold text-white">
+              New Patient Registration
+            </Text>
+            <Text className="text-xs text-white/70 mt-0.5">
+              Enter patient details to begin screening
+            </Text>
+          </View>
         </View>
       </View>
 
       <View className="p-5">
-        {/* Personal Information */}
-        <Text className="text-sm font-semibold text-primary mb-3">
-          Personal Information
-        </Text>
+        {/* Card 1: Personal Info */}
+        <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-gray-100">
+          <Text className="text-xs font-bold text-primary mb-4 uppercase tracking-wider">
+            Personal Information
+          </Text>
 
-        <Input
-          label="First Name *"
-          placeholder="Enter first name"
-          value={firstName}
-          onChangeText={setFirstName}
-          icon={
-            <Image
-              source={require("../../../../assets/icons/np-person.png")}
-              style={{ width: 20, height: 20 }}
-              contentFit="contain"
-              tintColor="#0D9E94"
-            />
-          }
-          error={errors.firstName}
-        />
-        <Input
-          label="Last Name *"
-          placeholder="Enter last name"
-          value={lastName}
-          onChangeText={setLastName}
-          icon={
-            <Image
-              source={require("../../../../assets/icons/np-person.png")}
-              style={{ width: 20, height: 20 }}
-              contentFit="contain"
-              tintColor="#0D9E94"
-            />
-          }
-          error={errors.lastName}
-        />
-        <Input
-          label="Date of Birth *"
-          placeholder="DD / MM / YYYY"
-          value={dob}
-          onChangeText={setDob}
-          icon={
-            <Image
-              source={require("../../../../assets/icons/np-calendar.png")}
-              style={{ width: 20, height: 20 }}
-              contentFit="contain"
-              tintColor="#0D9E94"
-            />
-          }
-          error={errors.dob}
-          keyboardType="default"
-        />
+          <Input
+            label="First Name *"
+            placeholder="Enter first name"
+            value={firstName}
+            onChangeText={setFirstName}
+            icon={
+              <Image
+                source={require("../../../../assets/icons/np-person.png")}
+                style={{ width: 20, height: 20 }}
+                contentFit="contain"
+                tintColor="#0D9E94"
+              />
+            }
+            error={errors.firstName}
+          />
+          <Input
+            label="Last Name *"
+            placeholder="Enter last name"
+            value={lastName}
+            onChangeText={setLastName}
+            icon={
+              <Image
+                source={require("../../../../assets/icons/np-person.png")}
+                style={{ width: 20, height: 20 }}
+                contentFit="contain"
+                tintColor="#0D9E94"
+              />
+            }
+            error={errors.lastName}
+          />
+          <Input
+            label="Date of Birth *"
+            placeholder="DD / MM / YYYY"
+            value={dob}
+            onChangeText={handleDobChange}
+            icon={
+              <Image
+                source={require("../../../../assets/icons/np-calendar.png")}
+                style={{ width: 20, height: 20 }}
+                contentFit="contain"
+                tintColor="#0D9E94"
+              />
+            }
+            error={errors.dob}
+            keyboardType="numeric"
+          />
 
-        {/* Gender selector */}
-        <View className="mb-4">
-          <Text className="text-sm font-medium text-navy mb-1.5">Gender *</Text>
-          <View className="flex-row gap-3">
-            {(["male", "female", "other"] as const).map((option) => (
-              <Pressable
-                key={option}
-                onPress={() => setSex(option)}
-                className={`flex-1 py-3 rounded-xl border items-center ${
-                  sex === option
-                    ? "border-primary bg-primary-50"
-                    : "border-gray-200 bg-white"
-                }`}
-              >
-                <Text
-                  className={`text-sm font-medium ${
-                    sex === option ? "text-primary" : "text-gray-500"
+          {/* Gender selector */}
+          <View className="mb-2">
+            <Text className="text-sm font-medium text-navy mb-1.5">Gender *</Text>
+            <View className="flex-row gap-3">
+              {(["male", "female", "other"] as const).map((option) => (
+                <Pressable
+                  key={option}
+                  onPress={() => setSex(option)}
+                  className={`flex-1 py-3.5 rounded-xl border flex-row items-center justify-center gap-2 ${
+                    sex === option
+                      ? "border-primary bg-primary-50 shadow-sm"
+                      : "border-gray-200 bg-white"
                   }`}
                 >
-                  {option === "male"
-                    ? "Male"
-                    : option === "female"
-                      ? "Female"
-                      : "Other"}
-                </Text>
-              </Pressable>
-            ))}
+                  <Text className="text-base">
+                    {option === "male" ? "👨" : option === "female" ? "👩" : "👥"}
+                  </Text>
+                  <Text
+                    className={`text-sm font-semibold ${
+                      sex === option ? "text-primary" : "text-gray-500"
+                    }`}
+                  >
+                    {option === "male"
+                      ? "Male"
+                      : option === "female"
+                        ? "Female"
+                        : "Other"}
+                  </Text>
+                  {sex === option && (
+                    <Text className="text-primary font-bold text-xs">✓</Text>
+                  )}
+                </Pressable>
+              ))}
+            </View>
+            {errors.sex && (
+              <Text className="text-sm text-red-500 mt-1">{errors.sex}</Text>
+            )}
           </View>
-          {errors.sex && (
-            <Text className="text-sm text-red-500 mt-1">{errors.sex}</Text>
-          )}
         </View>
 
-        {/* Contact Information */}
-        <Text className="text-sm font-semibold text-primary mb-3 mt-4">
-          Contact Information
-        </Text>
-        <Input
-          label="Phone Number"
-          placeholder="03XX XXXXXX"
-          value={phone}
-          onChangeText={setPhone}
-          icon={
-            <Image
-              source={require("../../../../assets/icons/np-phone.png")}
-              style={{ width: 20, height: 20 }}
-              contentFit="contain"
-              tintColor="#0D9E94"
-            />
-          }
-          keyboardType="phone-pad"
-        />
-        <Input
-          label="Address (Village / Area)"
-          placeholder="Enter address"
-          value={address}
-          onChangeText={setAddress}
-          icon={
-            <Image
-              source={require("../../../../assets/icons/np-location.png")}
-              style={{ width: 20, height: 20 }}
-              contentFit="contain"
-              tintColor="#0D9E94"
-            />
-          }
-        />
+        {/* Card 2: Contact Info */}
+        <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-gray-100">
+          <Text className="text-xs font-bold text-primary mb-4 uppercase tracking-wider">
+            Contact Information
+          </Text>
+          <Input
+            label="Phone Number"
+            placeholder="03XX XXXXXX"
+            value={phone}
+            onChangeText={setPhone}
+            icon={
+              <Image
+                source={require("../../../../assets/icons/np-phone.png")}
+                style={{ width: 20, height: 20 }}
+                contentFit="contain"
+                tintColor="#0D9E94"
+              />
+            }
+            keyboardType="phone-pad"
+          />
+          <Input
+            label="Address (Village / Area)"
+            placeholder="Enter address"
+            value={address}
+            onChangeText={setAddress}
+            icon={
+              <Image
+                source={require("../../../../assets/icons/np-location.png")}
+                style={{ width: 20, height: 20 }}
+                contentFit="contain"
+                tintColor="#0D9E94"
+              />
+            }
+          />
+        </View>
 
-        {/* Additional Information */}
-        <Text className="text-sm font-semibold text-primary mb-3 mt-4">
-          Additional Information
-        </Text>
-        <Input
-          label="Notes"
-          placeholder="Any additional notes"
-          value={notes}
-          onChangeText={setNotes}
-          icon={
-            <Image
-              source={require("../../../../assets/icons/np-notes.png")}
-              style={{ width: 20, height: 20 }}
-              contentFit="contain"
-              tintColor="#0D9E94"
-            />
-          }
-          multiline
-        />
+        {/* Card 3: Notes Info */}
+        <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-gray-100">
+          <Text className="text-xs font-bold text-primary mb-4 uppercase tracking-wider">
+            Additional Information
+          </Text>
+          <Input
+            label="Notes"
+            placeholder="Enter medical history, symptoms, or any other notes"
+            value={notes}
+            onChangeText={setNotes}
+            icon={
+              <Image
+                source={require("../../../../assets/icons/np-notes.png")}
+                style={{ width: 20, height: 20 }}
+                contentFit="contain"
+                tintColor="#0D9E94"
+              />
+            }
+            multiline
+          />
+        </View>
 
         <View className="mt-4 mb-8">
           <Button title="Save Patient" onPress={handleSave} loading={saving} />
