@@ -55,7 +55,20 @@ export function formatRelativeDate(dateString: string): string {
 }
 
 export function calculateAge(dateOfBirth: string): number {
-  const birth = new Date(dateOfBirth);
+  let parsedDob = dateOfBirth;
+  const parts = dateOfBirth.replace(/\s+/g, "").split(/[-/]/);
+  if (parts.length === 3) {
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const year = parseInt(parts[2], 10);
+    if (year > 1000 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      const monthStr = month.toString().padStart(2, "0");
+      const dayStr = day.toString().padStart(2, "0");
+      parsedDob = `${year}-${monthStr}-${dayStr}`;
+    }
+  }
+
+  const birth = new Date(parsedDob);
   const now = new Date();
   let age = now.getFullYear() - birth.getFullYear();
   const monthDiff = now.getMonth() - birth.getMonth();

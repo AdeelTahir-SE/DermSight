@@ -61,6 +61,16 @@ export async function runSync(): Promise<SyncResult> {
     return { success: 0, failed: 0, skipped: getPendingCount() };
   }
 
+  // Reset failed queue items to pending so they are retried
+  try {
+    db.update(syncQueue)
+      .set({ status: "pending", attemptCount: 0 })
+      .where(eq(syncQueue.status, "failed"))
+      .run();
+  } catch (e) {
+    console.warn("Failed to reset failed sync items:", e);
+  }
+
   const pendingItems = getPendingSyncItems();
   let success = 0;
   let failed = 0;

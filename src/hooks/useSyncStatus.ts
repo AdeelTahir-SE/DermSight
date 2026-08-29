@@ -18,7 +18,7 @@ export function useSyncStatus() {
   }, []);
 
   const triggerSync = useCallback(async () => {
-    if (isSyncing || !isConnected) return;
+    if (isSyncing || isConnected === false) return;
     setIsSyncing(true);
     try {
       await runSync();

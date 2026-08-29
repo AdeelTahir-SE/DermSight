@@ -41,18 +41,34 @@ export async function getPatientById(id: string): Promise<Patient | null> {
   return row ? mapRowToPatient(row) : null;
 }
 
+function normalizeDateOfBirth(dob: string): string {
+  const parts = dob.replace(/\s+/g, "").split(/[-/]/);
+  if (parts.length === 3) {
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const year = parseInt(parts[2], 10);
+    if (year > 1000 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      const monthStr = month.toString().padStart(2, "0");
+      const dayStr = day.toString().padStart(2, "0");
+      return `${year}-${monthStr}-${dayStr}`;
+    }
+  }
+  return dob;
+}
+
 export async function createPatient(
   data: PatientFormData,
   userId: string,
 ): Promise<Patient> {
   const now = new Date().toISOString();
   const id = generateUUID();
+  const normalizedDob = normalizeDateOfBirth(data.dateOfBirth);
 
   const patient: Patient = {
     id,
     firstName: data.firstName,
     lastName: data.lastName,
-    dateOfBirth: data.dateOfBirth,
+    dateOfBirth: normalizedDob,
     sex: data.sex,
     phone: data.phone || null,
     address: data.address || null,
