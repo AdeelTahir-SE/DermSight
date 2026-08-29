@@ -242,6 +242,76 @@ export const db = {
 
 export function initializeDatabase(): void {
   console.log("[Web DB] Initializing LocalStorage SQLite mock...");
+
+  // One-time data cleanup: repair any malformed date_of_birth records in localStorage
+  try {
+    const normalizeDateOfBirth = (dob: string): string => {
+      const parts = dob.replace(/\s+/g, "").split(/[-/]/);
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        const year = parseInt(parts[2], 10);
+        if (year > 1000 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+          const monthStr = month.toString().padStart(2, "0");
+          const dayStr = day.toString().padStart(2, "0");
+          return `${year}-${monthStr}-${dayStr}`;
+        }
+      }
+      return dob;
+    };
+
+    // 1. Clean patients table
+    const patientsKey = getLocalStorageKey("patients");
+    const patientsData = localStorage.getItem(patientsKey);
+    if (patientsData) {
+      const patients = JSON.parse(patientsData);
+      let updated = false;
+      for (const p of patients) {
+        const currentDob = p.dateOfBirth || p.date_of_birth || "";
+        const normalized = normalizeDateOfBirth(currentDob);
+        if (normalized && normalized !== currentDob) {
+          if (p.dateOfBirth) p.dateOfBirth = normalized;
+          if (p.date_of_birth) p.date_of_birth = normalized;
+          updated = true;
+        }
+      }
+      if (updated) {
+        localStorage.setItem(patientsKey, JSON.stringify(patients));
+        console.log("[Web DB] Repaired malformed dateOfBirth in patients table");
+      }
+    }
+
+    // 2. Clean sync_queue payloads
+    const queueKey = getLocalStorageKey("sync_queue");
+    const queueData = localStorage.getItem(queueKey);
+    if (queueData) {
+      const queue = JSON.parse(queueData);
+      let updated = false;
+      for (const row of queue) {
+        if (row.entity_type === "patient" || row.entityType === "patient") {
+          try {
+            const payload = typeof row.payload === "string" ? JSON.parse(row.payload) : row.payload;
+            if (payload && payload.dateOfBirth) {
+              const normalized = normalizeDateOfBirth(payload.dateOfBirth);
+              if (normalized !== payload.dateOfBirth) {
+                payload.dateOfBirth = normalized;
+                row.payload = JSON.stringify(payload);
+                updated = true;
+              }
+            }
+          } catch (e) {
+            console.error("Failed to parse/repair web sync_queue payload:", e);
+          }
+        }
+      }
+      if (updated) {
+        localStorage.setItem(queueKey, JSON.stringify(queue));
+        console.log("[Web DB] Repaired malformed dateOfBirth in sync_queue payloads");
+      }
+    }
+  } catch (err) {
+    console.error("One-time web database cleanup failed:", err);
+  }
 }
 
 export const rawDb = {
