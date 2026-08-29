@@ -175,7 +175,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // 5. Trigger remote data pull to download patients and assessments for this worker
       try {
         const { pullRemoteData } = await import("@/features/sync/syncEngine");
-        await pullRemoteData();
+        await pullRemoteData(worker.id);
       } catch (pullError) {
         console.error("Failed to pull remote data on login:", pullError);
       }

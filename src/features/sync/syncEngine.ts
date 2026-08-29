@@ -7,7 +7,6 @@
 import { db } from "@/db/client";
 import { assessments, patients, syncQueue } from "@/db/schema";
 import { useAssessmentsStore } from "@/features/assessments/store";
-import { useAuthStore } from "@/features/auth/store";
 import { usePatientsStore } from "@/features/patients/store";
 import { isConnected } from "@/lib/netinfo";
 import { supabase } from "@/lib/supabase";
@@ -343,12 +342,10 @@ function mapRow(row: any): SyncQueueItem {
  * Pull all data from Supabase remote database for the current health worker.
  * Saves/updates all patients and assessments in the local SQLite database.
  */
-export async function pullRemoteData(): Promise<{ success: boolean; error?: string }> {
+export async function pullRemoteData(workerId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    // 1. Resolve current health worker UUID
-    const workerId = useAuthStore.getState().userId;
     if (!workerId) {
-      return { success: false, error: "No authenticated health worker found." };
+      return { success: false, error: "No authenticated health worker ID provided." };
     }
 
     console.log("Starting remote data pull for health worker:", workerId);
