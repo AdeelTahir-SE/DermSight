@@ -176,17 +176,17 @@ async function uploadToSupabase(item: SyncQueueItem): Promise<string | null> {
 
   if (item.entityType === "patient") {
     const { data, error } = await supabase.rpc("upsert_patient", {
-      p_local_id: payload.id,
-      p_first_name: payload.firstName || payload.first_name,
-      p_last_name: payload.lastName || payload.last_name,
-      p_date_of_birth: payload.dateOfBirth || payload.date_of_birth,
-      p_sex: payload.sex,
+      p_local_id: payload.id ?? null,
+      p_first_name: (payload.firstName || payload.first_name) ?? null,
+      p_last_name: (payload.lastName || payload.last_name) ?? null,
+      p_date_of_birth: (payload.dateOfBirth || payload.date_of_birth) ?? null,
+      p_sex: payload.sex ?? null,
       p_phone: payload.phone ?? null,
       p_address: payload.address ?? null,
       p_notes: payload.notes ?? null,
       p_latitude: payload.latitude ?? null,
       p_longitude: payload.longitude ?? null,
-      p_captured_at: payload.capturedAt || payload.captured_at,
+      p_captured_at: (payload.capturedAt || payload.captured_at) ?? null,
     });
     if (error) throw new Error(`Patient sync failed: ${error.message}`);
     return data as string;
@@ -210,23 +210,23 @@ async function uploadToSupabase(item: SyncQueueItem): Promise<string | null> {
     }
 
     const { data, error } = await supabase.rpc("upsert_assessment", {
-      p_local_id: payload.id,
-      p_patient_local_id: payload.patientId || payload.patient_id,
-      p_image_local_uri: localUri,
-      p_image_remote_url: imageRemoteUrl || payload.imageRemoteUrl || payload.image_remote_url,
-      p_predicted_class: payload.predictedClass || payload.predicted_class,
-      p_class_probabilities: classProbs,
-      p_abcd_asymmetry: payload.abcdAsymmetry || payload.abcd_asymmetry,
-      p_abcd_border: payload.abcdBorder || payload.abcd_border,
-      p_abcd_color: payload.abcdColor || payload.abcd_color,
-      p_abcd_diameter: payload.abcdDiameter || payload.abcd_diameter,
-      p_risk_tier: payload.riskTier || payload.risk_tier,
-      p_confidence_score: payload.confidenceScore || payload.confidence_score,
-      p_model_version: payload.modelVersion || payload.model_version,
+      p_local_id: payload.id ?? null,
+      p_patient_local_id: (payload.patientId || payload.patient_id) ?? null,
+      p_image_local_uri: localUri ?? null,
+      p_image_remote_url: imageRemoteUrl || payload.imageRemoteUrl || payload.image_remote_url || null,
+      p_predicted_class: (payload.predictedClass || payload.predicted_class) ?? null,
+      p_class_probabilities: classProbs ?? null,
+      p_abcd_asymmetry: (payload.abcdAsymmetry || payload.abcd_asymmetry) ?? null,
+      p_abcd_border: (payload.abcdBorder || payload.abcd_border) ?? null,
+      p_abcd_color: (payload.abcdColor || payload.abcd_color) ?? null,
+      p_abcd_diameter: (payload.abcdDiameter || payload.abcd_diameter) ?? null,
+      p_risk_tier: (payload.riskTier || payload.risk_tier) ?? null,
+      p_confidence_score: (payload.confidenceScore || payload.confidence_score) ?? null,
+      p_model_version: (payload.modelVersion || payload.model_version) ?? null,
       p_body_location: payload.bodyLocation ?? payload.body_location ?? null,
       p_latitude: payload.latitude ?? null,
       p_longitude: payload.longitude ?? null,
-      p_captured_at: payload.capturedAt || payload.captured_at,
+      p_captured_at: (payload.capturedAt || payload.captured_at) ?? null,
     });
     if (error) throw new Error(`Assessment sync failed: ${error.message}`);
     return data as string;
