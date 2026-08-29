@@ -80,11 +80,23 @@ export async function runSync(): Promise<SyncResult> {
       // Optimization: Skip assessments whose patient has not synced yet
       if (item.entityType === "assessment") {
         const payload = JSON.parse(item.payload);
-        const patientId = payload.patientId || payload.patient_id;
+        let patientId = payload.patientId || payload.patient_id || payload.patientLocalId || payload.patient_local_id;
+        
+        if (!patientId) {
+          const localAssessment = db
+            .select()
+            .from(assessments)
+            .where(eq(assessments.id, item.entityId))
+            .get();
+          if (localAssessment) {
+            patientId = localAssessment.patientId;
+          }
+        }
+
         const patientRow = db
           .select()
           .from(patients)
-          .where(eq(patients.id, patientId))
+          .where(eq(patients.id, patientId ?? ""))
           .get();
 
         if (!patientRow || !patientRow.remoteId) {
@@ -209,9 +221,21 @@ async function uploadToSupabase(item: SyncQueueItem): Promise<string | null> {
       }
     }
 
+    let resolvedPatientId = payload.patientId || payload.patient_id || payload.patientLocalId || payload.patient_local_id;
+    if (!resolvedPatientId) {
+      const localAssessment = db
+        .select()
+        .from(assessments)
+        .where(eq(assessments.id, item.entityId))
+        .get();
+      if (localAssessment) {
+        resolvedPatientId = localAssessment.patientId;
+      }
+    }
+
     const { data, error } = await supabase.rpc("upsert_assessment", {
       p_local_id: payload.id ?? null,
-      p_patient_local_id: (payload.patientId || payload.patient_id) ?? null,
+      p_patient_local_id: resolvedPatientId ?? null,
       p_image_local_uri: localUri ?? null,
       p_image_remote_url: imageRemoteUrl || payload.imageRemoteUrl || payload.image_remote_url || null,
       p_predicted_class: (payload.predictedClass || payload.predicted_class) ?? null,
