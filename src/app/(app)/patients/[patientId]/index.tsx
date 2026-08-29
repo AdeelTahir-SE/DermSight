@@ -14,7 +14,14 @@ import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 export default function PatientDetailScreen() {
-  const { patientId } = useLocalSearchParams<{ patientId: string }>();
+  const {
+    patientId: rawPatientId,
+    patientid: fallbackPatientId,
+  } = useLocalSearchParams<{
+    patientId?: string;
+    patientid?: string;
+  }>();
+  const patientId = rawPatientId || fallbackPatientId || "";
   const router = useRouter();
   const { patients } = usePatientsStore();
   const [dbPatient, setDbPatient] = useState<Patient | null>(null);

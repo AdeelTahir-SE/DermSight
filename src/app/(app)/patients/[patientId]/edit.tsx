@@ -21,7 +21,14 @@ function formatDateForInput(isoDate: string): string {
 }
 
 export default function EditPatientScreen() {
-  const { patientId } = useLocalSearchParams<{ patientId: string }>();
+  const {
+    patientId: rawPatientId,
+    patientid: fallbackPatientId,
+  } = useLocalSearchParams<{
+    patientId?: string;
+    patientid?: string;
+  }>();
+  const patientId = rawPatientId || fallbackPatientId || "";
   const router = useRouter();
   const { updatePatientInStore } = usePatientsStore();
 

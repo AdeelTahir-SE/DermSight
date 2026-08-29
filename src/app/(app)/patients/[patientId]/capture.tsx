@@ -20,7 +20,14 @@ import {
 } from "react-native";
 
 export default function CaptureScreen() {
-  const { patientId } = useLocalSearchParams<{ patientId: string }>();
+  const {
+    patientId: rawPatientId,
+    patientid: fallbackPatientId,
+  } = useLocalSearchParams<{
+    patientId?: string;
+    patientid?: string;
+  }>();
+  const patientId = rawPatientId || fallbackPatientId || "";
   const router = useRouter();
   const cameraRef = useRef<CameraView>(null);
   const { status, requestPermission } = useCameraPermissions();

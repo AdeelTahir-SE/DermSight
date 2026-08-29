@@ -15,15 +15,19 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-nati
 export default function ResultScreen() {
   const {
     result: resultParam,
-    patientId,
+    patientId: rawPatientId,
+    patientid: fallbackPatientId,
     imageUri,
     assessmentId,
   } = useLocalSearchParams<{
     result?: string;
-    patientId: string;
+    patientId?: string;
+    patientid?: string;
     imageUri?: string;
     assessmentId?: string;
   }>();
+
+  const patientId = rawPatientId || fallbackPatientId || "";
 
   const router = useRouter();
   const { saveAssessment } = useAssessmentsStore();

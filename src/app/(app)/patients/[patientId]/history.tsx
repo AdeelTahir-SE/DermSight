@@ -12,7 +12,14 @@ import { useEffect, useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 
 export default function HistoryScreen() {
-  const { patientId } = useLocalSearchParams<{ patientId: string }>();
+  const {
+    patientId: rawPatientId,
+    patientid: fallbackPatientId,
+  } = useLocalSearchParams<{
+    patientId?: string;
+    patientid?: string;
+  }>();
+  const patientId = rawPatientId || fallbackPatientId || "";
   const router = useRouter();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
 
