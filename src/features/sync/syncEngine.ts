@@ -12,7 +12,7 @@ import { isConnected } from "@/lib/netinfo";
 import { supabase } from "@/lib/supabase";
 import type { SyncQueueItem } from "@/types";
 import { eq } from "drizzle-orm";
-import { File } from "expo-file-system";
+import * as FileSystem from "expo-file-system";
 
 const MAX_RETRIES = 5;
 const BASE_DELAY_MS = 1000;
@@ -292,9 +292,15 @@ async function uploadImage(
     const localUri = assessmentPayload.imageLocalUri || assessmentPayload.image_local_uri;
     if (!localUri) return null;
  
-    // Read the file as Uint8Array using new expo-file-system v57 API
-    const file = new File(localUri);
-    const bytes = await file.bytes();
+    // Read the file as Uint8Array using stable expo-file-system API + base64 decoding
+    const base64 = await FileSystem.readAsStringAsync(localUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < bytes.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
  
     const workerId = assessmentPayload.createdBy || assessmentPayload.created_by;
     const assessmentId = assessmentPayload.id;

@@ -1,4 +1,5 @@
-import { Directory, File, Paths } from "expo-file-system";
+import * as FileSystem from "expo-file-system";
+import { Paths } from "expo-file-system";
 import { Platform } from "react-native";
 
 const IMAGE_DIR_NAME = "dermsight_images";
@@ -10,11 +11,16 @@ export async function ensureImageDirectory(): Promise<string> {
   if (Platform.OS === "web") {
     return "";
   }
-  const dir = new Directory(Paths.document, IMAGE_DIR_NAME);
-  if (!dir.exists) {
-    dir.create({ intermediates: true });
+  const dirUri = `${Paths.document}/${IMAGE_DIR_NAME}`;
+  try {
+    const dirInfo = await FileSystem.getInfoAsync(dirUri);
+    if (!dirInfo.exists) {
+      await FileSystem.makeDirectoryAsync(dirUri, { intermediates: true });
+    }
+  } catch (e) {
+    console.error("Failed to ensure image directory:", e);
   }
-  return dir.uri;
+  return dirUri;
 }
 
 /**
@@ -27,14 +33,17 @@ export async function saveImageLocally(
   if (Platform.OS === "web") {
     return sourceUri;
   }
-  const dir = new Directory(Paths.document, IMAGE_DIR_NAME);
-  if (!dir.exists) {
-    dir.create({ intermediates: true });
+  const dirUri = `${Paths.document}/${IMAGE_DIR_NAME}`;
+  const dirInfo = await FileSystem.getInfoAsync(dirUri);
+  if (!dirInfo.exists) {
+    await FileSystem.makeDirectoryAsync(dirUri, { intermediates: true });
   }
-  const source = new File(sourceUri);
-  const dest = new File(dir, `${assessmentId}.jpg`);
-  await source.copy(dest);
-  return dest.uri;
+  const destUri = `${dirUri}/${assessmentId}.jpg`;
+  await FileSystem.copyAsync({
+    from: sourceUri,
+    to: destUri,
+  });
+  return destUri;
 }
 
 /**
@@ -44,9 +53,13 @@ export async function deleteLocalImage(imageUri: string): Promise<void> {
   if (Platform.OS === "web") {
     return;
   }
-  const file = new File(imageUri);
-  if (file.exists) {
-    file.delete();
+  try {
+    const fileInfo = await FileSystem.getInfoAsync(imageUri);
+    if (fileInfo.exists) {
+      await FileSystem.deleteAsync(imageUri);
+    }
+  } catch (e) {
+    console.warn("Failed to delete local image:", e);
   }
 }
 
@@ -57,10 +70,13 @@ export async function getFileSizeKB(uri: string): Promise<number> {
   if (Platform.OS === "web") {
     return 0;
   }
-  const file = new File(uri);
-  if (file.exists) {
-    const info = file.info();
-    return Math.round((info.size ?? 0) / 1024);
+  try {
+    const fileInfo = await FileSystem.getInfoAsync(uri);
+    if (fileInfo.exists) {
+      return Math.round((fileInfo.size ?? 0) / 1024);
+    }
+  } catch {
+    // Ignore
   }
   return 0;
 }

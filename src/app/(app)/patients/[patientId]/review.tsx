@@ -39,7 +39,6 @@ export default function ReviewScreen() {
         pathname: `/(app)/patients/${patientId}/result`,
         params: {
           result: JSON.stringify(result),
-          patientId: patientId,
           imageUri: imageUri ?? "",
         },
       } as Href);
