@@ -80,10 +80,11 @@ export async function runSync(): Promise<SyncResult> {
       // Optimization: Skip assessments whose patient has not synced yet
       if (item.entityType === "assessment") {
         const payload = JSON.parse(item.payload);
+        const patientId = payload.patientId || payload.patient_id;
         const patientRow = db
           .select()
           .from(patients)
-          .where(eq(patients.id, payload.patientId))
+          .where(eq(patients.id, patientId))
           .get();
 
         if (!patientRow || !patientRow.remoteId) {
@@ -176,46 +177,56 @@ async function uploadToSupabase(item: SyncQueueItem): Promise<string | null> {
   if (item.entityType === "patient") {
     const { data, error } = await supabase.rpc("upsert_patient", {
       p_local_id: payload.id,
-      p_first_name: payload.firstName,
-      p_last_name: payload.lastName,
-      p_date_of_birth: payload.dateOfBirth,
+      p_first_name: payload.firstName || payload.first_name,
+      p_last_name: payload.lastName || payload.last_name,
+      p_date_of_birth: payload.dateOfBirth || payload.date_of_birth,
       p_sex: payload.sex,
       p_phone: payload.phone ?? null,
       p_address: payload.address ?? null,
       p_notes: payload.notes ?? null,
       p_latitude: payload.latitude ?? null,
       p_longitude: payload.longitude ?? null,
-      p_captured_at: payload.capturedAt,
+      p_captured_at: payload.capturedAt || payload.captured_at,
     });
     if (error) throw new Error(`Patient sync failed: ${error.message}`);
     return data as string;
   }
 
   if (item.entityType === "assessment") {
+    const localUri = payload.imageLocalUri || payload.image_local_uri;
     // Upload image first if we have a local URI
     let imageRemoteUrl: string | null = null;
-    if (payload.imageLocalUri) {
+    if (localUri) {
       imageRemoteUrl = await uploadImage(payload);
+    }
+
+    let classProbs = payload.classProbabilities || payload.class_probabilities;
+    if (typeof classProbs === "string") {
+      try {
+        classProbs = JSON.parse(classProbs);
+      } catch (e) {
+        console.warn("Failed to parse class probabilities string:", e);
+      }
     }
 
     const { data, error } = await supabase.rpc("upsert_assessment", {
       p_local_id: payload.id,
-      p_patient_local_id: payload.patientId,
-      p_image_local_uri: payload.imageLocalUri,
-      p_image_remote_url: imageRemoteUrl,
-      p_predicted_class: payload.predictedClass,
-      p_class_probabilities: payload.classProbabilities,
-      p_abcd_asymmetry: payload.abcdAsymmetry,
-      p_abcd_border: payload.abcdBorder,
-      p_abcd_color: payload.abcdColor,
-      p_abcd_diameter: payload.abcdDiameter,
-      p_risk_tier: payload.riskTier,
-      p_confidence_score: payload.confidenceScore,
-      p_model_version: payload.modelVersion,
-      p_body_location: payload.bodyLocation ?? null,
+      p_patient_local_id: payload.patientId || payload.patient_id,
+      p_image_local_uri: localUri,
+      p_image_remote_url: imageRemoteUrl || payload.imageRemoteUrl || payload.image_remote_url,
+      p_predicted_class: payload.predictedClass || payload.predicted_class,
+      p_class_probabilities: classProbs,
+      p_abcd_asymmetry: payload.abcdAsymmetry || payload.abcd_asymmetry,
+      p_abcd_border: payload.abcdBorder || payload.abcd_border,
+      p_abcd_color: payload.abcdColor || payload.abcd_color,
+      p_abcd_diameter: payload.abcdDiameter || payload.abcd_diameter,
+      p_risk_tier: payload.riskTier || payload.risk_tier,
+      p_confidence_score: payload.confidenceScore || payload.confidence_score,
+      p_model_version: payload.modelVersion || payload.model_version,
+      p_body_location: payload.bodyLocation ?? payload.body_location ?? null,
       p_latitude: payload.latitude ?? null,
       p_longitude: payload.longitude ?? null,
-      p_captured_at: payload.capturedAt,
+      p_captured_at: payload.capturedAt || payload.captured_at,
     });
     if (error) throw new Error(`Assessment sync failed: ${error.message}`);
     return data as string;
@@ -232,14 +243,14 @@ async function uploadImage(
   assessmentPayload: Record<string, any>,
 ): Promise<string | null> {
   try {
-    const localUri = assessmentPayload.imageLocalUri;
+    const localUri = assessmentPayload.imageLocalUri || assessmentPayload.image_local_uri;
     if (!localUri) return null;
-
+ 
     // Read the file as Uint8Array using new expo-file-system v57 API
     const file = new File(localUri);
     const bytes = await file.bytes();
-
-    const workerId = assessmentPayload.createdBy;
+ 
+    const workerId = assessmentPayload.createdBy || assessmentPayload.created_by;
     const assessmentId = assessmentPayload.id;
     const filePath = `${workerId}/${assessmentId}.jpg`;
 
