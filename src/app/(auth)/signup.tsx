@@ -10,7 +10,7 @@ import { useConnectivity } from "@/hooks/useConnectivity";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -49,8 +49,16 @@ export default function SignupScreen() {
 
     const res = await signUp(email.trim(), password, fullName.trim(), region.trim());
     if (res.success) {
-      // Redirect to PIN Setup to configure offline credential
-      router.replace("/(auth)/pin-setup");
+      if (res.needsConfirmation) {
+        Alert.alert(
+          "Confirmation Required",
+          "Registration successful! Please check your email inbox to confirm your account before logging in.",
+          [{ text: "OK", onPress: () => router.replace("/(auth)/login") }]
+        );
+      } else {
+        // Redirect to PIN Setup to configure offline credential
+        router.replace("/(auth)/pin-setup");
+      }
     } else {
       setError(res.error || "Signup failed. Please try again.");
     }

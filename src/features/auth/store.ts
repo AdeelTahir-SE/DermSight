@@ -16,7 +16,7 @@ interface AuthState extends AuthSession {
   loginWithPin: (pin: string) => Promise<boolean>;
   loginWithEmail: (email: string, password: string) => Promise<boolean>;
   setupPin: (pin: string, workerName: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName: string, region: string) => Promise<{ success: boolean; error?: string }>;
+  signUp: (email: string, password: string, fullName: string, region: string) => Promise<{ success: boolean; needsConfirmation?: boolean; error?: string }>;
   logout: () => Promise<void>;
   reset: () => void;
 }
@@ -213,10 +213,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signUp: async (email: string, password: string, fullName: string, region: string) => {
     set({ isLoading: true });
     try {
-      // 1. Authenticate / Create user with Supabase Auth
+      // 1. Authenticate / Create user with Supabase Auth with metadata
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: fullName,
+            region: region,
+          }
+        }
       });
 
       if (error || !data.user) {
@@ -224,21 +230,40 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return { success: false, error: error?.message || "Supabase Auth signup failed" };
       }
 
-      // 2. Create the health worker profile in the remote database
-      const { data: worker, error: workerError } = await supabase
-        .from("health_workers")
-        .insert({
-          supabase_user_id: data.user.id,
-          full_name: fullName,
-          region: region,
-        })
-        .select()
-        .single();
-
-      if (workerError || !worker) {
-        console.error("Failed to create health worker profile:", workerError);
+      // If email confirmation is enabled, session will be null
+      const session = data.session;
+      if (!session) {
         set({ isLoading: false });
-        return { success: false, error: workerError?.message || "Failed to create health worker profile." };
+        return { success: true, needsConfirmation: true };
+      }
+
+      // 2. Retrieve or Create the health worker profile in the remote database
+      let worker = null;
+      const { data: existingWorker } = await supabase
+        .from("health_workers")
+        .select("*")
+        .eq("supabase_user_id", data.user.id)
+        .maybeSingle();
+
+      if (existingWorker) {
+        worker = existingWorker;
+      } else {
+        const { data: newWorker, error: workerError } = await supabase
+          .from("health_workers")
+          .insert({
+            supabase_user_id: data.user.id,
+            full_name: fullName,
+            region: region,
+          })
+          .select()
+          .single();
+
+        if (workerError || !newWorker) {
+          console.error("Failed to create health worker profile:", workerError);
+          set({ isLoading: false });
+          return { success: false, error: workerError?.message || "Failed to create health worker profile." };
+        }
+        worker = newWorker;
       }
 
       // 3. Save details to SecureStorage
@@ -267,7 +292,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
         isLoading: false,
       });
-      return { success: true };
+      return { success: true, needsConfirmation: false };
     } catch (e: any) {
       console.error("Email signup failed:", e);
       set({ isLoading: false });
