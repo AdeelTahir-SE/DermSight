@@ -117,16 +117,25 @@ export function initializeDatabase(): void {
     };
 
     // 1. Scan and update patients table
-    const patientsRows = expo.prepareSync("SELECT id, date_of_birth FROM patients").all() as any[];
+    const selectPatients = expo.prepareSync("SELECT id, date_of_birth FROM patients");
+    const patientsRows = selectPatients.executeSync().getAllSync() as any[];
+    selectPatients.finalizeSync();
+
+    const updatePatientStmt = expo.prepareSync("UPDATE patients SET date_of_birth = ? WHERE id = ?");
     for (const row of patientsRows) {
       const normalized = normalizeDateOfBirth(row.date_of_birth);
       if (normalized !== row.date_of_birth) {
-        expo.prepareSync("UPDATE patients SET date_of_birth = ? WHERE id = ?").run(normalized, row.id);
+        updatePatientStmt.executeSync([normalized, row.id]);
       }
     }
+    updatePatientStmt.finalizeSync();
 
     // 2. Scan and update sync_queue table payloads
-    const queueRows = expo.prepareSync("SELECT id, payload FROM sync_queue WHERE entity_type = 'patient'").all() as any[];
+    const selectQueue = expo.prepareSync("SELECT id, payload FROM sync_queue WHERE entity_type = 'patient'");
+    const queueRows = selectQueue.executeSync().getAllSync() as any[];
+    selectQueue.finalizeSync();
+
+    const updateQueueStmt = expo.prepareSync("UPDATE sync_queue SET payload = ? WHERE id = ?");
     for (const row of queueRows) {
       try {
         const payload = JSON.parse(row.payload);
@@ -134,13 +143,14 @@ export function initializeDatabase(): void {
           const normalized = normalizeDateOfBirth(payload.dateOfBirth);
           if (normalized !== payload.dateOfBirth) {
             payload.dateOfBirth = normalized;
-            expo.prepareSync("UPDATE sync_queue SET payload = ? WHERE id = ?").run(JSON.stringify(payload), row.id);
+            updateQueueStmt.executeSync([JSON.stringify(payload), row.id]);
           }
         }
       } catch (e) {
         console.error("Failed to parse/update sync_queue payload:", e);
       }
     }
+    updateQueueStmt.finalizeSync();
   } catch (err) {
     console.error("One-time database cleanup failed:", err);
   }

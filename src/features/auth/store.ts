@@ -10,12 +10,13 @@ import type { AuthSession } from "./types";
 interface AuthState extends AuthSession {
   isLoading: boolean;
   isInitialized: boolean;
-
+ 
   // Actions
   initialize: () => Promise<void>;
   loginWithPin: (pin: string) => Promise<boolean>;
   loginWithEmail: (email: string, password: string) => Promise<boolean>;
   setupPin: (pin: string, workerName: string) => Promise<void>;
+  signUp: (email: string, password: string, fullName: string, region: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   reset: () => void;
 }
@@ -23,6 +24,7 @@ interface AuthState extends AuthSession {
 export const useAuthStore = create<AuthState>((set, get) => ({
   userId: "",
   workerName: "",
+  email: "",
   isAuthenticated: false,
   pinSet: false,
   isLoading: false,
@@ -33,11 +35,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const userId = await SecureStorage.getUserId();
       const workerName = await SecureStorage.getWorkerName();
+      const email = await SecureStorage.getUserEmail();
       const pinSet = await isPinSet();
 
       set({
         userId: userId || "",
         workerName: workerName || "",
+        email: email || "",
         pinSet,
         isAuthenticated: false,
         isInitialized: true,
@@ -62,10 +66,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const workerName =
           (await SecureStorage.getWorkerName()) || "Health Worker";
         const userId = (await SecureStorage.getUserId()) || "local-user";
+        const email = (await SecureStorage.getUserEmail()) || "";
         set({
           isAuthenticated: true,
           workerName,
           userId,
+          email,
           isLoading: false,
         });
         return true;
@@ -108,6 +114,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // 3. Save details to SecureStorage
       await SecureStorage.saveUserId(worker.id);
       await SecureStorage.saveWorkerName(worker.full_name);
+      await SecureStorage.saveUserEmail(email);
       const pinSet = await isPinSet();
 
       // 4. Save to local SQLite users table to satisfy foreign key relationships
@@ -137,6 +144,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({
         userId: worker.id,
         workerName: worker.full_name,
+        email,
         pinSet,
         isAuthenticated: true,
         isLoading: false,
@@ -162,6 +170,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (!existingUserId) {
         await SecureStorage.saveUserId(userId);
       }
+
+      const email = get().email || (await SecureStorage.getUserEmail()) || "";
 
       // Update or Insert in local SQLite database
       const existingUser = db.select().from(users).where(eq(users.id, userId)).get();
@@ -189,6 +199,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({
         userId,
         workerName,
+        email,
         pinSet: true,
         isAuthenticated: true,
         isLoading: false,
@@ -196,6 +207,71 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (e) {
       console.error("Setup PIN failed:", e);
       set({ isLoading: false });
+    }
+  },
+
+  signUp: async (email: string, password: string, fullName: string, region: string) => {
+    set({ isLoading: true });
+    try {
+      // 1. Authenticate / Create user with Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error || !data.user) {
+        set({ isLoading: false });
+        return { success: false, error: error?.message || "Supabase Auth signup failed" };
+      }
+
+      // 2. Create the health worker profile in the remote database
+      const { data: worker, error: workerError } = await supabase
+        .from("health_workers")
+        .insert({
+          supabase_user_id: data.user.id,
+          full_name: fullName,
+          region: region,
+        })
+        .select()
+        .single();
+
+      if (workerError || !worker) {
+        console.error("Failed to create health worker profile:", workerError);
+        set({ isLoading: false });
+        return { success: false, error: workerError?.message || "Failed to create health worker profile." };
+      }
+
+      // 3. Save details to SecureStorage
+      await SecureStorage.saveUserId(worker.id);
+      await SecureStorage.saveWorkerName(worker.full_name);
+      await SecureStorage.saveUserEmail(email);
+      const pinSet = false;
+
+      // 4. Save to local SQLite users table to satisfy foreign key relationships
+      db.insert(users)
+        .values({
+          id: worker.id,
+          fullName: worker.full_name,
+          region: worker.region,
+          pinHash: "", // Not set yet, will be populated on PIN setup
+          supabaseUserId: data.user.id,
+          createdAt: worker.created_at || new Date().toISOString(),
+        })
+        .run();
+
+      set({
+        userId: worker.id,
+        workerName: worker.full_name,
+        email,
+        pinSet,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+      return { success: true };
+    } catch (e: any) {
+      console.error("Email signup failed:", e);
+      set({ isLoading: false });
+      return { success: false, error: e?.message || "Email signup failed" };
     }
   },
 
@@ -209,6 +285,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({
       userId: "",
       workerName: "",
+      email: "",
       isAuthenticated: false,
       pinSet: false,
     });
@@ -218,6 +295,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({
       userId: "",
       workerName: "",
+      email: "",
       isAuthenticated: false,
       pinSet: false,
       isLoading: false,

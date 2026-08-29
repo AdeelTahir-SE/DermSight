@@ -12,6 +12,7 @@ const KEYS = {
   PIN_HASH: "dermsight_pin_hash",
   USER_ID: "dermsight_user_id",
   WORKER_NAME: "dermsight_worker_name",
+  USER_EMAIL: "dermsight_user_email",
 } as const;
 
 const isWeb = Platform.OS === "web";
@@ -116,6 +117,22 @@ export async function getWorkerName(): Promise<string | null> {
   }
 }
 
+export async function saveUserEmail(email: string): Promise<void> {
+  if (isWeb) {
+    localStorage.setItem(KEYS.USER_EMAIL, email);
+  } else {
+    await SecureStore.setItemAsync(KEYS.USER_EMAIL, email);
+  }
+}
+
+export async function getUserEmail(): Promise<string | null> {
+  if (isWeb) {
+    return localStorage.getItem(KEYS.USER_EMAIL);
+  } else {
+    return SecureStore.getItemAsync(KEYS.USER_EMAIL);
+  }
+}
+
 // ── Clear All ───────────────────────────────────────────────────────────
 export async function clearAllSecureData(): Promise<void> {
   if (isWeb) {
@@ -124,6 +141,7 @@ export async function clearAllSecureData(): Promise<void> {
     localStorage.removeItem(KEYS.PIN_HASH);
     localStorage.removeItem(KEYS.USER_ID);
     localStorage.removeItem(KEYS.WORKER_NAME);
+    localStorage.removeItem(KEYS.USER_EMAIL);
   } else {
     await Promise.all([
       deleteAuthToken(),
@@ -131,6 +149,7 @@ export async function clearAllSecureData(): Promise<void> {
       SecureStore.deleteItemAsync(KEYS.PIN_HASH),
       SecureStore.deleteItemAsync(KEYS.USER_ID),
       SecureStore.deleteItemAsync(KEYS.WORKER_NAME),
+      SecureStore.deleteItemAsync(KEYS.USER_EMAIL),
     ]);
   }
 }

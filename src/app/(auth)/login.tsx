@@ -178,6 +178,14 @@ export default function LoginScreen() {
           />
         ) : null}
 
+        {/* Link to signup */}
+        <View className="flex-row items-center justify-center mt-6">
+          <Text className="text-sm text-gray-500">{"Don't have an account? "}</Text>
+          <Pressable onPress={() => router.replace("/(auth)/signup")}>
+            <Text className="text-sm font-bold text-primary">Sign Up</Text>
+          </Pressable>
+        </View>
+
         {/* Offline notice */}
         {isOffline && (
           <View className="flex-row items-center bg-gray-50 rounded-xl p-4 mt-6">

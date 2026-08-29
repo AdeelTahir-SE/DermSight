@@ -5,6 +5,7 @@
 export interface AuthSession {
   userId: string;
   workerName: string;
+  email: string;
   isAuthenticated: boolean;
   pinSet: boolean;
 }
