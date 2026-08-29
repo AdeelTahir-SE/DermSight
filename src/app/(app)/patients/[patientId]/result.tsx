@@ -9,8 +9,9 @@ import { useAssessmentsStore } from "@/features/assessments/store";
 import { useAuthStore } from "@/features/auth/store";
 import type { InferenceResult } from "@/types";
 import { Image } from "expo-image";
+import * as FileSystem from "expo-file-system";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, ScrollView, Text, View } from "react-native";
 
 export default function ResultScreen() {
   const {
@@ -58,7 +59,22 @@ export default function ResultScreen() {
               },
               riskTier: assessment.riskTier,
             });
-            setDisplayImage(assessment.imageLocalUri);
+            let imgUri = assessment.imageLocalUri;
+            if (imgUri && Platform.OS !== "web") {
+              try {
+                const info = await FileSystem.getInfoAsync(imgUri);
+                if (!info.exists && assessment.imageRemoteUrl) {
+                  imgUri = assessment.imageRemoteUrl;
+                }
+              } catch {
+                if (assessment.imageRemoteUrl) {
+                  imgUri = assessment.imageRemoteUrl;
+                }
+              }
+            } else if (!imgUri && assessment.imageRemoteUrl) {
+              imgUri = assessment.imageRemoteUrl;
+            }
+            setDisplayImage(imgUri);
           }
         } catch (e) {
           console.error("Failed to load historical assessment:", e);
