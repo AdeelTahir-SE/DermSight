@@ -10,7 +10,7 @@ import { Pressable, Text, View } from "react-native";
 
 export default function PinSetupScreen() {
   const router = useRouter();
-  const { setupPin, isLoading } = useAuthStore();
+  const { setupPin, isLoading, workerName: authWorkerName } = useAuthStore();
   const [step, setStep] = useState<"enter" | "confirm">("enter");
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
@@ -38,7 +38,7 @@ export default function PinSetupScreen() {
       return;
     }
 
-    await setupPin(pin, workerName);
+    await setupPin(pin, authWorkerName || workerName);
     router.replace("/(app)/home");
   };
 
@@ -111,8 +111,7 @@ export default function PinSetupScreen() {
       <View className="bg-primary-50 rounded-xl p-4 mb-6 flex-row items-center">
         <Text className="text-lg mr-3">ℹ️</Text>
         <Text className="text-xs text-primary-700 flex-1">
-          Your PIN keeps your data private. You'll use this PIN to unlock the
-          app.
+          {"Your PIN keeps your data private. You'll use this PIN to unlock the app."}
         </Text>
       </View>
 

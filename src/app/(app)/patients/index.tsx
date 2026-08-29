@@ -22,11 +22,11 @@ export default function PatientListScreen() {
 
   useEffect(() => {
     loadPatients();
-  }, []);
+  }, [loadPatients]);
 
   useEffect(() => {
     searchPatients(debouncedQuery);
-  }, [debouncedQuery]);
+  }, [debouncedQuery, searchPatients]);
 
   // Apply filter
   const filteredPatients = patients.filter((p) => {

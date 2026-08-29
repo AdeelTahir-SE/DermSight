@@ -5,6 +5,7 @@
 import { db } from "@/db/client";
 import { assessments, syncQueue } from "@/db/schema";
 import type { Assessment, DiagnosisClass, InferenceResult } from "@/types";
+import { saveImageLocally } from "@/utils/image";
 import { generateUUID } from "@/utils/uuid";
 import { desc, eq } from "drizzle-orm";
 
@@ -60,10 +61,20 @@ export async function createAssessment(
   const now = new Date().toISOString();
   const id = generateUUID();
 
+  // Save image locally to persistent storage
+  let finalImageUri = imageUri;
+  try {
+    if (imageUri) {
+      finalImageUri = await saveImageLocally(imageUri, id);
+    }
+  } catch (e) {
+    console.error("Failed to copy image to persistent storage, using original:", e);
+  }
+
   const assessment: Assessment = {
     id,
     patientId,
-    imageLocalUri: imageUri,
+    imageLocalUri: finalImageUri,
     imageRemoteUrl: null,
     predictedClass: result.predictedClass,
     classProbabilities: result.classProbabilities,

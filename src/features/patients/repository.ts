@@ -7,7 +7,7 @@ import { db } from "@/db/client";
 import { patients, syncQueue } from "@/db/schema";
 import type { Patient } from "@/types";
 import { generateUUID } from "@/utils/uuid";
-import { desc, eq, like, or } from "drizzle-orm";
+import { desc, eq, like, or, and } from "drizzle-orm";
 import type { PatientFormData } from "./types";
 
 export async function getAllPatients(): Promise<Patient[]> {
@@ -41,18 +41,34 @@ export async function getPatientById(id: string): Promise<Patient | null> {
   return row ? mapRowToPatient(row) : null;
 }
 
+function normalizeDateOfBirth(dob: string): string {
+  const parts = dob.replace(/\s+/g, "").split(/[-/]/);
+  if (parts.length === 3) {
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const year = parseInt(parts[2], 10);
+    if (year > 1000 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      const monthStr = month.toString().padStart(2, "0");
+      const dayStr = day.toString().padStart(2, "0");
+      return `${year}-${monthStr}-${dayStr}`;
+    }
+  }
+  return dob;
+}
+
 export async function createPatient(
   data: PatientFormData,
   userId: string,
 ): Promise<Patient> {
   const now = new Date().toISOString();
   const id = generateUUID();
+  const normalizedDob = normalizeDateOfBirth(data.dateOfBirth);
 
   const patient: Patient = {
     id,
     firstName: data.firstName,
     lastName: data.lastName,
-    dateOfBirth: data.dateOfBirth,
+    dateOfBirth: normalizedDob,
     sex: data.sex,
     phone: data.phone || null,
     address: data.address || null,
@@ -99,6 +115,84 @@ export async function createPatient(
     .run();
 
   return patient;
+}
+
+export async function updatePatient(
+  id: string,
+  data: PatientFormData,
+): Promise<Patient> {
+  const now = new Date().toISOString();
+  const normalizedDob = normalizeDateOfBirth(data.dateOfBirth);
+
+  const existing = await getPatientById(id);
+  if (!existing) {
+    throw new Error(`Patient not found: ${id}`);
+  }
+
+  const updatedPatient: Patient = {
+    ...existing,
+    firstName: data.firstName,
+    lastName: data.lastName,
+    dateOfBirth: normalizedDob,
+    sex: data.sex,
+    phone: data.phone || null,
+    address: data.address || null,
+    notes: data.notes || null,
+    updatedAt: now,
+    syncStatus: "pending",
+  };
+
+  db.update(patients)
+    .set({
+      firstName: updatedPatient.firstName,
+      lastName: updatedPatient.lastName,
+      dateOfBirth: updatedPatient.dateOfBirth,
+      sex: updatedPatient.sex,
+      phone: updatedPatient.phone,
+      address: updatedPatient.address,
+      notes: updatedPatient.notes,
+      updatedAt: now,
+      syncStatus: "pending",
+    })
+    .where(eq(patients.id, id))
+    .run();
+
+  // Check if there is already a pending sync for this patient
+  const pendingSync = db
+    .select()
+    .from(syncQueue)
+    .where(
+      and(
+        eq(syncQueue.entityId, id),
+        eq(syncQueue.entityType, "patient"),
+        eq(syncQueue.status, "pending"),
+      ),
+    )
+    .get();
+
+  if (pendingSync) {
+    db.update(syncQueue)
+      .set({
+        payload: JSON.stringify(updatedPatient),
+        createdAt: now,
+      })
+      .where(eq(syncQueue.id, pendingSync.id))
+      .run();
+  } else {
+    db.insert(syncQueue)
+      .values({
+        entityType: "patient",
+        entityId: id,
+        operation: "create",
+        payload: JSON.stringify(updatedPatient),
+        attemptCount: 0,
+        status: "pending",
+        createdAt: now,
+      })
+      .run();
+  }
+
+  return updatedPatient;
 }
 
 export async function deletePatient(id: string): Promise<void> {

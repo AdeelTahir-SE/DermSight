@@ -17,10 +17,16 @@ import {
 } from "react-native";
 
 export default function ReviewScreen() {
-  const { patientId, imageUri } = useLocalSearchParams<{
-    patientId: string;
+  const {
+    patientId: rawPatientId,
+    patientid: fallbackPatientId,
+    imageUri,
+  } = useLocalSearchParams<{
+    patientId?: string;
+    patientid?: string;
     imageUri?: string;
   }>();
+  const patientId = rawPatientId || fallbackPatientId || "";
   const router = useRouter();
   const [analyzing, setAnalyzing] = useState(false);
 

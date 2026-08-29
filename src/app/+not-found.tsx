@@ -13,7 +13,7 @@ export default function NotFoundScreen() {
       <Text className="text-6xl mb-4">🔍</Text>
       <Text className="text-xl font-bold text-navy mb-2">Page Not Found</Text>
       <Text className="text-sm text-gray-500 text-center mb-6">
-        The page you're looking for doesn't exist.
+        {"The page you're looking for doesn't exist."}
       </Text>
       <Pressable
         onPress={() => router.replace("/(app)/home")}

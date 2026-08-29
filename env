@@ -1,0 +1,4 @@
+# Supabase Configuration
+# Get these from your Supabase project dashboard: https://supabase.com/dashboard
+EXPO_PUBLIC_SUPABASE_URL=https://cxiiatotlreehpowrmoy.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_HzOCIYKhpvLCM_tRxWxKeQ_6LgXOZih

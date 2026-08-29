@@ -18,7 +18,7 @@ export function useSyncStatus() {
   }, []);
 
   const triggerSync = useCallback(async () => {
-    if (isSyncing || !isConnected) return;
+    if (isSyncing || isConnected === false) return;
     setIsSyncing(true);
     try {
       await runSync();
@@ -30,9 +30,14 @@ export function useSyncStatus() {
   }, [isSyncing, isConnected, refreshCount]);
 
   useEffect(() => {
-    refreshCount();
+    const timer = setTimeout(() => {
+      refreshCount();
+    }, 0);
     const interval = setInterval(refreshCount, 5000);
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
   }, [refreshCount]);
 
   return {

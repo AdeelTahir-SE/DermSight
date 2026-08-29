@@ -4,6 +4,9 @@
  */
 
 import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
+
+const isWeb = Platform.OS === "web";
 
 const PIN_SALT_KEY = "dermsight_pin_salt";
 
@@ -18,10 +21,16 @@ function generateSalt(): string {
 }
 
 async function getOrCreateSalt(): Promise<string> {
-  let salt = await SecureStore.getItemAsync(PIN_SALT_KEY);
+  let salt = isWeb
+    ? localStorage.getItem(PIN_SALT_KEY)
+    : await SecureStore.getItemAsync(PIN_SALT_KEY);
   if (!salt) {
     salt = generateSalt();
-    await SecureStore.setItemAsync(PIN_SALT_KEY, salt);
+    if (isWeb) {
+      localStorage.setItem(PIN_SALT_KEY, salt);
+    } else {
+      await SecureStore.setItemAsync(PIN_SALT_KEY, salt);
+    }
   }
   return salt;
 }
@@ -67,6 +76,8 @@ export async function verifyPin(
  * Check if a PIN has been set up.
  */
 export async function isPinSet(): Promise<boolean> {
-  const hash = await SecureStore.getItemAsync("dermsight_pin_hash");
+  const hash = isWeb
+    ? localStorage.getItem("dermsight_pin_hash")
+    : await SecureStore.getItemAsync("dermsight_pin_hash");
   return hash !== null;
 }

@@ -98,6 +98,62 @@ export function initializeDatabase(): void {
       is_active INTEGER NOT NULL DEFAULT 0
     );
   `);
+
+  // One-time data cleanup: repair any malformed date_of_birth records
+  try {
+    const normalizeDateOfBirth = (dob: string): string => {
+      const parts = dob.replace(/\s+/g, "").split(/[-/]/);
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        const year = parseInt(parts[2], 10);
+        if (year > 1000 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+          const monthStr = month.toString().padStart(2, "0");
+          const dayStr = day.toString().padStart(2, "0");
+          return `${year}-${monthStr}-${dayStr}`;
+        }
+      }
+      return dob;
+    };
+
+    // 1. Scan and update patients table
+    const selectPatients = expo.prepareSync("SELECT id, date_of_birth FROM patients");
+    const patientsRows = selectPatients.executeSync().getAllSync() as any[];
+    selectPatients.finalizeSync();
+
+    const updatePatientStmt = expo.prepareSync("UPDATE patients SET date_of_birth = ? WHERE id = ?");
+    for (const row of patientsRows) {
+      const normalized = normalizeDateOfBirth(row.date_of_birth);
+      if (normalized !== row.date_of_birth) {
+        updatePatientStmt.executeSync([normalized, row.id]);
+      }
+    }
+    updatePatientStmt.finalizeSync();
+
+    // 2. Scan and update sync_queue table payloads
+    const selectQueue = expo.prepareSync("SELECT id, payload FROM sync_queue WHERE entity_type = 'patient'");
+    const queueRows = selectQueue.executeSync().getAllSync() as any[];
+    selectQueue.finalizeSync();
+
+    const updateQueueStmt = expo.prepareSync("UPDATE sync_queue SET payload = ? WHERE id = ?");
+    for (const row of queueRows) {
+      try {
+        const payload = JSON.parse(row.payload);
+        if (payload && payload.dateOfBirth) {
+          const normalized = normalizeDateOfBirth(payload.dateOfBirth);
+          if (normalized !== payload.dateOfBirth) {
+            payload.dateOfBirth = normalized;
+            updateQueueStmt.executeSync([JSON.stringify(payload), row.id]);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse/update sync_queue payload:", e);
+      }
+    }
+    updateQueueStmt.finalizeSync();
+  } catch (err) {
+    console.error("One-time database cleanup failed:", err);
+  }
 }
 
 export { expo as rawDb };

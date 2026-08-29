@@ -1,21 +1,38 @@
 /**
- * New Patient Registration screen — intake form + geo-tag.
+ * Edit Patient Information screen — modify patient demographics.
  */
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { useAuthStore } from "@/features/auth/store";
-import { createPatient } from "@/features/patients/repository";
+import { getPatientById, updatePatient } from "@/features/patients/repository";
 import { usePatientsStore } from "@/features/patients/store";
 import { Image } from "expo-image";
-import { useRouter } from "expo-router";
-import { useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { Alert, Platform, Pressable, ScrollView, Text, View } from "react-native";
 
-export default function NewPatientScreen() {
+function formatDateForInput(isoDate: string): string {
+  if (!isoDate) return "";
+  const parts = isoDate.split("-");
+  if (parts.length === 3) {
+    return `${parts[2]} / ${parts[1]} / ${parts[0]}`;
+  }
+  return isoDate;
+}
+
+export default function EditPatientScreen() {
+  const {
+    patientId: rawPatientId,
+    patientid: fallbackPatientId,
+  } = useLocalSearchParams<{
+    patientId?: string;
+    patientid?: string;
+  }>();
+  const patientId = rawPatientId || fallbackPatientId || "";
   const router = useRouter();
-  const { userId } = useAuthStore();
-  const { addPatient } = usePatientsStore();
+  const { updatePatientInStore } = usePatientsStore();
+
+  const [loading, setLoading] = useState(true);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [dob, setDob] = useState("");
@@ -26,15 +43,31 @@ export default function NewPatientScreen() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
-  const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
-    if (!firstName.trim()) newErrors.firstName = "First name is required";
-    if (!lastName.trim()) newErrors.lastName = "Last name is required";
-    if (!dob.trim()) newErrors.dob = "Date of birth is required";
-    if (!sex) newErrors.sex = "Please select a gender";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  useEffect(() => {
+    if (patientId) {
+      getPatientById(patientId)
+        .then((patient) => {
+          if (patient) {
+            setFirstName(patient.firstName);
+            setLastName(patient.lastName);
+            setDob(formatDateForInput(patient.dateOfBirth));
+            setSex(patient.sex);
+            setPhone(patient.phone || "");
+            setAddress(patient.address || "");
+            setNotes(patient.notes || "");
+          }
+          setLoading(false);
+        })
+        .catch(() => {
+          if (Platform.OS === "web") {
+            window.alert("Failed to load patient details.");
+          } else {
+            Alert.alert("Error", "Failed to load patient details.");
+          }
+          setLoading(false);
+        });
+    }
+  }, [patientId]);
 
   const handleDobChange = (text: string) => {
     // Remove non-digits
@@ -49,36 +82,59 @@ export default function NewPatientScreen() {
     setDob(formatted);
   };
 
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    if (!firstName.trim()) newErrors.firstName = "First name is required";
+    if (!lastName.trim()) newErrors.lastName = "Last name is required";
+    if (!dob.trim()) newErrors.dob = "Date of birth is required";
+    if (!sex) newErrors.sex = "Please select a gender";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSave = async () => {
     if (!validate()) return;
     setSaving(true);
     try {
-      const patient = await createPatient(
-        {
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          dateOfBirth: dob,
-          sex: sex as "male" | "female" | "other",
-          phone: phone || undefined,
-          address: address || undefined,
-          notes: notes || undefined,
-        },
-        userId,
-      );
-      addPatient(patient);
-      router.back();
+      const updated = await updatePatient(patientId, {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        dateOfBirth: dob,
+        sex: sex as "male" | "female" | "other",
+        phone: phone || undefined,
+        address: address || undefined,
+        notes: notes || undefined,
+      });
+      updatePatientInStore(updated);
+      if (Platform.OS === "web") {
+        window.alert("Patient details updated successfully.");
+        router.back();
+      } else {
+        Alert.alert("Success", "Patient details updated successfully.", [
+          { text: "OK", onPress: () => router.back() }
+        ]);
+      }
     } catch {
-      Alert.alert("Error", "Failed to save patient. Please try again.");
+      if (Platform.OS === "web") {
+        window.alert("Failed to update patient. Please try again.");
+      } else {
+        Alert.alert("Error", "Failed to update patient. Please try again.");
+      }
     } finally {
       setSaving(false);
     }
   };
 
+  if (loading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white">
+        <Text className="text-gray-500">Loading patient details...</Text>
+      </View>
+    );
+  }
+
   return (
-    <ScrollView
-      className="flex-1 bg-gray-50"
-      showsVerticalScrollIndicator={false}
-    >
+    <ScrollView className="flex-1 bg-gray-50" showsVerticalScrollIndicator={false}>
       {/* Header */}
       <View className="bg-navy px-5 pt-12 pb-6 rounded-b-[28px] shadow-sm">
         <View className="flex-row items-center">
@@ -89,12 +145,8 @@ export default function NewPatientScreen() {
             <Text className="text-white text-xl">←</Text>
           </Pressable>
           <View>
-            <Text className="text-xl font-bold text-white">
-              New Patient Registration
-            </Text>
-            <Text className="text-xs text-white/70 mt-0.5">
-              Enter patient details to begin screening
-            </Text>
+            <Text className="text-xl font-bold text-white">Edit Patient Details</Text>
+            <Text className="text-xs text-white/70 mt-0.5">Modify patient demographics and notes</Text>
           </View>
         </View>
       </View>
@@ -113,7 +165,7 @@ export default function NewPatientScreen() {
             onChangeText={setFirstName}
             icon={
               <Image
-                source={require("../../../../assets/icons/np-person.png")}
+                source={require("../../../../../assets/icons/np-person.png")}
                 style={{ width: 20, height: 20 }}
                 contentFit="contain"
                 tintColor="#0D9E94"
@@ -128,7 +180,7 @@ export default function NewPatientScreen() {
             onChangeText={setLastName}
             icon={
               <Image
-                source={require("../../../../assets/icons/np-person.png")}
+                source={require("../../../../../assets/icons/np-person.png")}
                 style={{ width: 20, height: 20 }}
                 contentFit="contain"
                 tintColor="#0D9E94"
@@ -143,7 +195,7 @@ export default function NewPatientScreen() {
             onChangeText={handleDobChange}
             icon={
               <Image
-                source={require("../../../../assets/icons/np-calendar.png")}
+                source={require("../../../../../assets/icons/np-calendar.png")}
                 style={{ width: 20, height: 20 }}
                 contentFit="contain"
                 tintColor="#0D9E94"
@@ -205,7 +257,7 @@ export default function NewPatientScreen() {
             onChangeText={setPhone}
             icon={
               <Image
-                source={require("../../../../assets/icons/np-phone.png")}
+                source={require("../../../../../assets/icons/np-phone.png")}
                 style={{ width: 20, height: 20 }}
                 contentFit="contain"
                 tintColor="#0D9E94"
@@ -220,7 +272,7 @@ export default function NewPatientScreen() {
             onChangeText={setAddress}
             icon={
               <Image
-                source={require("../../../../assets/icons/np-location.png")}
+                source={require("../../../../../assets/icons/np-location.png")}
                 style={{ width: 20, height: 20 }}
                 contentFit="contain"
                 tintColor="#0D9E94"
@@ -241,7 +293,7 @@ export default function NewPatientScreen() {
             onChangeText={setNotes}
             icon={
               <Image
-                source={require("../../../../assets/icons/np-notes.png")}
+                source={require("../../../../../assets/icons/np-notes.png")}
                 style={{ width: 20, height: 20 }}
                 contentFit="contain"
                 tintColor="#0D9E94"
@@ -252,7 +304,7 @@ export default function NewPatientScreen() {
         </View>
 
         <View className="mt-4 mb-8">
-          <Button title="Save Patient" onPress={handleSave} loading={saving} />
+          <Button title="Save Changes" onPress={handleSave} loading={saving} />
         </View>
       </View>
     </ScrollView>

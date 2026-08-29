@@ -24,8 +24,11 @@ export default function SyncScreen() {
   }, []);
 
   React.useEffect(() => {
-    loadItems();
-  }, [pendingCount]);
+    const timer = setTimeout(() => {
+      loadItems();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [pendingCount, loadItems]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
