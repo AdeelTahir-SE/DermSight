@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { getAssessmentsByPatient } from "@/features/assessments/repository";
 import { getPatientById } from "@/features/patients/repository";
 import type { Assessment, Patient } from "@/types";
+import { usePatientsStore } from "@/features/patients/store";
 import { formatDate, formatDateTime } from "@/utils/date";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useEffect, useState } from "react";
@@ -15,15 +16,18 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 export default function PatientDetailScreen() {
   const { patientId } = useLocalSearchParams<{ patientId: string }>();
   const router = useRouter();
-  const [patient, setPatient] = useState<Patient | null>(null);
+  const { patients } = usePatientsStore();
+  const [dbPatient, setDbPatient] = useState<Patient | null>(null);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
 
   useEffect(() => {
     if (patientId) {
-      getPatientById(patientId).then(setPatient);
+      getPatientById(patientId).then(setDbPatient);
       getAssessmentsByPatient(patientId).then(setAssessments);
     }
   }, [patientId]);
+
+  const patient = patients.find((p) => p.id === patientId) || dbPatient;
 
   if (!patient) {
     return (
@@ -56,9 +60,19 @@ export default function PatientDetailScreen() {
 
       {/* Patient Information */}
       <View className="bg-white mt-3 p-5">
-        <Text className="text-base font-semibold text-navy mb-3">
-          Patient Information
-        </Text>
+        <View className="flex-row justify-between items-center mb-3">
+          <Text className="text-base font-semibold text-navy">
+            Patient Information
+          </Text>
+          <Pressable
+            onPress={() =>
+              router.push(`/(app)/patients/${patientId}/edit` as Href)
+            }
+            className="p-1"
+          >
+            <Text className="text-sm font-semibold text-primary">✏️ Edit</Text>
+          </Pressable>
+        </View>
         <InfoRow
           label="Date of Birth"
           value={formatDate(patient.dateOfBirth)}

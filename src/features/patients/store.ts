@@ -21,6 +21,7 @@ interface PatientsState {
   setFilter: (filter: PatientListFilter) => void;
   setSearchQuery: (query: string) => void;
   addPatient: (patient: Patient) => void;
+  updatePatientInStore: (patient: Patient) => void;
 }
 
 export const usePatientsStore = create<PatientsState>((set, get) => ({
@@ -63,5 +64,12 @@ export const usePatientsStore = create<PatientsState>((set, get) => ({
 
   addPatient: (patient) => {
     set((state) => ({ patients: [patient, ...state.patients] }));
+  },
+
+  updatePatientInStore: (patient) => {
+    set((state) => ({
+      patients: state.patients.map((p) => (p.id === patient.id ? patient : p)),
+      activePatient: state.activePatient?.id === patient.id ? patient : state.activePatient,
+    }));
   },
 }));
