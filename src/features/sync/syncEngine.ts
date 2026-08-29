@@ -7,6 +7,7 @@
 import { db } from "@/db/client";
 import { assessments, patients, syncQueue } from "@/db/schema";
 import { useAssessmentsStore } from "@/features/assessments/store";
+import { useAuthStore } from "@/features/auth/store";
 import { usePatientsStore } from "@/features/patients/store";
 import { isConnected } from "@/lib/netinfo";
 import { supabase } from "@/lib/supabase";
@@ -336,4 +337,163 @@ function mapRow(row: any): SyncQueueItem {
     status: row.status,
     createdAt: row.createdAt,
   };
+}
+
+/**
+ * Pull all data from Supabase remote database for the current health worker.
+ * Saves/updates all patients and assessments in the local SQLite database.
+ */
+export async function pullRemoteData(): Promise<{ success: boolean; error?: string }> {
+  try {
+    // 1. Resolve current health worker UUID
+    const workerId = useAuthStore.getState().userId;
+    if (!workerId) {
+      return { success: false, error: "No authenticated health worker found." };
+    }
+
+    console.log("Starting remote data pull for health worker:", workerId);
+
+    // 2. Fetch remote patients created by this health worker
+    const { data: remotePatients, error: patientError } = await supabase
+      .from("patients")
+      .select("*")
+      .eq("created_by", workerId);
+
+    if (patientError) {
+      console.error("Failed to pull remote patients:", patientError.message);
+      return { success: false, error: `Pull patients failed: ${patientError.message}` };
+    }
+
+    // 3. Upsert remote patients into local SQLite database
+    if (remotePatients && remotePatients.length > 0) {
+      for (const p of remotePatients) {
+        db.insert(patients)
+          .values({
+            id: p.local_id, // Match local ID
+            firstName: p.first_name,
+            lastName: p.last_name,
+            dateOfBirth: p.date_of_birth,
+            sex: p.sex,
+            phone: p.phone || null,
+            address: p.address || null,
+            notes: p.notes || null,
+            latitude: p.latitude || null,
+            longitude: p.longitude || null,
+            capturedAt: p.captured_at,
+            createdBy: p.created_by,
+            createdAt: p.created_at,
+            updatedAt: p.updated_at,
+            syncStatus: "synced", // Since it came from remote, it is already synced!
+            remoteId: p.id, // Set the remote UUID
+          })
+          .onConflictDoUpdate({
+            target: patients.id,
+            set: {
+              firstName: p.first_name,
+              lastName: p.last_name,
+              dateOfBirth: p.date_of_birth,
+              sex: p.sex,
+              phone: p.phone || null,
+              address: p.address || null,
+              notes: p.notes || null,
+              latitude: p.latitude || null,
+              longitude: p.longitude || null,
+              updatedAt: p.updated_at,
+              syncStatus: "synced",
+              remoteId: p.id,
+            }
+          })
+          .run();
+      }
+    }
+
+    // 4. Fetch remote assessments created by this health worker
+    const { data: remoteAssessments, error: assessmentError } = await supabase
+      .from("assessments")
+      .select(`
+        *,
+        patients!inner(local_id)
+      `)
+      .eq("created_by", workerId);
+
+    if (assessmentError) {
+      console.error("Failed to pull remote assessments:", assessmentError.message);
+      return { success: false, error: `Pull assessments failed: ${assessmentError.message}` };
+    }
+
+    // 5. Upsert remote assessments into local SQLite database
+    if (remoteAssessments && remoteAssessments.length > 0) {
+      for (const a of remoteAssessments) {
+        // Resolve patient's local ID
+        const patientLocalId = (a as any).patients?.local_id || a.patient_id;
+        
+        db.insert(assessments)
+          .values({
+            id: a.local_id, // Match local ID
+            patientId: patientLocalId,
+            imageLocalUri: a.image_local_uri || "",
+            imageRemoteUrl: a.image_remote_url || null,
+            predictedClass: a.predicted_class,
+            classProbabilities: typeof a.class_probabilities === "string" 
+              ? a.class_probabilities 
+              : JSON.stringify(a.class_probabilities),
+            abcdAsymmetry: a.abcd_asymmetry,
+            abcdBorder: a.abcd_border,
+            abcdColor: a.abcd_color,
+            abcdDiameter: a.abcd_diameter,
+            riskTier: a.risk_tier,
+            confidenceScore: a.confidence_score,
+            modelVersion: a.model_version,
+            bodyLocation: a.body_location || null,
+            latitude: a.latitude || null,
+            longitude: a.longitude || null,
+            capturedAt: a.captured_at,
+            createdBy: a.created_by,
+            syncStatus: "synced", // Already synced!
+            remoteId: a.id,
+            createdAt: a.created_at,
+          })
+          .onConflictDoUpdate({
+            target: assessments.id,
+            set: {
+              patientId: patientLocalId,
+              imageLocalUri: a.image_local_uri || "",
+              imageRemoteUrl: a.image_remote_url || null,
+              predictedClass: a.predicted_class,
+              classProbabilities: typeof a.class_probabilities === "string" 
+                ? a.class_probabilities 
+                : JSON.stringify(a.class_probabilities),
+              abcdAsymmetry: a.abcd_asymmetry,
+              abcdBorder: a.abcd_border,
+              abcdColor: a.abcd_color,
+              abcdDiameter: a.abcd_diameter,
+              riskTier: a.risk_tier,
+              confidenceScore: a.confidence_score,
+              modelVersion: a.model_version,
+              bodyLocation: a.body_location || null,
+              latitude: a.latitude || null,
+              longitude: a.longitude || null,
+              syncStatus: "synced",
+              remoteId: a.id,
+            }
+          })
+          .run();
+      }
+    }
+
+    // 6. Refresh Zustand stores from SQLite
+    try {
+      usePatientsStore.getState().loadPatients();
+      useAssessmentsStore.getState().loadAll();
+      useAssessmentsStore.getState().loadCounts();
+    } catch (storeError) {
+      console.warn("Failed to refresh Zustand stores after remote pull:", storeError);
+    }
+
+    console.log("Successfully pulled all remote records from Supabase!");
+    return { success: true };
+  } catch (e: any) {
+    console.error("Failed to pull remote database data:", e);
+    return { success: false, error: e?.message || "Data pull error" };
+  }
 }

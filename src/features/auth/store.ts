@@ -163,14 +163,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           .run();
       }
 
+      // Set auth state first so that get_worker_id() resolves correctly if called
       set({
         userId: worker.id,
         workerName: worker.full_name,
         email,
         pinSet,
         isAuthenticated: true,
-        isLoading: false,
       });
+
+      // 5. Trigger remote data pull to download patients and assessments for this worker
+      try {
+        const { pullRemoteData } = await import("@/features/sync/syncEngine");
+        await pullRemoteData();
+      } catch (pullError) {
+        console.error("Failed to pull remote data on login:", pullError);
+      }
+
+      set({ isLoading: false });
       return true;
     } catch (e) {
       console.error("Email login failed:", e);
