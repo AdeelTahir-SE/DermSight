@@ -17,7 +17,7 @@ export default function LoginScreen() {
   const { isOffline } = useConnectivity();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [pinMode, setPinMode] = useState(false);
+  const [pinMode, setPinMode] = useState(pinSet);
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
 
@@ -166,15 +166,17 @@ export default function LoginScreen() {
           <View className="flex-1 h-px bg-gray-200" />
         </View>
 
-        <Button
-          title={pinMode ? "Login with Email" : "Login with PIN"}
-          onPress={() => {
-            setPinMode(!pinMode);
-            setError("");
-          }}
-          variant="outline"
-          icon={<Text className="mr-2">{pinMode ? "✉️" : "🔢"}</Text>}
-        />
+        {pinSet ? (
+          <Button
+            title={pinMode ? "Login with Email" : "Login with PIN"}
+            onPress={() => {
+              setPinMode(!pinMode);
+              setError("");
+            }}
+            variant="outline"
+            icon={<Text className="mr-2">{pinMode ? "✉️" : "🔢"}</Text>}
+          />
+        ) : null}
 
         {/* Offline notice */}
         {isOffline && (

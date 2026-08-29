@@ -44,12 +44,8 @@ export default function SplashScreen() {
         animated: true,
       });
     } else {
-      // Last onboarding slide — go to login or pin setup
-      if (pinSet) {
-        router.replace("/(auth)/login");
-      } else {
-        router.replace("/(auth)/pin-setup");
-      }
+      // Last onboarding slide — go to login
+      router.replace("/(auth)/login");
     }
   };
 
