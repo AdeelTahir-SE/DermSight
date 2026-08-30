@@ -71,8 +71,8 @@ export async function runSync(): Promise<SyncResult> {
       .set({ status: "pending", attemptCount: 0 })
       .where(eq(syncQueue.status, "failed"))
       .run();
-  } catch (e) {
-    console.warn("Failed to reset failed sync items:", e);
+  } catch {
+    // Non-fatal — failed items simply stay failed until the next run.
   }
 
   const pendingItems = getPendingSyncItems();
@@ -174,8 +174,8 @@ export async function runSync(): Promise<SyncResult> {
     usePatientsStore.getState().loadPatients();
     useAssessmentsStore.getState().loadAll();
     useAssessmentsStore.getState().loadCounts();
-  } catch (storeError) {
-    console.warn("Failed to refresh Zustand stores after sync:", storeError);
+  } catch {
+    // UI refresh failure does not affect sync outcome.
   }
 
   return { success, failed, skipped: 0 };
@@ -260,8 +260,8 @@ async function uploadToSupabase(item: SyncQueueItem): Promise<string | null> {
     if (typeof classProbs === "string") {
       try {
         classProbs = JSON.parse(classProbs);
-      } catch (e) {
-        console.warn("Failed to parse class probabilities string:", e);
+      } catch {
+        // Leave as string — server accepts serialized JSON.
       }
     }
 
@@ -326,7 +326,6 @@ async function uploadImage(
       });
 
     if (error) {
-      console.warn("Image upload failed:", error.message);
       return null;
     }
 
@@ -336,8 +335,7 @@ async function uploadImage(
       .getPublicUrl(data.path);
 
     return urlData.publicUrl;
-  } catch (e) {
-    console.warn("Image upload error:", e);
+  } catch {
     return null;
   }
 }

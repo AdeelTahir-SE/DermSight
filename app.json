@@ -60,8 +60,15 @@
           "cameraPermission": "Allow DermSight to capture images of skin lesions for assessment."
         }
       ],
-      ["react-native-fast-tflite", {}],
-      ["expo-dev-client", {}]
+      [
+        "react-native-fast-tflite",
+        {}
+      ],
+      [
+        "expo-dev-client",
+        {}
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,

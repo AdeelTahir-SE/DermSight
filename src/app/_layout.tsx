@@ -3,12 +3,17 @@
  * NativeWind entry, DB init, auth state, i18n.
  */
 
-import i18n from "@/lib/i18n";
+import i18n, { loadSavedLanguage } from "@/lib/i18n";
 import "../../global.css";
 
 import { ToastContainer } from "@/components/ui/ToastContainer";
 import { initializeDatabase } from "@/db/client";
 import { useAuthStore } from "@/features/auth/store";
+import { usePreferencesStore } from "@/features/preferences/store";
+import {
+  registerBackgroundSync,
+  startConnectivityAutoSync,
+} from "@/features/sync/backgroundSync";
 import { useThemeStore } from "@/features/theme/store";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -28,20 +33,28 @@ export default function RootLayout() {
   const [dbReady, setDbReady] = useState(false);
 
   useEffect(() => {
+    let stopAutoSync: (() => void) | undefined;
     async function bootstrap() {
       try {
         await initializeTheme();
+        await loadSavedLanguage();
+        await usePreferencesStore.getState().initializePreferences();
         initializeDatabase();
         setDbReady(true);
         await initialize();
-      } catch (e) {
-        console.error("Bootstrap error:", e);
+        // Automatic sync: on reconnect (foreground) + periodic background task
+        stopAutoSync = startConnectivityAutoSync();
+        void registerBackgroundSync();
+      } catch {
         setDbReady(true);
       } finally {
         await SplashScreen.hideAsync();
       }
     }
     bootstrap();
+    return () => {
+      stopAutoSync?.();
+    };
   }, []);
 
   // Update NativeWind's active color scheme whenever resolvedTheme changes

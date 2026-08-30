@@ -72,10 +72,10 @@ Capture --> Haptics["expo-haptics<br/>tactile feedback"]
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
-- [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
+- [classify.ts:1-212](file://src/features/assessments/inference/classify.ts#L1-L212)
 - [store.ts:1-87](file://src/features/assessments/store.ts#L1-L87)
-- [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
-- [ABCDPanel.tsx:1-68](file://src/components/assessment/ABCDPanel.tsx#L1-L68)
+- [riskLevels.ts:1-131](file://src/constants/riskLevels.ts#L1-L131)
+- [ABCDPanel.tsx:1-80](file://src/components/assessment/ABCDPanel.tsx#L1-L80)
 
 **Section sources**
 - [capture.tsx:1-365](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L365)
@@ -83,10 +83,10 @@ Capture --> Haptics["expo-haptics<br/>tactile feedback"]
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
-- [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
+- [classify.ts:1-212](file://src/features/assessments/inference/classify.ts#L1-L212)
 - [store.ts:1-87](file://src/features/assessments/store.ts#L1-L87)
-- [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
-- [ABCDPanel.tsx:1-68](file://src/components/assessment/ABCDPanel.tsx#L1-L68)
+- [riskLevels.ts:1-131](file://src/constants/riskLevels.ts#L1-L131)
+- [ABCDPanel.tsx:1-80](file://src/components/assessment/ABCDPanel.tsx#L1-L80)
 
 ## Core Components
 - **Camera Permission Hook**: Provides status and request flow with platform-specific handling; supports undetermined/denied/granted states with web fallback
@@ -104,7 +104,7 @@ Capture --> Haptics["expo-haptics<br/>tactile feedback"]
 - [review.tsx:1-268](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L268)
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
-- [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
+- [classify.ts:1-212](file://src/features/assessments/inference/classify.ts#L1-L212)
 - [store.ts:1-87](file://src/features/assessments/store.ts#L1-L87)
 
 ## Architecture Overview
@@ -148,7 +148,7 @@ J-->>U : Display diagnosis & ABCD
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
 - [store.ts:1-87](file://src/features/assessments/store.ts#L1-L87)
 - [review.tsx:1-268](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L268)
-- [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
+- [classify.ts:1-212](file://src/features/assessments/inference/classify.ts#L1-L212)
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 
 ## Detailed Component Analysis
@@ -256,7 +256,7 @@ Res-->>U : Display diagnosis & ABCD
 **Diagram sources**
 - [review.tsx:1-268](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L268)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
-- [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
+- [classify.ts:1-212](file://src/features/assessments/inference/classify.ts#L1-L212)
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 
 **Section sources**
@@ -291,13 +291,13 @@ class ResultScreen {
 
 **Diagram sources**
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
-- [ABCDPanel.tsx:1-68](file://src/components/assessment/ABCDPanel.tsx#L1-L68)
-- [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
+- [ABCDPanel.tsx:1-80](file://src/components/assessment/ABCDPanel.tsx#L1-L80)
+- [riskLevels.ts:1-131](file://src/constants/riskLevels.ts#L1-L131)
 
 **Section sources**
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
-- [ABCDPanel.tsx:1-68](file://src/components/assessment/ABCDPanel.tsx#L1-L68)
-- [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
+- [ABCDPanel.tsx:1-80](file://src/components/assessment/ABCDPanel.tsx#L1-L80)
+- [riskLevels.ts:1-131](file://src/constants/riskLevels.ts#L1-L131)
 
 ### Image Utilities
 The image utilities provide modern file management using expo-file-system v57 API:
@@ -368,12 +368,12 @@ Risk --> Return["Return InferenceResult"]
 ```
 
 **Diagram sources**
-- [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
-- [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
+- [classify.ts:1-212](file://src/features/assessments/inference/classify.ts#L1-L212)
+- [riskLevels.ts:1-131](file://src/constants/riskLevels.ts#L1-L131)
 
 **Section sources**
-- [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
-- [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
+- [classify.ts:1-212](file://src/features/assessments/inference/classify.ts#L1-L212)
+- [riskLevels.ts:1-131](file://src/constants/riskLevels.ts#L1-L131)
 
 ### Haptic Feedback Integration
 The capture screen integrates comprehensive haptic feedback using the expo-haptics library:
@@ -422,10 +422,10 @@ Review --> Haptics
 - [capture.tsx:1-365](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L365)
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
 - [review.tsx:1-268](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L268)
-- [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
+- [classify.ts:1-212](file://src/features/assessments/inference/classify.ts#L1-L212)
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
-- [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
-- [ABCDPanel.tsx:1-68](file://src/components/assessment/ABCDPanel.tsx#L1-L68)
+- [riskLevels.ts:1-131](file://src/constants/riskLevels.ts#L1-L131)
+- [ABCDPanel.tsx:1-80](file://src/components/assessment/ABCDPanel.tsx#L1-L80)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
 - [store.ts:1-87](file://src/features/assessments/store.ts#L1-L87)
 - [package.json:15-22](file://package.json#L15-L22)
@@ -436,10 +436,10 @@ Review --> Haptics
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
-- [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
+- [classify.ts:1-212](file://src/features/assessments/inference/classify.ts#L1-L212)
 - [store.ts:1-87](file://src/features/assessments/store.ts#L1-L87)
-- [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
-- [ABCDPanel.tsx:1-68](file://src/components/assessment/ABCDPanel.tsx#L1-L68)
+- [riskLevels.ts:1-131](file://src/constants/riskLevels.ts#L1-L131)
+- [ABCDPanel.tsx:1-80](file://src/components/assessment/ABCDPanel.tsx#L1-L80)
 - [package.json:15-22](file://package.json#L15-L22)
 
 ## Performance Considerations

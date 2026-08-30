@@ -1,3 +1,5 @@
+Based on my analysis of the codebase, I can now update the documentation to reflect the enhanced i18next integration with root-level provider wrapping and comprehensive translation coverage. Here's the updated documentation:
+
 # Internationalization
 
 <cite>
@@ -10,6 +12,8 @@
 - [language.tsx](file://src/app/(app)/settings/language.tsx)
 - [home/index.tsx](file://src/app/(app)/home/index.tsx)
 - [package.json](file://package.json)
+- [capture.tsx](file://src/app/(app)/patients/[patientId]/capture.tsx)
+- [new.tsx](file://src/app/(app)/patients/new.tsx)
 </cite>
 
 ## Update Summary
@@ -19,6 +23,7 @@
 - Added detailed coverage of runtime language switching and fallback mechanisms
 - Updated dependency analysis to include react-i18next integration
 - Expanded testing approaches for multi-language functionality with provider context
+- Added comprehensive coverage of capture screen, patient records, and assessment translations
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -33,7 +38,7 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains DermSight's internationalization (i18n) system that supports English, French, and Swahili. The system now features a comprehensive i18next implementation that wraps the entire application with I18nextProvider in the root layout, ensuring all user-facing text elements use translation functions with robust fallback mechanisms. Language switching is fully supported throughout the app lifecycle, providing seamless multilingual experiences for community health workers across different regions.
+This document explains DermSight's internationalization (i18n) system that supports English, French, and Swahili. The system now features a comprehensive i18next implementation that wraps the entire application with I18nextProvider in the root layout, ensuring all user-facing text elements use translation functions with robust fallback mechanisms. Language switching is fully supported throughout the app lifecycle, providing seamless multilingual experiences for community health workers across different regions. The implementation includes extensive translation coverage for capture screens, patient records, assessments, and all core app features.
 
 ## Project Structure
 The i18n implementation follows a centralized architecture pattern:
@@ -41,7 +46,7 @@ The i18n implementation follows a centralized architecture pattern:
 - Centralized i18n initialization module configuring translation resources
 - JSON translation files organized by language under assets/locales
 - Settings screen enabling runtime language switching
-- Comprehensive translation usage across all app components
+- Comprehensive translation usage across all app components including capture, patient management, and assessment workflows
 
 ```mermaid
 graph TB
@@ -51,7 +56,8 @@ C --> D["English Resources<br/>assets/locales/en.json"]
 C --> E["French Resources<br/>assets/locales/fr.json"]
 C --> F["Swahili Resources<br/>assets/locales/sw.json"]
 G["Language Selection UI<br/>src/app/(app)/settings/language.tsx"] --> C
-H["App Components<br/>Home, Patients, etc."] --> B
+H["App Components<br/>Home, Patients, Capture, etc."] --> B
+I["Translation Keys<br/>comprehensive coverage"] --> H
 ```
 
 **Diagram sources**
@@ -64,16 +70,17 @@ H["App Components<br/>Home, Patients, etc."] --> B
 - [i18n.ts:18-26](file://src/lib/i18n.ts#L18-L26)
 
 ## Core Components
-- **I18nextProvider**: Wraps the entire application at the root layout level, making translations available to all child components
-- **i18next Configuration**: Centralized initialization module that registers translation resources and configures interpolation settings
+- **I18nextProvider**: Wraps the entire application at the root layout level, making translations available to all child components without requiring individual provider setup
+- **i18next Configuration**: Centralized initialization module that registers translation resources and configures interpolation settings with support for multiple namespaces
 - **Translation Resources**: JSON files containing localized strings organized by feature areas (app, onboarding, auth, home, patients, capture, review, result, sync, settings, common)
-- **Language Switching**: Runtime language change functionality through the settings screen using i18next.changeLanguage API
+- **Language Switching**: Runtime language change functionality through the settings screen using i18next.changeLanguage API with persistent storage
 
 Key behaviors:
-- Default language set to English with automatic fallback
+- Default language set to English with automatic fallback to English
 - Interpolation enabled for dynamic content injection
 - Compatibility mode configured for React integration
 - All components access translations through the useTranslation hook
+- Persistent language preference storage using SecureStore or localStorage
 
 **Section sources**
 - [_layout.tsx:62-78](file://src/app/_layout.tsx#L62-L78)
@@ -97,9 +104,10 @@ Provider->>I18n : Load resources (en, fr, sw)
 Components->>Provider : Access translations via hooks
 LangUI->>I18n : changeLanguage(code)
 I18n-->>Components : Re-render with new locale
+I18n->>Storage : Persist language choice
 ```
 
-**Updated** The architecture now uses I18nextProvider at the root level instead of individual component providers, ensuring consistent translation availability throughout the entire application lifecycle.
+**Updated** The architecture now uses I18nextProvider at the root level instead of individual component providers, ensuring consistent translation availability throughout the entire application lifecycle. The system includes comprehensive translation coverage for all major app features including capture screens, patient management, and assessment workflows.
 
 **Diagram sources**
 - [_layout.tsx:62-78](file://src/app/_layout.tsx#L62-L78)
@@ -127,12 +135,13 @@ Implementation details:
 - [_layout.tsx:62-78](file://src/app/_layout.tsx#L62-L78)
 
 ### Translation Function Usage Across Components
-**Updated** All user-facing text elements now use translation functions with comprehensive fallback mechanisms.
+**Updated** All user-facing text elements now use translation functions with comprehensive fallback mechanisms across all major app features.
 
 Component integration patterns:
 - Home screen uses `useTranslation()` hook for dynamic greetings and status messages
 - Patient management screens implement localized labels, placeholders, and error states
 - Assessment workflows provide translated instructions and results
+- Capture screen includes camera permissions, tips, and error handling in multiple languages
 - Settings interface offers complete localization including language selection
 
 Example implementations:
@@ -140,9 +149,11 @@ Example implementations:
 - Status messages: `{isOffline ? t("home:deviceOffline") : t("home:deviceOnline")}`
 - Form labels: `{t("patients:firstName")}`, `{t("patients:lastName")}`
 - Action buttons: `{t("common:save")}`, `{t("common:cancel")}`
+- Camera permissions: `{t("capture:cameraRequired")}`, `{t("capture:grantAccess")}`
 
 **Section sources**
 - [home/index.tsx:19,48,57,95,98,108,115,122,129,151,154](file://src/app/(app)/home/index.tsx#L19-L154)
+- [capture.tsx:23,50,53,66,79,82,94,126](file://src/app/(app)/patients/[patientId]/capture.tsx#L23-L126)
 
 ### Dynamic Language Switching
 Behavior:
@@ -150,29 +161,34 @@ Behavior:
 - Updates active language via i18next.changeLanguage API
 - Triggers immediate re-render across all components with new locale
 - Maintains selected language state during runtime session
+- Persists language choice using SecureStore or localStorage
 
 Enhanced capabilities:
 - Real-time language switching without app restart
 - Consistent translation updates across all screens
 - Proper cleanup and resource management
 - Error handling for unsupported language codes
+- Cross-platform persistence support
 
 **Section sources**
 - [language.tsx:22-25](file://src/app/(app)/settings/language.tsx#L22-L25)
+- [i18n.ts:36-47](file://src/lib/i18n.ts#L36-L47)
 
 ### Locale Detection and Persistence
 Current state:
 - Application initializes with English as default language
 - No automatic device locale detection implemented
-- Language selection persists only during runtime session
+- Language selection persists using SecureStore (mobile) or localStorage (web)
+- Saved language restored at app bootstrap
 
-Recommendations for enhancement:
-- Implement device locale detection at startup
-- Add persistent storage for selected language preference
-- Provide clear override mechanism for automatic detection
-- Consider caching strategies for improved performance
+Enhanced capabilities:
+- Platform-specific storage implementation
+- Graceful fallback if storage fails
+- Language restoration on app startup
+- Session-based language persistence
 
-[No sources needed since this section provides general guidance]
+**Section sources**
+- [i18n.ts:52-63](file://src/lib/i18n.ts#L52-L63)
 
 ### Text Localization Patterns
 Guidance:
@@ -187,6 +203,7 @@ Implementation examples:
 - Assessment workflow: `capture:positionInstruction`, `review:useImage`, `result:screeningResult`
 - System messages: `sync:syncNow`, `sync:pendingItems`, `sync:noConnection`
 - Common actions: `common:save`, `common:cancel`, `common:retry`
+- Camera operations: `capture:cameraRequired`, `capture:grantAccess`, `capture:captureFailed`
 
 **Section sources**
 - [home/index.tsx:48,57,95,98,108,115,122,129,151,154](file://src/app/(app)/home/index.tsx#L48-L154)
@@ -234,12 +251,15 @@ Recommendations:
 - Visual regression: Compare screenshots across locales for layout issues
 - Accessibility testing: Ensure screen readers announce localized strings correctly
 - Provider context testing: Validate I18nextProvider behavior in component trees
+- Storage testing: Verify language persistence across app sessions
 
 Testing implementation:
 - Mock i18n instance for isolated component testing
 - Test language switching scenarios and state persistence
 - Verify fallback mechanisms work correctly for missing translations
 - Test interpolation and pluralization across different locales
+- Test camera permission messages in capture screen
+- Test patient form validation messages across locales
 
 [No sources needed since this section provides general guidance]
 
@@ -249,15 +269,18 @@ Integration points:
 - Assessment results and disclaimers accurately translated for risk communication
 - Sync status messages localized to inform users about connectivity
 - Medical terminology validated for cultural appropriateness
+- Camera permissions and capture instructions localized for international users
 
 Enhanced integration:
 - All patient data displays use translation keys for labels and formatting
 - Assessment workflows provide localized instructions and results
 - Error states and loading indicators are fully internationalized
 - User feedback messages support multiple languages
+- Capture screen includes comprehensive camera permission handling in all supported languages
 
 **Section sources**
 - [home/index.tsx:48,57,95,98,108,115,122,129,151,154](file://src/app/(app)/home/index.tsx#L48-L154)
+- [capture.tsx:23,50,53,66,79,82,94,126](file://src/app/(app)/patients/[patientId]/capture.tsx#L23-L126)
 - [en.json:1-220](file://assets/locales/en.json#L1-L220)
 
 ## Dependency Analysis
@@ -270,6 +293,8 @@ The i18n system depends on:
 - Static JSON translation files for each supported language
 - Root layout integration for application-wide provider setup
 - Language selection screen for runtime configuration
+- SecureStore for mobile language persistence
+- localStorage for web language persistence
 
 ```mermaid
 graph TB
@@ -281,16 +306,17 @@ Init --> FR["fr.json"]
 Init --> SW["sw.json"]
 Provider --> Components["All App Components"]
 LangUI["Language Screen<br/>src/app/(app)/settings/language.tsx"] --> Init
+Init --> Storage["SecureStore/localStorage"]
 ```
 
 **Diagram sources**
-- [package.json:1-66](file://package.json#L1-L66)
+- [package.json:39,46:39-46](file://package.json#L39-L46)
 - [_layout.tsx:62-78](file://src/app/_layout.tsx#L62-L78)
 - [i18n.ts:18-26](file://src/lib/i18n.ts#L18-L26)
 - [language.tsx:22-25](file://src/app/(app)/settings/language.tsx#L22-L25)
 
 **Section sources**
-- [package.json:1-66](file://package.json#L1-L66)
+- [package.json:39,46:39-46](file://package.json#L39-L46)
 - [_layout.tsx:62-78](file://src/app/_layout.tsx#L62-L78)
 - [i18n.ts:18-26](file://src/lib/i18n.ts#L18-L26)
 
@@ -303,6 +329,7 @@ LangUI["Language Screen<br/>src/app/(app)/settings/language.tsx"] --> Init
 - Lazy loading considerations for additional locales
 - Memory management for translation resources
 - Interpolation performance optimization for dynamic content
+- Platform-specific storage optimization for language persistence
 
 Best practices:
 - Keep translation files modular and well-structured
@@ -310,6 +337,7 @@ Best practices:
 - Monitor bundle size impact of additional locales
 - Consider code splitting for large translation files
 - Optimize re-render cycles during language switching
+- Use efficient storage operations for language persistence
 
 [No sources needed since this section provides general guidance]
 
@@ -329,12 +357,17 @@ Common issues and resolutions:
 - Interpolation errors:
   - Symptom: Dynamic values not displayed correctly
   - Resolution: Ensure placeholder syntax matches; validate parameter passing
+- Storage issues:
+  - Symptom: Language preference not persisting
+  - Resolution: Check SecureStore permissions; verify localStorage access on web
 
 Advanced troubleshooting:
 - Debug translation resolution using console logging
 - Verify fallback chain works correctly for missing keys
 - Check for circular dependencies in translation imports
 - Monitor memory usage during language switching operations
+- Test camera permission messages in capture screen
+- Validate patient form validation messages across locales
 
 **Section sources**
 - [_layout.tsx:62-78](file://src/app/_layout.tsx#L62-L78)
@@ -342,7 +375,7 @@ Advanced troubleshooting:
 - [language.tsx:22-25](file://src/app/(app)/settings/language.tsx#L22-L25)
 
 ## Conclusion
-DermSight's comprehensive i18n system provides robust multi-language support with English, French, and Swahili. The implementation now features I18nextProvider wrapping the entire application, ensuring consistent translation availability across all components. The centralized initialization, structured translation files, and runtime language switching enable a responsive and accessible experience for community health workers. Future enhancements should focus on locale detection, persistent language preferences, advanced date and number formatting, and comprehensive testing across all supported locales to strengthen the localization workflow and ensure culturally appropriate communication in healthcare contexts.
+DermSight's comprehensive i18n system provides robust multi-language support with English, French, and Swahili. The implementation now features I18nextProvider wrapping the entire application, ensuring consistent translation availability across all components. The centralized initialization, structured translation files, and runtime language switching enable a responsive and accessible experience for community health workers. The system includes extensive translation coverage for capture screens, patient records, assessments, and all core app features. Future enhancements should focus on locale detection, advanced date and number formatting, comprehensive testing across all supported locales, and continued expansion of translation coverage to ensure culturally appropriate communication in healthcare contexts.
 
 ## Appendices
 
@@ -350,12 +383,13 @@ DermSight's comprehensive i18n system provides robust multi-language support wit
 **Updated** Steps for adding new language support:
 
 Steps:
-- Create new JSON file under assets/locales with complete key structure
+- Create new JSON file under assets/locales with complete key structure matching existing locales
 - Import and register language in i18n initialization module
 - Add language option to language selection screen
 - Update I18nextProvider configuration if needed
 - Test comprehensive language switching across all screens
 - Verify translation key coverage and fallback mechanisms
+- Test camera permission messages and patient form validations
 
 **Section sources**
 - [i18n.ts:18-26](file://src/lib/i18n.ts#L18-L26)
@@ -368,6 +402,7 @@ Guidelines:
 - Test language switching to ensure no regressions
 - Verify interpolation and pluralization work correctly
 - Run comprehensive tests across all affected components
+- Test camera permission messages and patient form validations
 
 **Section sources**
 - [en.json:1-220](file://assets/locales/en.json#L1-L220)
@@ -402,5 +437,11 @@ Fallback mechanisms:
 {t('home:greeting', { name: workerName || t('common:loading') })}
 ```
 
+Camera permission handling:
+```typescript
+{t('capture:cameraRequired') || 'Camera Access Required'}
+```
+
 **Section sources**
 - [home/index.tsx:19,48,57,95,98,108,115,122,129,151,154](file://src/app/(app)/home/index.tsx#L19-L154)
+- [capture.tsx:23,50,53,66,79,82,94,126](file://src/app/(app)/patients/[patientId]/capture.tsx#L23-L126)

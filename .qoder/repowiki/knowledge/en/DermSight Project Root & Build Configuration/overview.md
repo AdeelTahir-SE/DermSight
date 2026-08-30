@@ -1,0 +1,1 @@
+Project root manifest and build pipeline for the DermSight offline-first dermatological screening app, wiring Expo SDK 57, expo-router, NativeWind/Tailwind styling, TypeScript, assets, and native capabilities.

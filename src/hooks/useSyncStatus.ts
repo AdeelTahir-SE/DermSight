@@ -4,12 +4,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { getPendingCount, runSync } from "@/features/sync/syncEngine";
+import { usePreferencesStore } from "@/features/preferences/store";
 import { useConnectivity } from "./useConnectivity";
 
 export function useSyncStatus() {
   const [pendingCount, setPendingCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [lastSynced, setLastSynced] = useState<string | null>(null);
+  const lastSynced = usePreferencesStore((s) => s.lastSyncedAt);
   const { isConnected } = useConnectivity();
 
   const refreshCount = useCallback(() => {
@@ -22,7 +23,9 @@ export function useSyncStatus() {
     setIsSyncing(true);
     try {
       await runSync();
-      setLastSynced(new Date().toISOString());
+      await usePreferencesStore
+        .getState()
+        .setLastSyncedAt(new Date().toISOString());
       refreshCount();
     } finally {
       setIsSyncing(false);
