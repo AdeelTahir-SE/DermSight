@@ -13,6 +13,8 @@ export interface RiskTierInfo {
   label: string;
   color: string;
   bgColor: string;
+  textColorClass: string;
+  bgColorClass: string;
   action: string;
 }
 
@@ -22,6 +24,8 @@ export const RISK_TIER_CONFIG: Record<RiskTier, RiskTierInfo> = {
     label: "Urgent Referral",
     color: "#DC2626",
     bgColor: "#FEE2E2",
+    textColorClass: "text-red-650 dark:text-red-400",
+    bgColorClass: "bg-red-50 dark:bg-red-950/30 border border-red-100/50 dark:border-red-900/30",
     action:
       "Refer to clinic/specialist immediately. Flag record for priority review.",
   },
@@ -30,6 +34,8 @@ export const RISK_TIER_CONFIG: Record<RiskTier, RiskTierInfo> = {
     label: "High Risk",
     color: "#EA580C",
     bgColor: "#FFEDD5",
+    textColorClass: "text-orange-600 dark:text-orange-400",
+    bgColorClass: "bg-orange-50 dark:bg-orange-950/30 border border-orange-100/50 dark:border-orange-900/30",
     action: "Refer within days. Schedule follow-up and monitor closely.",
   },
   medium: {
@@ -37,6 +43,8 @@ export const RISK_TIER_CONFIG: Record<RiskTier, RiskTierInfo> = {
     label: "Medium Risk",
     color: "#D97706",
     bgColor: "#FEF3C7",
+    textColorClass: "text-amber-600 dark:text-amber-400",
+    bgColorClass: "bg-amber-50 dark:bg-amber-950/30 border border-amber-100/50 dark:border-amber-900/30",
     action: "Advise monitoring. Re-screen at next follow-up visit.",
   },
   low: {
@@ -44,6 +52,8 @@ export const RISK_TIER_CONFIG: Record<RiskTier, RiskTierInfo> = {
     label: "Low Risk",
     color: "#16A34A",
     bgColor: "#DCFCE7",
+    textColorClass: "text-green-600 dark:text-green-400",
+    bgColorClass: "bg-green-50 dark:bg-green-950/30 border border-green-100/50 dark:border-green-900/30",
     action: "Routine care. No immediate action required.",
   },
 };

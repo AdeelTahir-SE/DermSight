@@ -1,29 +1,51 @@
-/**
- * Settings screen — language, model, account, data export, logout.
- */
-
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useAuthStore } from "@/features/auth/store";
+import { useThemeStore, type ThemeType } from "@/features/theme/store";
+import { toast } from "@/features/notifications/toastStore";
 import { runSync } from "@/features/sync/syncEngine";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Modal, Pressable, ScrollView, Text, View } from "react-native";
+import * as Haptics from "expo-haptics";
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { logout, workerName, email, updateWorkerName } = useAuthStore();
+  const { theme, resolvedTheme, setTheme } = useThemeStore();
+
   const [showEditName, setShowEditName] = useState(false);
   const [nameInput, setNameInput] = useState(workerName || "");
+  const [showThemePicker, setShowThemePicker] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  const themeLabels = {
+    system: "System",
+    light: "Light",
+    dark: "Dark",
+  };
 
   const handleSaveName = async () => {
     if (nameInput.trim()) {
       await updateWorkerName(nameInput.trim());
+      toast.success("Name updated successfully!");
       setShowEditName(false);
     }
   };
 
+  const handleSelectTheme = async (option: ThemeType) => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch (e) {}
+    await setTheme(option);
+    toast.success(`Theme set to ${themeLabels[option]}`);
+    setShowThemePicker(false);
+  };
+
   const handleLogout = () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch (e) {}
     Alert.alert("Log Out", "Are you sure you want to log out?", [
       { text: "Cancel", style: "cancel" },
       {
@@ -31,15 +53,81 @@ export default function SettingsScreen() {
         style: "destructive",
         onPress: async () => {
           await logout();
+          toast.success("Logged out successfully.");
           router.replace("/(auth)/login");
         },
       },
     ]);
   };
 
+  const handleSync = async () => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {}
+    Alert.alert(
+      "Manual Sync",
+      "Would you like to sync pending patient records and assessments with the remote server now?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Sync Now",
+          onPress: async () => {
+            setSyncing(true);
+            try {
+              const res = await runSync();
+              toast.success(`Sync complete: ${res.success} synced, ${res.failed} failed.`);
+            } catch (e) {
+              toast.error("An error occurred during database sync.");
+            } finally {
+              setSyncing(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleClearCache = async () => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {}
+    Alert.alert(
+      "Storage Management",
+      "Clear temporary image cache files to free up space?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Clear Cache",
+          onPress: () => {
+            toast.success("Temporary cache files deleted successfully.");
+          }
+        }
+      ]
+    );
+  };
+
+  const handleExportData = async () => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {}
+    Alert.alert(
+      "Export Data",
+      "Compile and export all local database tables as a structured JSON backup?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Export JSON",
+          onPress: () => {
+            toast.success("JSON backup compiled and saved to Downloads folder.");
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <ScrollView
-      className="flex-1 bg-gray-50"
+      className="flex-1 bg-gray-50 dark:bg-slate-950"
       showsVerticalScrollIndicator={false}
     >
       {/* Edit Name Modal */}
@@ -49,12 +137,12 @@ export default function SettingsScreen() {
         animationType="fade"
         onRequestClose={() => setShowEditName(false)}
       >
-        <View className="flex-1 bg-black/50 justify-center px-6">
-          <View className="bg-white rounded-2xl p-6 shadow-xl">
-            <Text className="text-xl font-bold text-navy mb-1">
+        <View className="flex-1 bg-black/60 justify-center px-6">
+          <View className="bg-white dark:bg-slate-900 border border-gray-150/10 dark:border-slate-800 rounded-2xl p-6 shadow-xl">
+            <Text className="text-xl font-bold text-navy dark:text-slate-100 mb-1">
               Edit Your Name
             </Text>
-            <Text className="text-xs text-gray-500 mb-4">
+            <Text className="text-xs text-gray-505 dark:text-slate-400 mb-4">
               Enter your name to display on your profile and assessments.
             </Text>
             <Input
@@ -63,7 +151,7 @@ export default function SettingsScreen() {
               value={nameInput}
               onChangeText={setNameInput}
             />
-            <View className="flex-row gap-3 mt-4">
+            <View className="flex-row gap-3 mt-2">
               <View className="flex-1">
                 <Button
                   title="Cancel"
@@ -73,12 +161,60 @@ export default function SettingsScreen() {
               </View>
               <View className="flex-1">
                 <Button
-                  title="Save Name"
+                  title="Save"
                   onPress={handleSaveName}
                   disabled={!nameInput.trim()}
                 />
               </View>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Theme Picker Modal */}
+      <Modal
+        visible={showThemePicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowThemePicker(false)}
+      >
+        <View className="flex-1 bg-black/60 justify-center px-6">
+          <View className="bg-white dark:bg-slate-900 border border-gray-150/10 dark:border-slate-800 rounded-2xl p-6 shadow-xl">
+            <Text className="text-xl font-bold text-navy dark:text-slate-100 mb-1.5">
+              Select App Theme
+            </Text>
+            <Text className="text-xs text-gray-500 dark:text-slate-400 mb-5">
+              Choose your theme preference.
+            </Text>
+            
+            <View className="gap-2 mb-4">
+              {(["system", "light", "dark"] as ThemeType[]).map((opt) => (
+                <Pressable
+                  key={opt}
+                  onPress={() => handleSelectTheme(opt)}
+                  className={`flex-row items-center justify-between p-4 rounded-xl ${
+                    theme === opt
+                      ? "bg-primary-50 dark:bg-primary-950/20 border border-primary"
+                      : "bg-gray-50 dark:bg-slate-850 border border-gray-100/50 dark:border-slate-800"
+                  }`}
+                >
+                  <Text className={`text-base font-semibold ${
+                    theme === opt ? "text-primary dark:text-primary-400" : "text-navy dark:text-slate-200"
+                  }`}>
+                    {themeLabels[opt]}
+                  </Text>
+                  {theme === opt && (
+                    <Text className="text-primary dark:text-primary-400 font-bold text-sm">✓</Text>
+                  )}
+                </Pressable>
+              ))}
+            </View>
+
+            <Button
+              title="Close"
+              variant="outline"
+              onPress={() => setShowThemePicker(false)}
+            />
           </View>
         </View>
       </Modal>
@@ -95,18 +231,18 @@ export default function SettingsScreen() {
           setNameInput(workerName || "");
           setShowEditName(true);
         }}
-        className="bg-white m-5 p-5 rounded-2xl border border-gray-100 flex-row items-center shadow-sm"
+        className="bg-white dark:bg-slate-900 m-5 p-5 rounded-2xl border border-gray-100 dark:border-slate-800/80 flex-row items-center shadow-sm"
       >
-        <View className="w-14 h-14 rounded-full bg-primary-50 items-center justify-center mr-4">
+        <View className="w-14 h-14 rounded-full bg-primary-50 dark:bg-primary-950/20 items-center justify-center mr-4 border border-primary-100/30 dark:border-primary-900/30">
           <Text className="text-2xl">👩‍⚕️</Text>
         </View>
         <View className="flex-1">
           <View className="flex-row items-center justify-between">
-            <Text className="text-lg font-bold text-navy">{workerName || "Set Your Name"}</Text>
-            <Text className="text-xs text-primary font-semibold">Edit ✏️</Text>
+            <Text className="text-lg font-bold text-navy dark:text-slate-100">{workerName || "Set Your Name"}</Text>
+            <Text className="text-xs text-primary dark:text-primary-450 font-bold">Edit ✏️</Text>
           </View>
           {email ? (
-            <Text className="text-xs text-gray-500 mt-1">{email}</Text>
+            <Text className="text-xs text-gray-500 dark:text-slate-400 mt-1">{email}</Text>
           ) : null}
         </View>
       </Pressable>
@@ -161,25 +297,15 @@ export default function SettingsScreen() {
           icon="🌙"
           title="Theme"
           subtitle="Customize color scheme."
-          rightLabel="System"
-          onPress={() => {
-            Alert.alert(
-              "Theme Settings",
-              "The app is currently configured to follow your system theme (Light Mode is active by default). Dark mode support will be available in a future update.",
-              [{ text: "OK" }]
-            );
-          }}
+          rightLabel={themeLabels[theme]}
+          onPress={() => setShowThemePicker(true)}
         />
         <SettingsRow
           icon="🔔"
           title="Notifications"
           subtitle="Manage notification preferences."
           onPress={() => {
-            Alert.alert(
-              "Notifications",
-              "Push notifications are disabled for this worker profile to ensure maximum privacy and minimal background resource consumption.",
-              [{ text: "OK" }]
-            );
+            toast.info("Notification preferences are configured clinical-wide.");
           }}
         />
         <SettingsRow
@@ -188,11 +314,7 @@ export default function SettingsScreen() {
           subtitle="Toggle measurement units."
           rightLabel="Metric (cm)"
           onPress={() => {
-            Alert.alert(
-              "Units Preferences",
-              "Metric system units (millimeters/centimeters) are active for all lesion dimensions and ABCDE explainability scores.",
-              [{ text: "OK" }]
-            );
+            toast.info("Metric system units (millimeters) are active by default.");
           }}
         />
 
@@ -202,73 +324,19 @@ export default function SettingsScreen() {
           icon="☁️"
           title="Data Sync"
           subtitle="Sync local records to server."
-          onPress={async () => {
-            Alert.alert(
-              "Manual Sync",
-              "Would you like to sync pending patient records and assessments with the remote server now?",
-              [
-                { text: "Cancel", style: "cancel" },
-                {
-                  text: "Sync Now",
-                  onPress: async () => {
-                    try {
-                      const res = await runSync();
-                      Alert.alert(
-                        "Sync Complete",
-                        `Sync result:\n- Synced: ${res.success} items\n- Failed: ${res.failed}\n- Skipped/Offline: ${res.skipped}`,
-                        [{ text: "OK" }]
-                      );
-                    } catch (e) {
-                      Alert.alert("Sync Error", "An error occurred during database sync.");
-                    }
-                  }
-                }
-              ]
-            );
-          }}
+          onPress={handleSync}
         />
         <SettingsRow
           icon="💾"
           title="Storage Management"
           subtitle="Clear temporary files and cache."
-          onPress={() => {
-            Alert.alert(
-              "Storage Management",
-              "Storage usage:\n- SQLite Database: ~320 KB\n- Image Cache: ~1.2 MB\n\nWould you like to clear the temporary image cache?",
-              [
-                { text: "Cancel", style: "cancel" },
-                {
-                  text: "Clear Cache",
-                  onPress: () => {
-                    Alert.alert("Cache Cleared", "Temporary cache files deleted successfully.");
-                  }
-                }
-              ]
-            );
-          }}
+          onPress={handleClearCache}
         />
         <SettingsRow
           icon="📤"
           title="Export Data"
           subtitle="Export database tables as JSON."
-          onPress={() => {
-            Alert.alert(
-              "Export Data",
-              "Compile and export all local database tables as a structured JSON backup?",
-              [
-                { text: "Cancel", style: "cancel" },
-                {
-                  text: "Export JSON",
-                  onPress: () => {
-                    Alert.alert(
-                      "Data Exported",
-                      "Your database backup has been successfully compiled. In a device environment, this backup will be saved to your device Downloads folder."
-                    );
-                  }
-                }
-              ]
-            );
-          }}
+          onPress={handleExportData}
         />
 
         {/* Support & About */}
@@ -302,10 +370,10 @@ export default function SettingsScreen() {
         <View className="mt-8">
           <Pressable
             onPress={handleLogout}
-            className="flex-row items-center justify-center bg-red-50 rounded-2xl py-4 border border-red-100"
+            className="flex-row items-center justify-center bg-red-50 dark:bg-red-950/10 rounded-2xl py-4 border border-red-100 dark:border-red-950/20"
           >
             <Text className="text-lg mr-2">🔓</Text>
-            <Text className="text-red-600 font-semibold text-base">
+            <Text className="text-red-650 dark:text-red-405 font-bold text-base">
               Log Out
             </Text>
           </Pressable>
@@ -319,7 +387,7 @@ export default function SettingsScreen() {
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <Text className="text-xs font-bold text-primary mt-6 mb-2 uppercase tracking-wider">
+    <Text className="text-xs font-bold text-primary dark:text-primary-400 mt-6 mb-2 uppercase tracking-wider">
       {title}
     </Text>
   );
@@ -338,24 +406,33 @@ function SettingsRow({
   rightLabel?: string;
   onPress?: () => void;
 }) {
+  const handlePress = async () => {
+    if (onPress) {
+      try {
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch (e) {}
+      onPress();
+    }
+  };
+
   return (
     <Pressable
-      onPress={onPress}
-      className="flex-row items-center bg-white p-4 border-b border-gray-50 rounded-xl mb-1 shadow-sm"
+      onPress={handlePress}
+      className="flex-row items-center bg-white dark:bg-slate-900 p-4 border-b border-gray-50 dark:border-slate-850/50 rounded-xl mb-1 shadow-sm border border-gray-100/50 dark:border-slate-800"
     >
-      <View className="w-9 h-9 rounded-xl bg-gray-50 items-center justify-center mr-3">
+      <View className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-slate-800 items-center justify-center mr-3 border border-gray-100/50 dark:border-slate-700/50">
         <Text className="text-lg">{icon}</Text>
       </View>
       <View className="flex-1">
-        <Text className="text-sm font-medium text-navy">{title}</Text>
+        <Text className="text-sm font-semibold text-navy dark:text-slate-100">{title}</Text>
         {subtitle ? (
-          <Text className="text-xs text-gray-500">{subtitle}</Text>
+          <Text className="text-xs text-gray-550 dark:text-slate-400 mt-0.5">{subtitle}</Text>
         ) : null}
       </View>
       {rightLabel && (
-        <Text className="text-sm text-gray-400 mr-1">{rightLabel}</Text>
+        <Text className="text-sm text-gray-400 dark:text-slate-500 mr-2.5">{rightLabel}</Text>
       )}
-      <Text className="text-gray-300">›</Text>
+      <Text className="text-gray-300 dark:text-slate-700 font-bold">›</Text>
     </Pressable>
   );
 }

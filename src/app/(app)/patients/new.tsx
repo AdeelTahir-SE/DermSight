@@ -1,16 +1,14 @@
-/**
- * New Patient Registration screen — intake form + geo-tag.
- */
-
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useAuthStore } from "@/features/auth/store";
 import { createPatient } from "@/features/patients/repository";
 import { usePatientsStore } from "@/features/patients/store";
+import { toast } from "@/features/notifications/toastStore";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import * as Haptics from "expo-haptics";
 
 export default function NewPatientScreen() {
   const router = useRouter();
@@ -66,24 +64,37 @@ export default function NewPatientScreen() {
         userId,
       );
       addPatient(patient);
+      toast.success("Patient registered successfully!");
       router.back();
     } catch {
-      Alert.alert("Error", "Failed to save patient. Please try again.");
+      toast.error("Failed to save patient. Please try again.");
     } finally {
       setSaving(false);
     }
   };
 
+  const selectGender = async (option: "male" | "female" | "other") => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {}
+    setSex(option);
+  };
+
   return (
     <ScrollView
-      className="flex-1 bg-gray-50"
+      className="flex-1 bg-gray-50 dark:bg-slate-950"
       showsVerticalScrollIndicator={false}
     >
       {/* Header */}
-      <View className="bg-navy px-5 pt-12 pb-6 rounded-b-[28px] shadow-sm">
+      <View className="bg-navy dark:bg-slate-900 px-5 pt-12 pb-6 rounded-b-[28px] shadow-sm">
         <View className="flex-row items-center">
           <Pressable
-            onPress={() => router.back()}
+            onPress={async () => {
+              try {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              } catch (e) {}
+              router.back();
+            }}
             className="mr-4 w-10 h-10 rounded-full bg-white/10 items-center justify-center border border-white/10"
           >
             <Text className="text-white text-xl">←</Text>
@@ -92,7 +103,7 @@ export default function NewPatientScreen() {
             <Text className="text-xl font-bold text-white">
               New Patient Registration
             </Text>
-            <Text className="text-xs text-white/70 mt-0.5">
+            <Text className="text-xs text-white/70 dark:text-slate-400 mt-0.5">
               Enter patient details to begin screening
             </Text>
           </View>
@@ -101,8 +112,8 @@ export default function NewPatientScreen() {
 
       <View className="p-5">
         {/* Card 1: Personal Info */}
-        <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-gray-100">
-          <Text className="text-xs font-bold text-primary mb-4 uppercase tracking-wider">
+        <View className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-4 shadow-sm border border-gray-100 dark:border-slate-800/80">
+          <Text className="text-xs font-bold text-primary dark:text-primary-400 mb-4 uppercase tracking-wider">
             Personal Information
           </Text>
 
@@ -111,6 +122,7 @@ export default function NewPatientScreen() {
             placeholder="Enter first name"
             value={firstName}
             onChangeText={setFirstName}
+            editable={!saving}
             icon={
               <Image
                 source={require("../../../../assets/icons/np-person.png")}
@@ -126,6 +138,7 @@ export default function NewPatientScreen() {
             placeholder="Enter last name"
             value={lastName}
             onChangeText={setLastName}
+            editable={!saving}
             icon={
               <Image
                 source={require("../../../../assets/icons/np-person.png")}
@@ -141,6 +154,7 @@ export default function NewPatientScreen() {
             placeholder="DD / MM / YYYY"
             value={dob}
             onChangeText={handleDobChange}
+            editable={!saving}
             icon={
               <Image
                 source={require("../../../../assets/icons/np-calendar.png")}
@@ -155,16 +169,17 @@ export default function NewPatientScreen() {
 
           {/* Gender selector */}
           <View className="mb-2">
-            <Text className="text-sm font-medium text-navy mb-1.5">Gender *</Text>
+            <Text className="text-sm font-medium text-navy dark:text-slate-200 mb-1.5">Gender *</Text>
             <View className="flex-row gap-3">
               {(["male", "female", "other"] as const).map((option) => (
                 <Pressable
                   key={option}
-                  onPress={() => setSex(option)}
-                  className={`flex-1 py-3.5 rounded-xl border flex-row items-center justify-center gap-2 ${
+                  onPress={() => selectGender(option)}
+                  disabled={saving}
+                  className={`flex-1 py-3.5 rounded-xl border flex-row items-center justify-center gap-1.5 ${
                     sex === option
-                      ? "border-primary bg-primary-50 shadow-sm"
-                      : "border-gray-200 bg-white"
+                      ? "border-primary bg-primary-50 dark:bg-primary-950/20 shadow-sm"
+                      : "border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900"
                   }`}
                 >
                   <Text className="text-base">
@@ -172,7 +187,7 @@ export default function NewPatientScreen() {
                   </Text>
                   <Text
                     className={`text-sm font-semibold ${
-                      sex === option ? "text-primary" : "text-gray-500"
+                      sex === option ? "text-primary dark:text-primary-400" : "text-gray-500 dark:text-slate-400"
                     }`}
                   >
                     {option === "male"
@@ -182,20 +197,20 @@ export default function NewPatientScreen() {
                         : "Other"}
                   </Text>
                   {sex === option && (
-                    <Text className="text-primary font-bold text-xs">✓</Text>
+                    <Text className="text-primary dark:text-primary-400 font-bold text-xs">✓</Text>
                   )}
                 </Pressable>
               ))}
             </View>
             {errors.sex && (
-              <Text className="text-sm text-red-500 mt-1">{errors.sex}</Text>
+              <Text className="text-sm text-red-500 dark:text-red-400 mt-1">{errors.sex}</Text>
             )}
           </View>
         </View>
 
         {/* Card 2: Contact Info */}
-        <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-gray-100">
-          <Text className="text-xs font-bold text-primary mb-4 uppercase tracking-wider">
+        <View className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-4 shadow-sm border border-gray-100 dark:border-slate-800/80">
+          <Text className="text-xs font-bold text-primary dark:text-primary-400 mb-4 uppercase tracking-wider">
             Contact Information
           </Text>
           <Input
@@ -203,6 +218,7 @@ export default function NewPatientScreen() {
             placeholder="03XX XXXXXX"
             value={phone}
             onChangeText={setPhone}
+            editable={!saving}
             icon={
               <Image
                 source={require("../../../../assets/icons/np-phone.png")}
@@ -218,6 +234,7 @@ export default function NewPatientScreen() {
             placeholder="Enter address"
             value={address}
             onChangeText={setAddress}
+            editable={!saving}
             icon={
               <Image
                 source={require("../../../../assets/icons/np-location.png")}
@@ -230,8 +247,8 @@ export default function NewPatientScreen() {
         </View>
 
         {/* Card 3: Notes Info */}
-        <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-gray-100">
-          <Text className="text-xs font-bold text-primary mb-4 uppercase tracking-wider">
+        <View className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-4 shadow-sm border border-gray-100 dark:border-slate-800/80">
+          <Text className="text-xs font-bold text-primary dark:text-primary-400 mb-4 uppercase tracking-wider">
             Additional Information
           </Text>
           <Input
@@ -239,6 +256,7 @@ export default function NewPatientScreen() {
             placeholder="Enter medical history, symptoms, or any other notes"
             value={notes}
             onChangeText={setNotes}
+            editable={!saving}
             icon={
               <Image
                 source={require("../../../../assets/icons/np-notes.png")}
@@ -252,7 +270,12 @@ export default function NewPatientScreen() {
         </View>
 
         <View className="mt-4 mb-8">
-          <Button title="Save Patient" onPress={handleSave} loading={saving} />
+          <Button
+            title="Save Patient"
+            onPress={handleSave}
+            loading={saving}
+            disabled={saving}
+          />
         </View>
       </View>
     </ScrollView>

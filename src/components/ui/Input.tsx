@@ -1,7 +1,3 @@
-/**
- * Input component — text input with label, icon, and error state.
- */
-
 import React, { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
@@ -40,26 +36,26 @@ export function Input({
   const [showPassword, setShowPassword] = useState(false);
 
   const borderColor = error
-    ? "border-red-400"
+    ? "border-red-400 dark:border-red-500"
     : isFocused
       ? "border-primary"
-      : "border-gray-200";
+      : "border-gray-200 dark:border-slate-800";
 
   return (
     <View className="mb-4">
       {label && (
-        <Text className="text-sm font-medium text-navy mb-1.5">{label}</Text>
+        <Text className="text-sm font-medium text-navy dark:text-slate-200 mb-1.5">{label}</Text>
       )}
       <View
-        className={`flex-row items-center border rounded-xl bg-white px-3 ${borderColor} ${
+        className={`flex-row items-center border rounded-xl bg-white dark:bg-slate-900 px-3 ${borderColor} ${
           multiline ? "py-2" : ""
         }`}
       >
-        {icon && <View className="mr-2">{icon}</View>}
+        {icon && <View className="mr-2 opacity-70">{icon}</View>}
         <TextInput
-          className={`flex-1 text-base text-navy ${multiline ? "py-2 min-h-[80px]" : "py-3"}`}
+          className={`flex-1 text-base text-navy dark:text-slate-100 ${multiline ? "py-2 min-h-[80px]" : "py-3"}`}
           placeholder={placeholder}
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor="#64748B"
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={secureTextEntry && !showPassword}
@@ -76,14 +72,14 @@ export function Input({
             onPress={() => setShowPassword(!showPassword)}
             className="ml-2 p-1"
           >
-            <Text className="text-sm text-gray-400">
+            <Text className="text-sm text-gray-400 dark:text-gray-500">
               {showPassword ? "Hide" : "Show"}
             </Text>
           </Pressable>
         )}
         {rightIcon && <View className="ml-2">{rightIcon}</View>}
       </View>
-      {error && <Text className="text-sm text-red-500 mt-1">{error}</Text>}
+      {error && <Text className="text-sm text-red-500 dark:text-red-400 mt-1">{error}</Text>}
     </View>
   );
 }

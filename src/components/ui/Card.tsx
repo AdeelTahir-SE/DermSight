@@ -1,7 +1,3 @@
-/**
- * Card component — container with shadow and border.
- */
-
 import React from "react";
 import { View, type ViewStyle } from "react-native";
 
@@ -20,7 +16,9 @@ export function Card({
 }: CardProps) {
   return (
     <View
-      className={`bg-white rounded-2xl shadow-sm border border-gray-100 ${padded ? "p-4" : ""} ${className}`}
+      className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800/80 ${
+        padded ? "p-4" : ""
+      } ${className}`}
       style={style}
     >
       {children}

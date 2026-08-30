@@ -1,7 +1,3 @@
-/**
- * Badge component — color-coded risk tier badges.
- */
-
 import { RISK_TIER_CONFIG } from "@/constants/riskLevels";
 import type { RiskTier } from "@/types";
 import { Text, View } from "react-native";
@@ -28,12 +24,10 @@ export function Badge({ riskTier, size = "md" }: BadgeProps) {
 
   return (
     <View
-      className={`rounded-full self-start ${sizeStyles[size]}`}
-      style={{ backgroundColor: config.bgColor }}
+      className={`rounded-full self-start ${sizeStyles[size]} ${config.bgColorClass}`}
     >
       <Text
-        className={`font-semibold ${textSizeStyles[size]}`}
-        style={{ color: config.color }}
+        className={`font-semibold ${textSizeStyles[size]} ${config.textColorClass}`}
       >
         {config.label}
       </Text>
@@ -47,23 +41,32 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, size = "sm" }: StatusBadgeProps) {
-  const config = {
-    synced: { label: "Synced", bg: "#DCFCE7", color: "#16A34A" },
-    pending: { label: "Pending", bg: "#FEF3C7", color: "#D97706" },
-    failed: { label: "Failed", bg: "#FEE2E2", color: "#DC2626" },
+  const statusStyles = {
+    synced: {
+      bg: "bg-green-50 dark:bg-green-950/20 border border-green-100/50 dark:border-green-900/20",
+      text: "text-green-700 dark:text-green-400",
+      label: "Synced",
+    },
+    pending: {
+      bg: "bg-amber-50 dark:bg-amber-950/20 border border-amber-100/50 dark:border-amber-900/20",
+      text: "text-amber-700 dark:text-amber-400",
+      label: "Pending",
+    },
+    failed: {
+      bg: "bg-red-50 dark:bg-red-950/20 border border-red-100/50 dark:border-red-900/20",
+      text: "text-red-700 dark:text-red-400",
+      label: "Failed",
+    },
   };
 
-  const c = config[status];
+  const current = statusStyles[status];
   const sizeStyle = size === "sm" ? "px-2 py-0.5" : "px-3 py-1";
   const textStyle = size === "sm" ? "text-xs" : "text-sm";
 
   return (
-    <View
-      className={`rounded-full self-start ${sizeStyle}`}
-      style={{ backgroundColor: c.bg }}
-    >
-      <Text className={`font-medium ${textStyle}`} style={{ color: c.color }}>
-        {c.label}
+    <View className={`rounded-full self-start ${sizeStyle} ${current.bg}`}>
+      <Text className={`font-semibold ${textStyle} ${current.text}`}>
+        {current.label}
       </Text>
     </View>
   );

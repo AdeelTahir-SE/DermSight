@@ -1,24 +1,21 @@
-/**
- * Lesion Capture (Camera) screen — live camera with photo capture.
- * Uses expo-camera CameraView for real-time preview and capture.
- */
-
 import { useCameraPermissions } from "@/hooks/useCameraPermissions";
 import {
-    CameraView,
-    type CameraCapturedPicture,
-    type FlashMode,
+  CameraView,
+  type CameraCapturedPicture,
+  type FlashMode,
 } from "expo-camera";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useRef, useState } from "react";
 import { useAssessmentsStore } from "@/features/assessments/store";
+import { toast } from "@/features/notifications/toastStore";
 import {
-    ActivityIndicator,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
+import * as Haptics from "expo-haptics";
 
 export default function CaptureScreen() {
   const { setCapturedImageUri } = useAssessmentsStore();
@@ -51,11 +48,15 @@ export default function CaptureScreen() {
           Camera Access Required
         </Text>
         <Text className="text-white/60 text-sm text-center mb-8">
-          DermSight needs camera access to capture images of skin lesions for
-          assessment.
+          DermSight needs camera access to capture images of skin lesions for assessment.
         </Text>
         <Pressable
-          onPress={requestPermission}
+          onPress={async () => {
+            try {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            } catch (e) {}
+            requestPermission();
+          }}
           className="bg-primary px-8 py-4 rounded-xl"
         >
           <Text className="text-white font-semibold text-base">
@@ -75,11 +76,15 @@ export default function CaptureScreen() {
           Camera Access Denied
         </Text>
         <Text className="text-white/60 text-sm text-center mb-6">
-          Please enable camera access in your device settings to capture lesion
-          images.
+          Please enable camera access in your device settings to capture lesion images.
         </Text>
         <Pressable
-          onPress={() => router.back()}
+          onPress={async () => {
+            try {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            } catch (e) {}
+            router.back();
+          }}
           className="bg-white/20 px-8 py-3 rounded-xl"
         >
           <Text className="text-white font-medium">Go Back</Text>
@@ -93,14 +98,16 @@ export default function CaptureScreen() {
 
     setIsCapturing(true);
     try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch (e) {}
+
+    try {
       const photo: CameraCapturedPicture | undefined =
         await cameraRef.current.takePictureAsync({
           quality: 0.9,
           skipProcessing: true,
           exif: true,
         });
-
-      console.log("[CaptureScreen] Photo taken:", photo?.uri, photo?.width, photo?.height);
 
       if (photo?.uri) {
         setCapturedImageUri(photo.uri);
@@ -111,19 +118,33 @@ export default function CaptureScreen() {
       }
     } catch (error) {
       console.error("[CaptureScreen] Capture failed:", error);
+      toast.error("Capture failed. Please try again.");
     } finally {
       setIsCapturing(false);
     }
   };
 
-  const toggleFlash = () => {
+  const toggleFlash = async () => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {}
     setFlash((prev) =>
       prev === "off" ? "on" : prev === "on" ? "auto" : "off",
     );
   };
 
-  const toggleFacing = () => {
+  const toggleFacing = async () => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {}
     setFacing((prev) => (prev === "back" ? "front" : "back"));
+  };
+
+  const handleTipsToggle = async () => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {}
+    setShowTips(!showTips);
   };
 
   const flashIcon = flash === "off" ? "⚡" : flash === "on" ? "⚡" : "🔄";
@@ -145,7 +166,12 @@ export default function CaptureScreen() {
       {/* Top bar */}
       <View className="flex-row items-center justify-between px-5 pt-4 pb-4 absolute top-0 left-0 right-0 z-10">
         <Pressable
-          onPress={() => router.back()}
+          onPress={async () => {
+            try {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            } catch (e) {}
+            router.back();
+          }}
           className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
         >
           <Text className="text-white text-xl">✕</Text>
@@ -200,7 +226,15 @@ export default function CaptureScreen() {
         {/* Shutter + side controls */}
         <View className="flex-row items-center justify-around">
           {/* Gallery placeholder */}
-          <Pressable className="w-12 h-12 rounded-xl bg-white/10 items-center justify-center">
+          <Pressable
+            onPress={async () => {
+              try {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              } catch (e) {}
+              toast.info("Import from gallery is disabled. Use the live camera for diagnostics.");
+            }}
+            className="w-12 h-12 rounded-xl bg-white/10 items-center justify-center"
+          >
             <Text className="text-white text-xl">🖼️</Text>
           </Pressable>
 
@@ -216,14 +250,13 @@ export default function CaptureScreen() {
               style={{ width: 72, height: 72 }}
             >
               <View
-                className={`rounded-full ${isCapturing ? "bg-gray-400" : "bg-white"}`}
+                className={`rounded-full ${isCapturing ? "bg-gray-400" : "bg-white"} items-center justify-center`}
                 style={{ width: 56, height: 56 }}
               >
                 {isCapturing && (
                   <ActivityIndicator
                     size="small"
                     color="#0D9E94"
-                    className="mt-4"
                   />
                 )}
               </View>
@@ -232,7 +265,7 @@ export default function CaptureScreen() {
 
           {/* Tips toggle */}
           <Pressable
-            onPress={() => setShowTips(!showTips)}
+            onPress={handleTipsToggle}
             className="w-12 h-12 rounded-xl bg-white/10 items-center justify-center"
           >
             <Text className="text-white text-xl">💡</Text>
@@ -242,16 +275,16 @@ export default function CaptureScreen() {
         {/* Expandable tips */}
         {showTips && (
           <View className="mt-4 bg-white/10 rounded-xl p-3 gap-1">
-            <Text className="text-white/80 text-xs">
+            <Text className="text-white/80 text-xs text-left">
               ☀️ Use natural light when possible
             </Text>
-            <Text className="text-white/80 text-xs">
+            <Text className="text-white/80 text-xs text-left">
               🎯 Keep the lesion centered and in focus
             </Text>
-            <Text className="text-white/80 text-xs">
+            <Text className="text-white/80 text-xs text-left">
               📐 Capture the entire lesion with some surrounding skin
             </Text>
-            <Text className="text-white/80 text-xs">
+            <Text className="text-white/80 text-xs text-left">
               🚫 Avoid shadows and glare on the skin
             </Text>
           </View>

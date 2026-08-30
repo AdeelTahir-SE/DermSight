@@ -1,7 +1,3 @@
-/**
- * EmptyState component — placeholder for empty lists.
- */
-
 import React from "react";
 import { Text, View } from "react-native";
 
@@ -20,12 +16,12 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <View className="flex-1 items-center justify-center px-8 py-12">
-      {icon && <View className="mb-4">{icon}</View>}
-      <Text className="text-lg font-semibold text-navy text-center mb-2">
+      {icon && <View className="mb-4 opacity-75">{icon}</View>}
+      <Text className="text-lg font-semibold text-navy dark:text-slate-100 text-center mb-2">
         {title}
       </Text>
       {description && (
-        <Text className="text-sm text-gray-500 text-center mb-6">
+        <Text className="text-sm text-gray-500 dark:text-slate-400 text-center mb-6">
           {description}
         </Text>
       )}
