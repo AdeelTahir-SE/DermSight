@@ -6,6 +6,7 @@
 import { Button } from "@/components/ui/Button";
 import { runInference } from "@/features/assessments/inference/classify";
 import { useAssessmentsStore } from "@/features/assessments/store";
+import { normalizeImageUri } from "@/utils/image";
 import { Image } from "expo-image";
 import * as FileSystem from "expo-file-system/legacy";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
@@ -31,7 +32,8 @@ export default function ReviewScreen() {
     imageUri?: string;
   }>();
   const patientId = rawPatientId || fallbackPatientId || "";
-  const activeImageUri = capturedImageUri || imageUri || "";
+  const rawUri = capturedImageUri || imageUri || "";
+  const activeImageUri = normalizeImageUri(rawUri);
   const router = useRouter();
   const [analyzing, setAnalyzing] = useState(false);
   const [fileStats, setFileStats] = useState<{ exists: boolean; size?: number } | null>(null);

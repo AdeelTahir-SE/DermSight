@@ -8,6 +8,7 @@ import { DIAGNOSIS_LABELS } from "@/constants/riskLevels";
 import { useAssessmentsStore } from "@/features/assessments/store";
 import { useAuthStore } from "@/features/auth/store";
 import type { InferenceResult } from "@/types";
+import { normalizeImageUri } from "@/utils/image";
 import { Image } from "expo-image";
 import * as FileSystem from "expo-file-system/legacy";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -61,6 +62,7 @@ export default function ResultScreen() {
             });
             let imgUri = assessment.imageLocalUri;
             if (imgUri && Platform.OS !== "web") {
+              imgUri = normalizeImageUri(imgUri);
               try {
                 const info = await FileSystem.getInfoAsync(imgUri);
                 if (!info.exists && assessment.imageRemoteUrl) {
@@ -95,7 +97,7 @@ export default function ResultScreen() {
             }
           }
         }
-        const activeUri = capturedImageUri || imageUri || "";
+        const activeUri = normalizeImageUri(capturedImageUri || imageUri || "");
         if (activeUri) {
           setDisplayImage(activeUri);
         }
