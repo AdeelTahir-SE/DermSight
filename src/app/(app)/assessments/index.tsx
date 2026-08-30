@@ -1,32 +1,31 @@
-/**
- * Sync Queue / Status screen — manual sync, per-item status, failed-item retry.
- */
-
-import React, { useState, useCallback } from 'react';
-import { View, Text, FlatList, Pressable, RefreshControl } from 'react-native';
-import { useSyncStatus } from '@/hooks/useSyncStatus';
-import { useConnectivity } from '@/hooks/useConnectivity';
-import { getAllSyncItems, retrySyncItem } from '@/features/sync/syncEngine';
-import { SyncQueueItemRow } from '@/components/sync/SyncQueueItem';
-import { Button } from '@/components/ui/Button';
-import { EmptyState } from '@/components/ui/EmptyState';
-import type { SyncQueueItem } from '@/types';
+import { EmptyState } from "@/components/ui/EmptyState";
+import { SyncQueueItemRow } from "@/components/sync/SyncQueueItem";
+import { Button } from "@/components/ui/Button";
+import { getAllSyncItems, retrySyncItem } from "@/features/sync/syncEngine";
+import { useThemeStore } from "@/features/theme/store";
+import { useConnectivity } from "@/hooks/useConnectivity";
+import { useSyncStatus } from "@/hooks/useSyncStatus";
+import type { SyncQueueItem } from "@/types";
+import { Image } from "expo-image";
+import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { FlatList, RefreshControl, Text, View } from "react-native";
 
 export default function SyncScreen() {
-  const { pendingCount, isSyncing, lastSynced, triggerSync, refreshCount } = useSyncStatus();
+  const { t } = useTranslation();
+  const { pendingCount, isSyncing, lastSynced, triggerSync } = useSyncStatus();
   const { isOffline } = useConnectivity();
+  const { resolvedTheme } = useThemeStore();
+  const isDark = resolvedTheme === "dark";
   const [syncItems, setSyncItems] = useState<SyncQueueItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadItems = useCallback(() => {
-    const items = getAllSyncItems();
-    setSyncItems(items);
+    setSyncItems(getAllSyncItems());
   }, []);
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      loadItems();
-    }, 0);
+  useEffect(() => {
+    const timer = setTimeout(loadItems, 0);
     return () => clearTimeout(timer);
   }, [pendingCount, loadItems]);
 
@@ -41,43 +40,31 @@ export default function SyncScreen() {
     loadItems();
   };
 
-  const pendingItems = syncItems.filter(i => i.status === 'pending' || i.status === 'in_progress');
-  const failedItems = syncItems.filter(i => i.status === 'failed');
-  const doneItems = syncItems.filter(i => i.status === 'done');
-
   return (
-    <View className="flex-1 bg-gray-50">
-      {/* Header */}
-      <View className="bg-white px-5 pt-4 pb-4 border-b border-gray-100">
-        <Text className="text-2xl font-bold text-navy">Sync Queue</Text>
-        <Text className="text-sm text-gray-500 mt-0.5">Manage data synchronization.</Text>
+    <View className="flex-1 bg-gray-50 dark:bg-slate-950">
+      <View className="bg-white dark:bg-slate-900 px-5 pt-4 pb-4 border-b border-gray-100 dark:border-slate-800">
+        <Text className="text-2xl font-bold text-navy dark:text-slate-100">{t("sync:title")}</Text>
+        <Text className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{t("sync:subtitle")}</Text>
 
-        {/* Status card */}
-        <View className="mt-4 bg-primary-50 rounded-2xl p-4 flex-row items-center">
-          <View className="flex-1">
-            <Text className="text-sm font-medium text-primary-800">
-              {pendingCount === 0 ? 'All data is synced' : `${pendingCount} items pending`}
+        <View className="mt-4 bg-primary-50 dark:bg-primary-950/20 rounded-2xl p-4 flex-row items-center">
+          <Image source={require("../../../../assets/icons/home-cloud.png")} style={{ width: 28, height: 28, marginRight: 12 }} contentFit="contain" tintColor="#0D9E94" />
+          <View className="flex-1 pr-3">
+            <Text className="text-base font-semibold text-primary-800 dark:text-primary-300">
+              {pendingCount === 0 ? t("sync:allSynced") : t("sync:pendingItems", { count: pendingCount })}
             </Text>
             {lastSynced && (
-              <Text className="text-xs text-primary-600 mt-0.5">
-                Last synced: {new Date(lastSynced).toLocaleString()}
+              <Text className="text-sm text-primary-700 dark:text-primary-400 mt-0.5">
+                {t("sync:lastSynced")}: {new Date(lastSynced).toLocaleString()}
               </Text>
             )}
           </View>
-          <Button
-            title={isSyncing ? 'Syncing...' : 'Sync Now'}
-            onPress={triggerSync}
-            loading={isSyncing}
-            disabled={isOffline || isSyncing}
-            size="sm"
-            fullWidth={false}
-          />
+          <Button title={isSyncing ? t("sync:syncing") : t("sync:syncNow")} onPress={triggerSync} loading={isSyncing} disabled={isOffline || isSyncing} size="sm" fullWidth={false} />
         </View>
 
         {isOffline && (
-          <View className="mt-3 flex-row items-center bg-amber-50 rounded-xl p-3">
-            <Text className="text-sm mr-2">📡</Text>
-            <Text className="text-xs text-amber-700">No internet connection</Text>
+          <View className="mt-3 flex-row items-center bg-amber-50 dark:bg-amber-950/20 rounded-xl p-3">
+            <Image source={require("../../../../assets/icons/offline-cloud.png")} style={{ width: 20, height: 20, marginRight: 8 }} contentFit="contain" tintColor={isDark ? "#FBBF24" : "#B45309"} />
+            <Text className="text-sm text-amber-705 dark:text-amber-300">{t("sync:noConnection")}</Text>
           </View>
         )}
       </View>
@@ -86,19 +73,14 @@ export default function SyncScreen() {
         data={syncItems}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <SyncQueueItemRow
-            item={item}
-            onRetry={item.status === 'failed' ? () => handleRetry(item.id) : undefined}
-          />
+          <SyncQueueItemRow item={item} onRetry={item.status === "failed" ? () => handleRetry(item.id) : undefined} />
         )}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
         ListEmptyComponent={
           <EmptyState
-            icon={<Text className="text-4xl">☁️</Text>}
-            title="All data is synced"
-            description="No items in the sync queue."
+            icon={<Image source={require("../../../../assets/icons/home-checklist.png")} style={{ width: 44, height: 44 }} contentFit="contain" tintColor="#0D9E94" />}
+            title={t("sync:allSynced")}
+            description={t("sync:emptyDesc")}
           />
         }
         contentContainerStyle={{ paddingBottom: 100 }}
