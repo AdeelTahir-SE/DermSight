@@ -16,12 +16,12 @@
 
 ## Update Summary
 **Changes Made**
-- Enhanced camera functionality with production-ready features including real-time preview, flash mode toggling, front/back camera switching, and comprehensive permission handling
-- Migrated to modern expo-file-system v57 API using Directory, File, and Paths classes for improved file management
-- Implemented raw captured image URI storage in Zustand store for seamless state management across screens
-- Added recursive safe URI fallback mechanisms to handle various URI formats and encoding issues
-- Updated image parameter handling with proper URL-decoding for robust navigation between screens
-- Enhanced error handling and user feedback throughout the capture workflow with haptic feedback
+- Enhanced capture screen with tabbed navigation between PHOTO and GUIDE modes for improved user experience
+- Replaced text emojis with custom icon-based controls throughout the interface for better visual consistency
+- Improved framing guide with larger corner brackets (72x72px) for better lesion positioning guidance
+- Integrated haptic feedback using expo-haptics library for tactile user interaction confirmation
+- Implemented structured tips panel with consistent formatting and professional styling
+- Added comprehensive haptic feedback integration across all user interactions including camera controls, shutter button, and navigation elements
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -38,11 +38,11 @@
 ## Introduction
 DermSight's camera integration system provides a complete end-to-end solution for capturing lesion images with professional-grade features. The system leverages expo-camera for native camera access with comprehensive permission management, real-time preview capabilities, and sophisticated framing assistance. Healthcare workers can capture high-quality images with guided positioning, review them for quality assurance, and proceed to AI-powered risk assessment with full transparency through ABCD explainability scores.
 
-The system has been enhanced with production-ready features including real-time camera preview, flash control, front/back camera switching, sophisticated framing guides with corner brackets and center crosshair overlays, and comprehensive error handling. The recent migration to expo-file-system v57 API with Directory, File, and Paths classes provides improved file management capabilities and better performance.
+The system has been enhanced with production-ready features including real-time camera preview, flash control, front/back camera switching, sophisticated framing guides with corner brackets and center crosshair overlays, and comprehensive error handling. The recent migration to expo-file-system v57 API with Directory, File, and Paths classes provides improved file management capabilities and better performance. **Updated**: The capture screen now features an enhanced interface with tabbed navigation between PHOTO and GUIDE modes, custom icon-based controls replacing text emojis, improved framing guides with larger corner brackets (72x72px), integrated haptic feedback using expo-haptics, and a structured tips panel with consistent formatting.
 
 ## Project Structure
 The camera workflow spans multiple screens and supporting components:
-- **Capture Screen**: Full-screen camera interface with live preview, framing guides, and comprehensive controls
+- **Capture Screen**: Full-screen camera interface with live preview, tabbed navigation (PHOTO/GUIDE modes), sophisticated framing guides, and comprehensive controls
 - **Review Screen**: Image validation interface with quality assessment and analysis options
 - **Result Screen**: Comprehensive diagnosis presentation with confidence scores and clinical guidance
 - **Permission Hook**: Cross-platform camera permission management with appropriate fallbacks
@@ -52,7 +52,7 @@ The camera workflow spans multiple screens and supporting components:
 
 ```mermaid
 graph TB
-Capture["Capture Screen<br/>expo-camera CameraView"] --> Review["Review Screen<br/>quality check & validation"]
+Capture["Capture Screen<br/>expo-camera CameraView<br/>Tabbed Navigation"] --> Review["Review Screen<br/>quality check & validation"]
 Review --> Result["Result Screen<br/>diagnosis & ABCD"]
 Capture --> Permissions["useCameraPermissions<br/>cross-platform hook"]
 Review --> Inference["runInference<br/>mock ML"]
@@ -63,11 +63,12 @@ Images --> FileSystem["Directory/File/Paths API"]
 Capture --> Store["Zustand Store<br/>capturedImageUri"]
 Store --> Review
 Store --> Result
+Capture --> Haptics["expo-haptics<br/>tactile feedback"]
 ```
 
 **Diagram sources**
-- [capture.tsx:1-296](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L296)
-- [review.tsx:1-193](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L193)
+- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
+- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
@@ -77,8 +78,8 @@ Store --> Result
 - [ABCDPanel.tsx:1-68](file://src/components/assessment/ABCDPanel.tsx#L1-L68)
 
 **Section sources**
-- [capture.tsx:1-296](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L296)
-- [review.tsx:1-193](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L193)
+- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
+- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
@@ -89,17 +90,18 @@ Store --> Result
 
 ## Core Components
 - **Camera Permission Hook**: Provides status and request flow with platform-specific handling; supports undetermined/denied/granted states with web fallback
-- **Capture Screen**: Presents a full-screen CameraView with real-time preview, sophisticated framing guides with corner brackets and center crosshair, instructional overlay, flash mode toggling, front/back camera switching, shutter button, and expandable tips panel
+- **Enhanced Capture Screen**: Presents a full-screen CameraView with real-time preview, sophisticated framing guides with corner brackets and center crosshair, instructional overlay, flash mode toggling, front/back camera switching, shutter button, expandable tips panel, and tabbed navigation between PHOTO and GUIDE modes
 - **Review Screen**: Displays captured image with quality indicator, tips for better results, and actions to analyze or retake
 - **Result Screen**: Shows top diagnosis, confidence, class probabilities, ABCD explainability, and recommended actions based on risk tier
 - **Image Utilities**: Modern file management using expo-file-system v57 API with Directory, File, and Paths classes for directory creation, file operations, and size information
 - **Inference Module**: Mock classifier that returns realistic probabilities, ABCD scores, and risk tier mapping
 - **State Management**: Zustand store for managing captured image URIs across the application lifecycle
+- **Haptic Feedback System**: Integrated expo-haptics library providing tactile feedback for all user interactions
 
 **Section sources**
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
-- [capture.tsx:1-296](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L296)
-- [review.tsx:1-193](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L193)
+- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
+- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
 - [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
@@ -115,10 +117,12 @@ The camera integration follows a linear user journey with robust error handling 
 5. Inference runs (currently mock) and navigates to result screen with properly decoded parameters
 6. Result screen presents diagnosis, confidence, ABCD scores, and risk tier with clinical guidance
 
+**Updated**: The enhanced capture screen now includes tabbed navigation allowing users to switch between PHOTO mode for direct capture and GUIDE mode for instructional guidance, with haptic feedback provided for all user interactions.
+
 ```mermaid
 sequenceDiagram
 participant U as "User"
-participant C as "Capture Screen"
+participant C as "Enhanced Capture Screen"
 participant P as "useCameraPermissions"
 participant S as "Zustand Store"
 participant R as "Review Screen"
@@ -127,6 +131,8 @@ participant J as "Result Screen"
 U->>C : Open capture
 C->>P : Check/request permission
 P-->>C : Status (granted/denied/undetermined)
+U->>C : Switch tabs (PHOTO/GUIDE)
+C-->>U : Haptic feedback
 U->>C : Tap shutter with CameraView
 C->>S : setCapturedImageUri(photo.uri)
 C->>R : Navigate with imageUri param
@@ -138,10 +144,10 @@ J-->>U : Display diagnosis & ABCD
 ```
 
 **Diagram sources**
-- [capture.tsx:1-296](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L296)
+- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
 - [store.ts:1-87](file://src/features/assessments/store.ts#L1-L87)
-- [review.tsx:1-193](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L193)
+- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
 - [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 
@@ -171,22 +177,26 @@ SetGranted --> End
 **Section sources**
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
 
-### Capture Screen
-The capture screen implements a comprehensive camera interface with professional-grade features:
+### Enhanced Capture Screen
+The capture screen implements a comprehensive camera interface with professional-grade features and enhanced user experience:
 
-- **Purpose**: Guided lesion capture with real-time camera preview, sophisticated framing guides, and comprehensive controls
+- **Purpose**: Guided lesion capture with real-time camera preview, sophisticated framing guides, tabbed navigation, and comprehensive controls
 - **Key Features**:
   - Live CameraView with real-time preview and hardware acceleration
-  - Sophisticated framing guide with corner brackets and center crosshair for precise lesion positioning
+  - **Updated**: Tabbed navigation between PHOTO and GUIDE modes for flexible user interaction
+  - **Updated**: Sophisticated framing guide with larger corner brackets (72x72px) and center crosshair for precise lesion positioning
   - Instruction overlay advising proper positioning and lighting conditions
   - Flash mode toggling (off/on/auto) with visual indicator showing current mode
   - Front/back camera switching with smooth transitions
   - Shutter button with loading state and capture animation
-  - Expandable tips panel providing quick guidance on capturing clear images
-  - Haptic feedback for all user interactions
+  - **Updated**: Expandable tips panel with structured formatting and consistent styling
+  - **Updated**: Custom icon-based controls replacing text emojis for better visual consistency
+  - **Updated**: Comprehensive haptic feedback integration using expo-haptics for all user interactions
   - Comprehensive error handling for capture failures with user-friendly messages
 - **State Management**: Captures image URI and stores it in Zustand store for cross-screen persistence
 - **Navigation**: On successful capture, navigates to review screen with both image URI parameter and Zustand store reference
+
+**Updated**: The enhanced interface now provides tabbed navigation allowing users to choose between direct capture mode (PHOTO) and guided capture mode (GUIDE), with haptic feedback confirming each interaction and improved visual design using custom icons instead of text emojis.
 
 ```mermaid
 flowchart TD
@@ -194,21 +204,23 @@ Enter(["Open Capture"]) --> CheckPerm{"Permission Status"}
 CheckPerm --> |Undetermined| ShowRequest["Show permission request UI"]
 CheckPerm --> |Denied| ShowError["Show denial message"]
 CheckPerm --> |Granted| ShowCamera["Show CameraView with preview"]
-ShowCamera --> Controls["Flash/Camera Toggle Controls"]
-Controls --> Guide["Framing Guide Overlay"]
+ShowCamera --> Tabs["Tabbed Navigation<br/>PHOTO/GUIDE Modes"]
+Tabs --> Controls["Flash/Camera Toggle Controls"]
+Controls --> Guide["Enhanced Framing Guide<br/>72x72px Corner Brackets"]
 Guide --> UserAction{"User taps shutter?"}
 UserAction --> |Yes| Capture["cameraRef.takePictureAsync()"]
-Capture --> StoreURI["setCapturedImageUri(photo.uri)"]
+Capture --> Haptic["Haptic Feedback<br/>Medium Impact"]
+Haptic --> StoreURI["setCapturedImageUri(photo.uri)"]
 StoreURI --> Navigate["Navigate to Review"]
 UserAction --> |No| Adjust["Adjust position/lighting"]
 Adjust --> Guide
 ```
 
 **Diagram sources**
-- [capture.tsx:1-296](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L296)
+- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
 
 **Section sources**
-- [capture.tsx:1-296](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L296)
+- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
 
 ### Review Screen
 The review screen provides image validation and analysis initiation:
@@ -242,13 +254,13 @@ Res-->>U : Display diagnosis & ABCD
 ```
 
 **Diagram sources**
-- [review.tsx:1-193](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L193)
+- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
 - [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 
 **Section sources**
-- [review.tsx:1-193](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L193)
+- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
 
 ### Result Screen
 The result screen presents comprehensive diagnosis information with clinical context:
@@ -363,6 +375,18 @@ Risk --> Return["Return InferenceResult"]
 - [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
 - [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
 
+### Haptic Feedback Integration
+The capture screen integrates comprehensive haptic feedback using the expo-haptics library:
+
+- **Purpose**: Provide tactile confirmation for user interactions to enhance accessibility and user experience
+- **Implementation**: Uses Haptics.impactAsync() with different feedback styles (Light, Medium) for various interactions
+- **Coverage**: Integrated across all user interactions including permission requests, camera controls, shutter button, tips toggle, and navigation elements
+- **Accessibility**: Enhances usability for healthcare workers in various environments by providing tactile feedback alongside visual cues
+
+**Section sources**
+- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
+- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
+
 ## Dependency Analysis
 Key dependencies and relationships within the camera integration system:
 
@@ -372,6 +396,9 @@ Key dependencies and relationships within the camera integration system:
 - **Image Utilities**: Uses expo-file-system v57 API with Directory, File, and Paths classes for modern file management
 - **Inference Module**: Uses model labels and risk level mappings for classification
 - **State Management**: Zustand store provides cross-screen state management for captured image URIs
+- **Haptic Feedback**: expo-haptics library provides tactile feedback for enhanced user interaction
+
+**Updated**: The system now includes expo-haptics dependency for comprehensive haptic feedback integration across all user interactions.
 
 ```mermaid
 graph LR
@@ -387,23 +414,25 @@ Capture --> Images["image.ts"]
 Images --> FileSystem["expo-file-system ^57.0.6"]
 Store --> Repository["repository.ts"]
 Inference --> Labels["ml/labels.ts"]
+Capture --> Haptics["expo-haptics ^57.0.2"]
+Review --> Haptics
 ```
 
 **Diagram sources**
-- [capture.tsx:1-296](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L296)
+- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
-- [review.tsx:1-193](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L193)
+- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
 - [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 - [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
 - [ABCDPanel.tsx:1-68](file://src/components/assessment/ABCDPanel.tsx#L1-L68)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
 - [store.ts:1-87](file://src/features/assessments/store.ts#L1-L87)
-- [package.json:15-18](file://package.json#L15-L18)
+- [package.json:15-22](file://package.json#L15-L22)
 
 **Section sources**
-- [capture.tsx:1-296](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L296)
-- [review.tsx:1-193](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L193)
+- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
+- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
@@ -411,7 +440,7 @@ Inference --> Labels["ml/labels.ts"]
 - [store.ts:1-87](file://src/features/assessments/store.ts#L1-L87)
 - [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
 - [ABCDPanel.tsx:1-68](file://src/components/assessment/ABCDPanel.tsx#L1-L68)
-- [package.json:15-18](file://package.json#L15-L18)
+- [package.json:15-22](file://package.json#L15-L22)
 
 ## Performance Considerations
 - **Camera Preview**: Uses expo-camera's optimized CameraView component with hardware-accelerated rendering for smooth frame rates
@@ -422,6 +451,9 @@ Inference --> Labels["ml/labels.ts"]
 - **File Operations**: Modern expo-file-system v57 API provides better performance and type safety for file operations
 - **State Management**: Zustand store provides efficient state updates without unnecessary re-renders
 - **URI Normalization**: Efficient URI normalization with early returns for web platforms and cached results where applicable
+- **Haptic Feedback**: Lightweight haptic feedback implementation using expo-haptics with minimal performance impact
+
+**Updated**: The enhanced capture screen maintains optimal performance while adding tabbed navigation and haptic feedback without compromising camera preview quality or capture speed.
 
 ## Troubleshooting Guide
 Common issues and resolutions:
@@ -433,15 +465,18 @@ Common issues and resolutions:
 - **Inference Failures**: Catch exceptions during analysis; provide retry option and log errors for diagnostics
 - **URI Issues**: Use normalizeImageUri function to handle various URI formats and encoding issues; implement fallback mechanisms for missing files
 - **State Synchronization**: Ensure Zustand store is properly updated and accessed across screens to maintain consistent state
+- **Haptic Feedback Issues**: Verify expo-haptics installation and handle cases where haptic feedback is not available on certain platforms
+
+**Updated**: Added troubleshooting guidance for haptic feedback integration and tabbed navigation functionality.
 
 **Section sources**
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
-- [capture.tsx:1-296](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L296)
-- [review.tsx:1-193](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L193)
+- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
+- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
 
 ## Conclusion
-DermSight's camera integration provides a production-ready, user-friendly workflow for capturing lesion images with real-time preview, sophisticated framing guides, and comprehensive permission handling. The system leverages expo-camera for native camera access while maintaining a clean abstraction layer through the useCameraPermissions hook. The recent enhancements include production-ready features like flash control, camera switching, and sophisticated framing guides, along with the migration to expo-file-system v57 API with Directory, File, and Paths classes for improved file management. The addition of Zustand store for state management and robust URI normalization mechanisms ensures reliable operation across different platforms and edge cases. The design emphasizes clarity, accessibility, and reliability to support healthcare workers in diverse environments, with robust error handling and user feedback throughout the capture and analysis workflow.
+DermSight's camera integration provides a production-ready, user-friendly workflow for capturing lesion images with real-time preview, sophisticated framing guides, and comprehensive permission handling. The system leverages expo-camera for native camera access while maintaining a clean abstraction layer through the useCameraPermissions hook. The recent enhancements include production-ready features like flash control, camera switching, and sophisticated framing guides, along with the migration to expo-file-system v57 API with Directory, File, and Paths classes for improved file management. **Updated**: The capture screen now features an enhanced interface with tabbed navigation between PHOTO and GUIDE modes, custom icon-based controls replacing text emojis, improved framing guides with larger corner brackets (72x72px), integrated haptic feedback using expo-haptics, and a structured tips panel with consistent formatting. The addition of Zustand store for state management and robust URI normalization mechanisms ensures reliable operation across different platforms and edge cases. The design emphasizes clarity, accessibility, and reliability to support healthcare workers in diverse environments, with robust error handling and user feedback throughout the capture and analysis workflow.
 
 ## Appendices
 
@@ -450,96 +485,107 @@ DermSight's camera integration provides a production-ready, user-friendly workfl
 - **Web**: Continues assuming granted for development; informs users of limited functionality and encourages mobile use for clinical workflows
 - **Permission States**: Consistent handling of undetermined/denied/granted states across all platforms with appropriate UI feedback
 - **File System**: Modern expo-file-system v57 API provides consistent behavior across platforms with platform-specific optimizations
+- **Haptic Feedback**: expo-haptics provides consistent haptic feedback across iOS and Android platforms with graceful fallbacks for unsupported devices
 
 ### Accessibility Considerations
 - **High Contrast**: Framing guides and overlays remain visible under various lighting conditions with appropriate contrast ratios
 - **VoiceOver/TalkBack**: All interactive elements (shutter, tips, buttons) are properly labeled for screen readers
 - **Lighting Guidance**: Clear instructions provided to improve image quality in low-light scenarios with practical tips
 - **Touch Targets**: All interactive elements meet minimum touch target sizes for accessibility compliance
-- **Haptic Feedback**: Provides tactile confirmation for user interactions to enhance accessibility
+- **Haptic Feedback**: Provides tactile confirmation for user interactions to enhance accessibility, especially beneficial in bright outdoor environments
+- **Tabbed Navigation**: Enhanced accessibility through clear tab switching between PHOTO and GUIDE modes with visual and haptic feedback
 
 ### Implementation Examples
 
-#### Camera Permission Management
-The useCameraPermissions hook provides consistent permission handling across platforms:
+#### Enhanced Capture Screen with Tabbed Navigation
+The capture screen now implements tabbed navigation between PHOTO and GUIDE modes:
 
 ```typescript
-// Platform-aware permission handling
-if (Platform.OS === "web") {
-  return {
-    status: "granted",
-    isLoading: false,
-    requestPermission: async () => true,
-  };
-}
+const [activeTab, setActiveTab] = useState<"photo" | "guide">("photo");
+
+// Tabbed navigation implementation
+<View className="flex-row justify-center mb-5">
+  <Pressable onPress={() => setActiveTab("photo")} className="mr-6">
+    <Text className={`text-base font-semibold ${activeTab === "photo" ? "text-[#0D9E94]" : "text-white/60"}`}>
+      PHOTO
+    </Text>
+  </Pressable>
+  <Pressable onPress={() => setActiveTab("guide")}>
+    <Text className={`text-base font-semibold ${activeTab === "guide" ? "text-[#0D9E94]" : "text-white/60"}`}>
+      GUIDE
+    </Text>
+  </Pressable>
+</View>
 ```
 
-#### Real-time Camera Capture with State Management
-The capture screen implements proper camera lifecycle management with Zustand store integration:
+#### Haptic Feedback Integration
+Comprehensive haptic feedback integration using expo-haptics:
 
 ```typescript
+import * as Haptics from "expo-haptics";
+
 const handleCapture = async () => {
+  // Haptic feedback for capture
+  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  
   const photo = await cameraRef.current.takePictureAsync({
     quality: 0.9,
     skipProcessing: true,
     exif: true,
   });
-  
-  if (photo?.uri) {
-    setCapturedImageUri(photo.uri); // Store in Zustand store
-    router.push({
-      pathname: `/(app)/patients/${patientId}/review`,
-      params: { imageUri: photo.uri },
-    } as Href);
-  }
+};
+
+const toggleFlash = async () => {
+  // Haptic feedback for control interactions
+  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  setFlash((prev) => prev === "off" ? "on" : prev === "on" ? "auto" : "off");
 };
 ```
 
-#### Modern File Management with expo-file-system v57
-The image utilities demonstrate the new API usage with Directory, File, and Paths classes:
+#### Enhanced Framing Guide with Larger Corner Brackets
+Improved framing guide with 72x72px corner brackets:
 
 ```typescript
-// Using Directory, File, and Paths classes
-const dir = new Directory(Paths.document, IMAGE_DIR_NAME);
-if (!dir.exists) {
-  dir.create({ intermediates: true });
-}
-const normalizedSource = normalizeImageUri(sourceUri);
-const source = new File(normalizedSource);
-const dest = new File(dir, `${assessmentId}.jpg`);
-await source.copy(dest);
+{/* Framing guide */}
+<View className="flex-1 items-center justify-center z-0">
+  <View className="w-72 h-72 relative">
+    <View className="absolute top-0 left-0 w-12 h-12 border-t-[3px] border-l-[3px] border-[#0D9E94] rounded-tl-2xl" />
+    <View className="absolute top-0 right-0 w-12 h-12 border-t-[3px] border-r-[3px] border-[#0D9E94] rounded-tr-2xl" />
+    <View className="absolute bottom-0 left-0 w-12 h-12 border-b-[3px] border-l-[3px] border-[#0D9E94] rounded-bl-2xl" />
+    <View className="absolute bottom-0 right-0 w-12 h-12 border-b-[3px] border-r-[3px] border-[#0D9E94] rounded-br-2xl" />
+  </View>
+</View>
 ```
 
-#### URI Normalization and Fallback Mechanisms
-The review screen handles various URI formats with robust fallback mechanisms:
+#### Custom Icon-Based Controls
+Replacement of text emojis with custom icon assets:
 
 ```typescript
-const rawUri = capturedImageUri || imageUri || "";
-const activeImageUri = normalizeImageUri(rawUri);
-// Falls back to placeholder if image doesn't exist
-{activeImageUri ? (
-  <Image source={{ uri: activeImageUri }} ... />
-) : (
-  <View className="flex-1 items-center justify-center">
-    {/* Fallback placeholder */}
+<Pressable onPress={toggleFlash} className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+  <Image
+    source={require("../../../../../assets/icons/capture-light.png")}
+    style={{ width: 22, height: 22 }}
+    contentFit="contain"
+    tintColor={flashActive ? "#0D9E94" : "#FFFFFF"}
+  />
+</Pressable>
+```
+
+#### Structured Tips Panel with Consistent Formatting
+Enhanced tips panel with professional styling:
+
+```typescript
+{showTips && (
+  <View className="bg-white/10 rounded-2xl p-4">
+    <View className="flex-row items-start mb-2">
+      <Text className="text-white/90 text-xs mr-2">•</Text>
+      <Text className="text-white/80 text-xs flex-1">Use natural light when possible</Text>
+    </View>
+    <View className="flex-row items-start mb-2">
+      <Text className="text-white/90 text-xs mr-2">•</Text>
+      <Text className="text-white/80 text-xs flex-1">Keep the lesion centered and in focus</Text>
+    </View>
+    {/* Additional tips with consistent formatting */}
   </View>
 )}
-```
-
-#### Parameter Decoding and Error Handling
-The result screen implements proper URL-decoding with fallback mechanisms:
-
-```typescript
-if (resultParam) {
-  try {
-    const decoded = decodeURIComponent(resultParam);
-    setInferenceResult(JSON.parse(decoded));
-  } catch (e) {
-    try {
-      setInferenceResult(JSON.parse(resultParam));
-    } catch (innerError) {
-      console.error("Failed to parse resultParam:", innerError);
-    }
-  }
-}
 ```

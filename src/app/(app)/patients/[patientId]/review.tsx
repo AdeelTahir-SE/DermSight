@@ -91,7 +91,7 @@ export default function ReviewScreen() {
       <View className="flex-row items-center justify-between px-5 pt-12 pb-4 bg-white dark:bg-slate-900">
         <Pressable onPress={handleRetake} className="p-1">
           <Image
-            source={require("../../../../assets/icons/profile-back.png")}
+            source={require("../../../../../assets/icons/profile-back.png")}
             style={{ width: 24, height: 24 }}
             contentFit="contain"
             tintColor={isDark ? "#E2E8F0" : "#1B2B4B"}
@@ -102,7 +102,7 @@ export default function ReviewScreen() {
         </Text>
         <Pressable onPress={handleDelete} className="flex-row items-center p-1">
           <Image
-            source={require("../../../../assets/icons/review-delete.png")}
+            source={require("../../../../../assets/icons/review-delete.png")}
             style={{ width: 18, height: 18, marginRight: 4 }}
             contentFit="contain"
             tintColor="#EF4444"
@@ -160,7 +160,7 @@ export default function ReviewScreen() {
           {/* Quality indicator */}
           <View className="flex-row items-center bg-[#F0FDFA] dark:bg-teal-950/20 border border-[#CCFBF1] dark:border-teal-900/30 rounded-2xl p-4 mb-5">
             <Image
-              source={require("../../../../assets/icons/review-quality.png")}
+              source={require("../../../../../assets/icons/review-quality.png")}
               style={{ width: 24, height: 24, marginRight: 12 }}
               contentFit="contain"
               tintColor={isDark ? ICON_COLOR_DARK : ICON_COLOR}
@@ -181,17 +181,17 @@ export default function ReviewScreen() {
               Tips for better results
             </Text>
             <TipRow
-              icon={require("../../../../assets/icons/review-natural-light.png")}
+              icon={require("../../../../../assets/icons/review-natural-light.png")}
               text="Use natural light"
               isDark={isDark}
             />
             <TipRow
-              icon={require("../../../../assets/icons/review-lesion.png")}
+              icon={require("../../../../../assets/icons/review-lesion.png")}
               text="Keep the lesion in focus"
               isDark={isDark}
             />
             <TipRow
-              icon={require("../../../../assets/icons/review-entire-lesion.png")}
+              icon={require("../../../../../assets/icons/review-entire-lesion.png")}
               text="Capture the entire lesion"
               isDark={isDark}
             />
@@ -219,7 +219,7 @@ export default function ReviewScreen() {
           className="flex-row items-center justify-center rounded-xl py-4 border border-primary bg-white dark:bg-slate-900"
         >
           <Image
-            source={require("../../../../assets/icons/review-retake.png")}
+            source={require("../../../../../assets/icons/review-retake.png")}
             style={{ width: 20, height: 20, marginRight: 8 }}
             contentFit="contain"
             tintColor="#0D9E94"

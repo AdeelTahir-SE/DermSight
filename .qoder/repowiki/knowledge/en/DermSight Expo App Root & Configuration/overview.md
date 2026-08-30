@@ -1,0 +1,1 @@
+Expo SDK 57 application root for the DermSight offline-first dermatological screening app, wiring build, runtime, navigation, styling, and deployment configuration around a local SQLite + Supabase architecture.

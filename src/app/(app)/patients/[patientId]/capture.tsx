@@ -176,7 +176,7 @@ export default function CaptureScreen() {
           className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
         >
           <Image
-            source={require("../../../../assets/icons/capture-close.png")}
+            source={require("../../../../../assets/icons/capture-close.png")}
             style={{ width: 20, height: 20 }}
             contentFit="contain"
             tintColor="#FFFFFF"
@@ -188,7 +188,7 @@ export default function CaptureScreen() {
             className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
           >
             <Image
-              source={require("../../../../assets/icons/capture-light.png")}
+              source={require("../../../../../assets/icons/capture-light.png")}
               style={{ width: 22, height: 22 }}
               contentFit="contain"
               tintColor={flashActive ? "#0D9E94" : "#FFFFFF"}
@@ -199,7 +199,7 @@ export default function CaptureScreen() {
             className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
           >
             <Image
-              source={require("../../../../assets/icons/capture-camera.png")}
+              source={require("../../../../../assets/icons/capture-camera.png")}
               style={{ width: 22, height: 22 }}
               contentFit="contain"
               tintColor="#FFFFFF"
@@ -260,7 +260,7 @@ export default function CaptureScreen() {
           >
             <View className="w-12 h-12 rounded-xl bg-white/10 items-center justify-center mb-1">
               <Image
-                source={require("../../../../assets/icons/capture-gallery.png")}
+                source={require("../../../../../assets/icons/capture-gallery.png")}
                 style={{ width: 24, height: 24 }}
                 contentFit="contain"
                 tintColor="#FFFFFF"
@@ -294,7 +294,7 @@ export default function CaptureScreen() {
           <Pressable onPress={handleTipsToggle} className="items-center">
             <View className="w-12 h-12 rounded-xl bg-white/10 items-center justify-center mb-1">
               <Image
-                source={require("../../../../assets/icons/capture-tips.png")}
+                source={require("../../../../../assets/icons/capture-tips.png")}
                 style={{ width: 24, height: 24 }}
                 contentFit="contain"
                 tintColor="#FFFFFF"
@@ -337,7 +337,7 @@ export default function CaptureScreen() {
         {/* Guide card */}
         <View className="mt-4 bg-white/10 rounded-2xl p-4 flex-row items-center">
           <Image
-            source={require("../../../../assets/icons/capture-tips.png")}
+            source={require("../../../../../assets/icons/capture-tips.png")}
             style={{ width: 28, height: 28, marginRight: 12 }}
             contentFit="contain"
             tintColor="#0D9E94"

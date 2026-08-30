@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: ""
-title: DermSight Project Root & Build Configuration
+title: DermSight Expo App Root & Configuration
 scope:
     - README.md
     - ARCHITECTURE.md

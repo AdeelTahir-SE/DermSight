@@ -11,8 +11,10 @@ import { usePatientsStore } from "@/features/patients/store";
 import { isConnected } from "@/lib/netinfo";
 import { supabase } from "@/lib/supabase";
 import type { SyncQueueItem } from "@/types";
+import { base64ToUint8Array } from "@/utils/base64";
+import { normalizeImageUri } from "@/utils/image";
 import { eq } from "drizzle-orm";
-import * as FileSystem from "expo-file-system/legacy";
+import { File } from "expo-file-system";
 
 const MAX_RETRIES = 5;
 const BASE_DELAY_MS = 1000;
@@ -82,8 +84,12 @@ export async function runSync(): Promise<SyncResult> {
       // Optimization: Skip assessments whose patient has not synced yet
       if (item.entityType === "assessment") {
         const payload = JSON.parse(item.payload);
-        let patientId = payload.patientId || payload.patient_id || payload.patientLocalId || payload.patient_local_id;
-        
+        let patientId =
+          payload.patientId ||
+          payload.patient_id ||
+          payload.patientLocalId ||
+          payload.patient_local_id;
+
         if (!patientId) {
           const localAssessment = db
             .select()
@@ -203,7 +209,9 @@ async function uploadToSupabase(item: SyncQueueItem): Promise<string | null> {
       .get();
 
     if (!localPatient) {
-      throw new Error(`Local patient with ID ${item.entityId} not found in SQLite. Cannot sync.`);
+      throw new Error(
+        `Local patient with ID ${item.entityId} not found in SQLite. Cannot sync.`,
+      );
     }
 
     const { data, error } = await supabase.rpc("upsert_patient", {
@@ -231,7 +239,9 @@ async function uploadToSupabase(item: SyncQueueItem): Promise<string | null> {
       .get();
 
     if (!localAssessment) {
-      throw new Error(`Local assessment with ID ${item.entityId} not found in SQLite. Cannot sync.`);
+      throw new Error(
+        `Local assessment with ID ${item.entityId} not found in SQLite. Cannot sync.`,
+      );
     }
 
     const localUri = localAssessment.imageLocalUri;
@@ -259,7 +269,8 @@ async function uploadToSupabase(item: SyncQueueItem): Promise<string | null> {
       p_local_id: localAssessment.id,
       p_patient_local_id: localAssessment.patientId,
       p_image_local_uri: localUri,
-      p_image_remote_url: imageRemoteUrl || localAssessment.imageRemoteUrl || null,
+      p_image_remote_url:
+        imageRemoteUrl || localAssessment.imageRemoteUrl || null,
       p_predicted_class: localAssessment.predictedClass,
       p_class_probabilities: classProbs,
       p_abcd_asymmetry: localAssessment.abcdAsymmetry,
@@ -289,20 +300,21 @@ async function uploadImage(
   assessmentPayload: Record<string, any>,
 ): Promise<string | null> {
   try {
-    const localUri = assessmentPayload.imageLocalUri || assessmentPayload.image_local_uri;
+    const localUri =
+      assessmentPayload.imageLocalUri || assessmentPayload.image_local_uri;
     if (!localUri) return null;
- 
-    // Read the file as Uint8Array using stable expo-file-system API + base64 decoding
-    const base64 = await FileSystem.readAsStringAsync(localUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-    const binaryString = atob(base64);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < bytes.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+
+    // Read the file as base64 using the new expo-file-system API, then decode to bytes
+    const normalizedUri = normalizeImageUri(localUri);
+    const file = new File(normalizedUri);
+    if (!file.exists) {
+      throw new Error(`Image file does not exist: ${normalizedUri}`);
     }
- 
-    const workerId = assessmentPayload.createdBy || assessmentPayload.created_by;
+    const base64 = await file.base64();
+    const bytes = base64ToUint8Array(base64);
+
+    const workerId =
+      assessmentPayload.createdBy || assessmentPayload.created_by;
     const assessmentId = assessmentPayload.id;
     const filePath = `${workerId}/${assessmentId}.jpg`;
 
@@ -348,10 +360,15 @@ function mapRow(row: any): SyncQueueItem {
  * Pull all data from Supabase remote database for the current health worker.
  * Saves/updates all patients and assessments in the local SQLite database.
  */
-export async function pullRemoteData(workerId: string): Promise<{ success: boolean; error?: string }> {
+export async function pullRemoteData(
+  workerId: string,
+): Promise<{ success: boolean; error?: string }> {
   try {
     if (!workerId) {
-      return { success: false, error: "No authenticated health worker ID provided." };
+      return {
+        success: false,
+        error: "No authenticated health worker ID provided.",
+      };
     }
 
     console.log("Starting remote data pull for health worker:", workerId);
@@ -364,7 +381,10 @@ export async function pullRemoteData(workerId: string): Promise<{ success: boole
 
     if (patientError) {
       console.error("Failed to pull remote patients:", patientError.message);
-      return { success: false, error: `Pull patients failed: ${patientError.message}` };
+      return {
+        success: false,
+        error: `Pull patients failed: ${patientError.message}`,
+      };
     }
 
     // 3. Upsert remote patients into local SQLite database
@@ -404,7 +424,7 @@ export async function pullRemoteData(workerId: string): Promise<{ success: boole
               updatedAt: p.updated_at,
               syncStatus: "synced",
               remoteId: p.id,
-            }
+            },
           })
           .run();
       }
@@ -413,15 +433,23 @@ export async function pullRemoteData(workerId: string): Promise<{ success: boole
     // 4. Fetch remote assessments created by this health worker
     const { data: remoteAssessments, error: assessmentError } = await supabase
       .from("assessments")
-      .select(`
+      .select(
+        `
         *,
         patients!inner(local_id)
-      `)
+      `,
+      )
       .eq("created_by", workerId);
 
     if (assessmentError) {
-      console.error("Failed to pull remote assessments:", assessmentError.message);
-      return { success: false, error: `Pull assessments failed: ${assessmentError.message}` };
+      console.error(
+        "Failed to pull remote assessments:",
+        assessmentError.message,
+      );
+      return {
+        success: false,
+        error: `Pull assessments failed: ${assessmentError.message}`,
+      };
     }
 
     // 5. Upsert remote assessments into local SQLite database
@@ -429,7 +457,7 @@ export async function pullRemoteData(workerId: string): Promise<{ success: boole
       for (const a of remoteAssessments) {
         // Resolve patient's local ID
         const patientLocalId = (a as any).patients?.local_id || a.patient_id;
-        
+
         db.insert(assessments)
           .values({
             id: a.local_id, // Match local ID
@@ -437,9 +465,10 @@ export async function pullRemoteData(workerId: string): Promise<{ success: boole
             imageLocalUri: a.image_local_uri || "",
             imageRemoteUrl: a.image_remote_url || null,
             predictedClass: a.predicted_class,
-            classProbabilities: typeof a.class_probabilities === "string" 
-              ? a.class_probabilities 
-              : JSON.stringify(a.class_probabilities),
+            classProbabilities:
+              typeof a.class_probabilities === "string"
+                ? a.class_probabilities
+                : JSON.stringify(a.class_probabilities),
             abcdAsymmetry: a.abcd_asymmetry,
             abcdBorder: a.abcd_border,
             abcdColor: a.abcd_color,
@@ -463,9 +492,10 @@ export async function pullRemoteData(workerId: string): Promise<{ success: boole
               imageLocalUri: a.image_local_uri || "",
               imageRemoteUrl: a.image_remote_url || null,
               predictedClass: a.predicted_class,
-              classProbabilities: typeof a.class_probabilities === "string" 
-                ? a.class_probabilities 
-                : JSON.stringify(a.class_probabilities),
+              classProbabilities:
+                typeof a.class_probabilities === "string"
+                  ? a.class_probabilities
+                  : JSON.stringify(a.class_probabilities),
               abcdAsymmetry: a.abcd_asymmetry,
               abcdBorder: a.abcd_border,
               abcdColor: a.abcd_color,
@@ -478,7 +508,7 @@ export async function pullRemoteData(workerId: string): Promise<{ success: boole
               longitude: a.longitude || null,
               syncStatus: "synced",
               remoteId: a.id,
-            }
+            },
           })
           .run();
       }
@@ -490,7 +520,10 @@ export async function pullRemoteData(workerId: string): Promise<{ success: boole
       useAssessmentsStore.getState().loadAll();
       useAssessmentsStore.getState().loadCounts();
     } catch (storeError) {
-      console.warn("Failed to refresh Zustand stores after remote pull:", storeError);
+      console.warn(
+        "Failed to refresh Zustand stores after remote pull:",
+        storeError,
+      );
     }
 
     console.log("Successfully pulled all remote records from Supabase!");

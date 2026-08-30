@@ -108,7 +108,7 @@ export default function PatientDetailScreen() {
       <View className="bg-white dark:bg-slate-900 px-5 pt-12 pb-4 flex-row items-center justify-between">
         <Pressable onPress={handleBack} className="p-1">
           <Image
-            source={require("../../../../assets/icons/profile-back.png")}
+            source={require("../../../../../assets/icons/profile-back.png")}
             style={{ width: 24, height: 24 }}
             contentFit="contain"
             tintColor={isDark ? "#E2E8F0" : "#1B2B4B"}
@@ -116,7 +116,7 @@ export default function PatientDetailScreen() {
         </Pressable>
         <Pressable onPress={handleEdit} className="flex-row items-center">
           <Image
-            source={require("../../../../assets/icons/profile-edit.png")}
+            source={require("../../../../../assets/icons/profile-edit.png")}
             style={{ width: 16, height: 16, marginRight: 4 }}
             contentFit="contain"
             tintColor="#0D9E94"
@@ -164,21 +164,21 @@ export default function PatientDetailScreen() {
         {/* Quick Actions */}
         <View className="flex-row justify-around mt-5 bg-gray-50 dark:bg-slate-850 rounded-2xl py-4">
           <QuickAction
-            icon={require("../../../../assets/icons/profile-phone.png")}
+            icon={require("../../../../../assets/icons/profile-phone.png")}
             label="Call"
             onPress={() =>
               patient.phone && Linking.openURL(`tel:${patient.phone}`)
             }
           />
           <QuickAction
-            icon={require("../../../../assets/icons/profile-message.png")}
+            icon={require("../../../../../assets/icons/profile-message.png")}
             label="Message"
             onPress={() =>
               patient.phone && Linking.openURL(`sms:${patient.phone}`)
             }
           />
           <QuickAction
-            icon={require("../../../../assets/icons/profile-location.png")}
+            icon={require("../../../../../assets/icons/profile-location.png")}
             label="View Location"
             onPress={() => {
               if (patient.latitude && patient.longitude) {
@@ -200,12 +200,12 @@ export default function PatientDetailScreen() {
         <SectionHeader title="Patient Information" />
         <Card>
           <InfoRow
-            icon={require("../../../../assets/icons/profile-dob.png")}
+            icon={require("../../../../../assets/icons/profile-dob.png")}
             label="Date of Birth"
             value={formatDate(patient.dateOfBirth)}
           />
           <InfoRow
-            icon={require("../../../../assets/icons/profile-gender.png")}
+            icon={require("../../../../../assets/icons/profile-gender.png")}
             label="Gender"
             value={
               patient.sex === "male"
@@ -216,17 +216,17 @@ export default function PatientDetailScreen() {
             }
           />
           <InfoRow
-            icon={require("../../../../assets/icons/profile-id.png")}
+            icon={require("../../../../../assets/icons/profile-id.png")}
             label="Patient ID"
             value={displayId}
           />
           <InfoRow
-            icon={require("../../../../assets/icons/profile-location.png")}
+            icon={require("../../../../../assets/icons/profile-location.png")}
             label="Address"
             value={patient.address || "Not provided"}
           />
           <InfoRow
-            icon={require("../../../../assets/icons/profile-phone.png")}
+            icon={require("../../../../../assets/icons/profile-phone.png")}
             label="Phone Number"
             value={patient.phone || "Not provided"}
             isLast

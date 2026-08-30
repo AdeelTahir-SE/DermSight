@@ -3,20 +3,21 @@
  * NativeWind entry, DB init, auth state, i18n.
  */
 
-import "@/lib/i18n";
+import i18n from "@/lib/i18n";
 import "../../global.css";
 
+import { ToastContainer } from "@/components/ui/ToastContainer";
 import { initializeDatabase } from "@/db/client";
 import { useAuthStore } from "@/features/auth/store";
 import { useThemeStore } from "@/features/theme/store";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
+import { useColorScheme } from "nativewind";
+import { useEffect, useState } from "react";
+import { I18nextProvider } from "react-i18next";
 import { View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { useColorScheme } from "nativewind";
-import { ToastContainer } from "@/components/ui/ToastContainer";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -50,26 +51,30 @@ export default function RootLayout() {
 
   if (!isInitialized || !dbReady) {
     const isDark = resolvedTheme === "dark";
-    return <View className={`flex-1 ${isDark ? "bg-[#0B0F19]" : "bg-white"}`} />;
+    return (
+      <View className={`flex-1 ${isDark ? "bg-[#0B0F19]" : "bg-white"}`} />
+    );
   }
 
   const isDark = resolvedTheme === "dark";
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style={isDark ? "light" : "dark"} />
-      <ToastContainer />
-      <SafeAreaView
-        className="flex-1 bg-white dark:bg-slate-950"
-        style={{ flex: 1, backgroundColor: isDark ? "#0B0F19" : "#FFFFFF" }}
-        edges={["top", "left", "right"]}
-      >
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(app)" options={{ headerShown: false }} />
-        </Stack>
-      </SafeAreaView>
-    </SafeAreaProvider>
+    <I18nextProvider i18n={i18n}>
+      <SafeAreaProvider>
+        <StatusBar style={isDark ? "light" : "dark"} />
+        <ToastContainer />
+        <SafeAreaView
+          className="flex-1 bg-white dark:bg-slate-950"
+          style={{ flex: 1, backgroundColor: isDark ? "#0B0F19" : "#FFFFFF" }}
+          edges={["top", "left", "right"]}
+        >
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(app)" options={{ headerShown: false }} />
+          </Stack>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </I18nextProvider>
   );
 }
