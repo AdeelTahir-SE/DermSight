@@ -12,7 +12,7 @@ import { isConnected } from "@/lib/netinfo";
 import { supabase } from "@/lib/supabase";
 import type { SyncQueueItem } from "@/types";
 import { eq } from "drizzle-orm";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 
 const MAX_RETRIES = 5;
 const BASE_DELAY_MS = 1000;

@@ -8,9 +8,8 @@ import { DIAGNOSIS_LABELS } from "@/constants/riskLevels";
 import { useAssessmentsStore } from "@/features/assessments/store";
 import { useAuthStore } from "@/features/auth/store";
 import type { InferenceResult } from "@/types";
-import { safeDecodeURI } from "@/utils/image";
 import { Image } from "expo-image";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ActivityIndicator, Platform, Pressable, ScrollView, Text, View } from "react-native";
 
@@ -96,7 +95,7 @@ export default function ResultScreen() {
             }
           }
         }
-        const activeUri = capturedImageUri || safeDecodeURI(imageUri);
+        const activeUri = capturedImageUri || imageUri || "";
         if (activeUri) {
           setDisplayImage(activeUri);
         }
@@ -131,7 +130,7 @@ export default function ResultScreen() {
     if (!inferenceResult) return;
     setSaving(true);
     try {
-      await saveAssessment(patientId, displayImage || capturedImageUri || safeDecodeURI(imageUri) || "", inferenceResult, userId);
+      await saveAssessment(patientId, displayImage || capturedImageUri || imageUri || "", inferenceResult, userId);
       setCapturedImageUri(null);
       router.replace(`/(app)/patients/${patientId}`);
     } catch (e) {

@@ -1,5 +1,4 @@
-import * as FileSystem from "expo-file-system";
-import { Paths } from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import { Platform } from "react-native";
 
 const IMAGE_DIR_NAME = "dermsight_images";
@@ -11,7 +10,8 @@ export async function ensureImageDirectory(): Promise<string> {
   if (Platform.OS === "web") {
     return "";
   }
-  const dirUri = `${Paths.document}/${IMAGE_DIR_NAME}`;
+  const baseDir = FileSystem.documentDirectory || FileSystem.cacheDirectory || "";
+  const dirUri = `${baseDir}${IMAGE_DIR_NAME}`;
   try {
     const dirInfo = await FileSystem.getInfoAsync(dirUri);
     if (!dirInfo.exists) {
@@ -33,7 +33,8 @@ export async function saveImageLocally(
   if (Platform.OS === "web") {
     return sourceUri;
   }
-  const dirUri = `${Paths.document}/${IMAGE_DIR_NAME}`;
+  const baseDir = FileSystem.documentDirectory || FileSystem.cacheDirectory || "";
+  const dirUri = `${baseDir}${IMAGE_DIR_NAME}`;
   const dirInfo = await FileSystem.getInfoAsync(dirUri);
   if (!dirInfo.exists) {
     await FileSystem.makeDirectoryAsync(dirUri, { intermediates: true });
@@ -79,22 +80,4 @@ export async function getFileSizeKB(uri: string): Promise<number> {
     // Ignore
   }
   return 0;
-}
-
-/**
- * Recursively decode a URI string to handle single/double URL encoding from router parameters.
- */
-export function safeDecodeURI(uri?: string | null): string {
-  if (!uri) return "";
-  let decoded = uri;
-  try {
-    while (decoded.includes("%")) {
-      const next = decodeURIComponent(decoded);
-      if (next === decoded) break;
-      decoded = next;
-    }
-  } catch {
-    // If decoding fails, return current string
-  }
-  return decoded;
 }

@@ -6,9 +6,8 @@
 import { Button } from "@/components/ui/Button";
 import { runInference } from "@/features/assessments/inference/classify";
 import { useAssessmentsStore } from "@/features/assessments/store";
-import { safeDecodeURI } from "@/utils/image";
 import { Image } from "expo-image";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -32,7 +31,7 @@ export default function ReviewScreen() {
     imageUri?: string;
   }>();
   const patientId = rawPatientId || fallbackPatientId || "";
-  const activeImageUri = capturedImageUri || safeDecodeURI(imageUri);
+  const activeImageUri = capturedImageUri || imageUri || "";
   const router = useRouter();
   const [analyzing, setAnalyzing] = useState(false);
   const [fileStats, setFileStats] = useState<{ exists: boolean; size?: number } | null>(null);
