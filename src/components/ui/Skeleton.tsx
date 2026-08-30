@@ -1,16 +1,16 @@
-import React, { useEffect } from "react";
-import { type ViewStyle } from "react-native";
+import { useEffect } from "react";
+import { type DimensionValue, type ViewStyle } from "react-native";
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withSequence,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withSequence,
+    withTiming,
 } from "react-native-reanimated";
 
 interface SkeletonProps {
-  width?: number | string;
-  height?: number | string;
+  width?: DimensionValue;
+  height?: DimensionValue;
   variant?: "circle" | "rect" | "line";
   className?: string;
   style?: ViewStyle;
@@ -29,10 +29,10 @@ export function Skeleton({
     opacity.value = withRepeat(
       withSequence(
         withTiming(0.7, { duration: 800 }),
-        withTiming(0.35, { duration: 800 })
+        withTiming(0.35, { duration: 800 }),
       ),
       -1,
-      true
+      true,
     );
   }, [opacity]);
 
