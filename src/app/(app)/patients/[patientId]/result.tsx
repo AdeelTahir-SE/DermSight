@@ -85,13 +85,18 @@ export default function ResultScreen() {
         // Load new inference result from parameters
         if (resultParam) {
           try {
-            setInferenceResult(JSON.parse(resultParam));
+            const decoded = decodeURIComponent(resultParam);
+            setInferenceResult(JSON.parse(decoded));
           } catch (e) {
-            console.error("Failed to parse resultParam:", e);
+            try {
+              setInferenceResult(JSON.parse(resultParam));
+            } catch (innerError) {
+              console.error("Failed to parse resultParam:", innerError);
+            }
           }
         }
         if (imageUri) {
-          setDisplayImage(imageUri);
+          setDisplayImage(decodeURIComponent(imageUri));
         }
         setLoading(false);
       }
