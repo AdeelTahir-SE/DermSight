@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/Button";
 import { useAuthStore } from "@/features/auth/store";
 import { toast } from "@/features/notifications/toastStore";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -66,8 +67,12 @@ export default function PinSetupScreen() {
     <View className="flex-1 bg-white dark:bg-slate-950 justify-center px-8">
       {/* Header */}
       <View className="items-center mb-8">
-        <View className="w-20 h-20 rounded-full bg-primary-50 dark:bg-primary-950/20 items-center justify-center mb-6">
-          <Text className="text-3xl">🔐</Text>
+        <View className="w-36 h-36 rounded-[32px] bg-primary-50 dark:bg-primary-950/20 items-center justify-center mb-4 shadow-sm">
+          <Image
+            source={require("../../../assets/logo.png")}
+            style={{ width: 104, height: 104 }}
+            contentFit="contain"
+          />
         </View>
         <Text className="text-2xl font-bold text-navy dark:text-slate-100">Set up your PIN</Text>
         <Text className="text-sm text-gray-500 dark:text-slate-400 text-center mt-2 px-4">
@@ -108,9 +113,18 @@ export default function PinSetupScreen() {
             onPress={() => handleKeyPress(num)}
             disabled={num === null}
           >
-            <Text className="text-xl font-bold text-navy dark:text-slate-200">
-              {num === "del" ? "⌫" : (num ?? "")}
-            </Text>
+            {num === "del" ? (
+              <Image
+                source={require("../../../assets/icons/review-delete.png")}
+                style={{ width: 22, height: 22 }}
+                contentFit="contain"
+                tintColor="#64748B"
+              />
+            ) : (
+              <Text className="text-xl font-bold text-navy dark:text-slate-200">
+                {num ?? ""}
+              </Text>
+            )}
           </Pressable>
         ))}
       </View>
@@ -121,7 +135,12 @@ export default function PinSetupScreen() {
 
       {/* Info card */}
       <View className="bg-primary-50 dark:bg-primary-950/20 rounded-2xl p-4 mb-6 flex-row items-center border border-primary-100/50 dark:border-primary-900/30">
-        <Text className="text-lg mr-3">ℹ️</Text>
+        <Image
+          source={require("../../../assets/icons/settings-security.png")}
+          style={{ width: 22, height: 22, marginRight: 12 }}
+          contentFit="contain"
+          tintColor="#0D9E94"
+        />
         <Text className="text-xs text-primary-750 dark:text-primary-300 flex-1 leading-relaxed">
           {"Your PIN keeps your data private. You'll use this PIN to unlock the app."}
         </Text>
@@ -132,7 +151,7 @@ export default function PinSetupScreen() {
         onPress={handleContinue}
         loading={isLoading}
         disabled={currentPin.length !== 4 || isLoading}
-        iconRight={<Text className="text-white ml-2">→</Text>}
+        iconRight={<Text className="text-white ml-2 font-bold">→</Text>}
       />
     </View>
   );

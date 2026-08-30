@@ -81,10 +81,10 @@ export default function SignupScreen() {
       <View className="px-8 py-10 bg-white dark:bg-slate-950">
         {/* Header */}
         <View className="items-center mb-8">
-          <View className="w-16 h-16 rounded-2xl bg-primary-50 dark:bg-primary-950/20 items-center justify-center mb-4">
+          <View className="w-36 h-36 rounded-[32px] bg-primary-50 dark:bg-primary-950/20 items-center justify-center mb-4 shadow-sm">
             <Image
               source={require("../../../assets/logo.png")}
-              style={{ width: 40, height: 40 }}
+              style={{ width: 104, height: 104 }}
               contentFit="contain"
             />
           </View>
@@ -102,7 +102,14 @@ export default function SignupScreen() {
             value={fullName}
             onChangeText={setFullName}
             editable={!isLoading}
-            icon={<Text className="text-lg">👤</Text>}
+            icon={
+              <Image
+                source={require("../../../assets/icons/np-person.png")}
+                style={{ width: 20, height: 20 }}
+                contentFit="contain"
+                tintColor="#9CA3AF"
+              />
+            }
           />
           <Input
             label="Region / Village"
@@ -110,7 +117,14 @@ export default function SignupScreen() {
             value={region}
             onChangeText={setRegion}
             editable={!isLoading}
-            icon={<Text className="text-lg">📍</Text>}
+            icon={
+              <Image
+                source={require("../../../assets/icons/np-location.png")}
+                style={{ width: 20, height: 20 }}
+                contentFit="contain"
+                tintColor="#9CA3AF"
+              />
+            }
           />
           <Input
             label="Email Address"
@@ -119,7 +133,14 @@ export default function SignupScreen() {
             onChangeText={setEmail}
             keyboardType="email-address"
             editable={!isLoading}
-            icon={<Text className="text-lg">✉️</Text>}
+            icon={
+              <Image
+                source={require("../../../assets/icons/np-envelope.png")}
+                style={{ width: 20, height: 20 }}
+                contentFit="contain"
+                tintColor="#9CA3AF"
+              />
+            }
           />
           <Input
             label="Password"
@@ -128,7 +149,14 @@ export default function SignupScreen() {
             onChangeText={setPassword}
             secureTextEntry
             editable={!isLoading}
-            icon={<Text className="text-lg">🔒</Text>}
+            icon={
+              <Image
+                source={require("../../../assets/splash-screens/privacy-matters-lock.png")}
+                style={{ width: 20, height: 20 }}
+                contentFit="contain"
+                tintColor="#9CA3AF"
+              />
+            }
           />
           <Input
             label="Confirm Password"
@@ -137,7 +165,14 @@ export default function SignupScreen() {
             onChangeText={setConfirmPassword}
             secureTextEntry
             editable={!isLoading}
-            icon={<Text className="text-lg">🛡️</Text>}
+            icon={
+              <Image
+                source={require("../../../assets/icons/settings-security.png")}
+                style={{ width: 20, height: 20 }}
+                contentFit="contain"
+                tintColor="#9CA3AF"
+              />
+            }
           />
         </View>
 
@@ -148,7 +183,12 @@ export default function SignupScreen() {
         {/* Offline Warning Card */}
         {isOffline && (
           <View className="bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/30 rounded-xl p-4 mb-4 flex-row items-center">
-            <Text className="text-lg mr-3">⚠️</Text>
+            <Image
+              source={require("../../../assets/icons/offline-cloud.png")}
+              style={{ width: 24, height: 24, marginRight: 12 }}
+              contentFit="contain"
+              tintColor="#EA580C"
+            />
             <View className="flex-1">
               <Text className="text-sm font-semibold text-orange-800 dark:text-orange-300">
                 Connection Required

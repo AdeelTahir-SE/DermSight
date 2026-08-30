@@ -109,11 +109,20 @@ export default function EditPatientScreen() {
     }
   };
 
-  const selectGender = async (option: "male" | "female" | "other") => {
+  const selectGender = (option: "male" | "female" | "other") => {
     try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {}
+      if (Platform.OS !== "web") {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      }
+    } catch {}
     setSex(option);
+    if (errors.sex) {
+      setErrors((prev: Record<string, string>) => {
+        const next = { ...prev };
+        delete next.sex;
+        return next;
+      });
+    }
   };
 
   if (loading) {
@@ -208,36 +217,35 @@ export default function EditPatientScreen() {
           <View className="mb-2">
             <Text className="text-sm font-medium text-navy dark:text-slate-200 mb-1.5">Gender *</Text>
             <View className="flex-row gap-3">
-              {(["male", "female", "other"] as const).map((option) => (
-                <Pressable
-                  key={option}
-                  onPress={() => selectGender(option)}
-                  disabled={saving}
-                  className={`flex-1 py-3.5 rounded-xl border flex-row items-center justify-center gap-1.5 ${
-                    sex === option
-                      ? "border-primary bg-primary-50 dark:bg-primary-950/20 shadow-sm"
-                      : "border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900"
-                  }`}
-                >
-                  <Text className="text-base">
-                    {option === "male" ? "👨" : option === "female" ? "👩" : "👥"}
-                  </Text>
-                  <Text
-                    className={`text-sm font-semibold ${
-                      sex === option ? "text-primary dark:text-primary-400" : "text-gray-500 dark:text-slate-400"
+              {(["male", "female", "other"] as const).map((option) => {
+                const isSelected = sex === option;
+                return (
+                  <Pressable
+                    key={option}
+                    onPress={() => selectGender(option)}
+                    disabled={saving}
+                    className={`flex-1 py-3.5 rounded-xl border flex-row items-center justify-center gap-1.5 ${
+                      isSelected
+                        ? "border-primary bg-primary-50 dark:bg-primary-950/20 shadow-sm"
+                        : "border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900"
                     }`}
                   >
-                    {option === "male"
-                      ? "Male"
-                      : option === "female"
-                        ? "Female"
-                        : "Other"}
-                  </Text>
-                  {sex === option && (
-                    <Text className="text-primary dark:text-primary-400 font-bold text-xs">✓</Text>
-                  )}
-                </Pressable>
-              ))}
+                    <Image
+                      source={require("../../../../../assets/icons/profile-gender.png")}
+                      style={{ width: 16, height: 16 }}
+                      contentFit="contain"
+                      tintColor={isSelected ? "#0D9E94" : "#9CA3AF"}
+                    />
+                    <Text
+                      className={`text-sm font-semibold capitalize ${
+                        isSelected ? "text-primary dark:text-primary-400" : "text-gray-500 dark:text-slate-400"
+                      }`}
+                    >
+                      {option}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
             {errors.sex && (
               <Text className="text-sm text-red-500 dark:text-red-400 mt-1">{errors.sex}</Text>

@@ -90,10 +90,10 @@ export default function LoginScreen() {
       <View className="px-8 py-10 bg-white dark:bg-slate-950">
         {/* Header */}
         <View className="items-center mb-8">
-          <View className="w-16 h-16 rounded-2xl bg-primary-50 dark:bg-primary-950/20 items-center justify-center mb-4">
+          <View className="w-36 h-36 rounded-[32px] bg-primary-50 dark:bg-primary-950/20 items-center justify-center mb-4 shadow-sm">
             <Image
               source={require("../../../assets/logo.png")}
-              style={{ width: 40, height: 40 }}
+              style={{ width: 104, height: 104 }}
               contentFit="contain"
             />
           </View>
@@ -135,9 +135,18 @@ export default function LoginScreen() {
                   onPress={() => handleKeyPress(num)}
                   disabled={num === null}
                 >
-                  <Text className="text-xl font-bold text-navy dark:text-slate-200">
-                    {num === "del" ? "⌫" : (num ?? "")}
-                  </Text>
+                  {num === "del" ? (
+                    <Image
+                      source={require("../../../assets/icons/review-delete.png")}
+                      style={{ width: 22, height: 22 }}
+                      contentFit="contain"
+                      tintColor="#64748B"
+                    />
+                  ) : (
+                    <Text className="text-xl font-bold text-navy dark:text-slate-200">
+                      {num ?? ""}
+                    </Text>
+                  )}
                 </Pressable>
               ))}
             </View>
@@ -150,7 +159,14 @@ export default function LoginScreen() {
               placeholder="Enter your email or worker ID."
               value={email}
               onChangeText={setEmail}
-              icon={<Text className="text-lg">👤</Text>}
+              icon={
+                <Image
+                  source={require("../../../assets/icons/np-person.png")}
+                  style={{ width: 20, height: 20 }}
+                  contentFit="contain"
+                  tintColor="#9CA3AF"
+                />
+              }
             />
             <Input
               label="Password / PIN"
@@ -158,7 +174,14 @@ export default function LoginScreen() {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-              icon={<Text className="text-lg">🔒</Text>}
+              icon={
+                <Image
+                  source={require("../../../assets/splash-screens/privacy-matters-lock.png")}
+                  style={{ width: 20, height: 20 }}
+                  contentFit="contain"
+                  tintColor="#9CA3AF"
+                />
+              }
             />
             <View className="flex-row items-center mb-6 mt-1">
               <View className="w-5 h-5 rounded border border-green-500 bg-green-500 dark:bg-green-600 items-center justify-center mr-2">
@@ -194,7 +217,23 @@ export default function LoginScreen() {
               setPin("");
             }}
             variant="outline"
-            icon={<Text className="mr-2">{pinMode ? "✉️" : "🔢"}</Text>}
+            icon={
+              pinMode ? (
+                <Image
+                  source={require("../../../assets/icons/np-envelope.png")}
+                  style={{ width: 18, height: 18, marginRight: 8 }}
+                  contentFit="contain"
+                  tintColor="#0D9E94"
+                />
+              ) : (
+                <Image
+                  source={require("../../../assets/icons/settings-change-pin.png")}
+                  style={{ width: 18, height: 18, marginRight: 8 }}
+                  contentFit="contain"
+                  tintColor="#0D9E94"
+                />
+              )
+            }
           />
         ) : null}
 
@@ -209,7 +248,12 @@ export default function LoginScreen() {
         {/* Offline notice */}
         {isOffline && (
           <View className="flex-row items-center bg-gray-50 dark:bg-slate-900 border border-gray-100/50 dark:border-slate-800 rounded-2xl p-4 mt-6">
-            <Text className="text-lg mr-3">📡</Text>
+            <Image
+              source={require("../../../assets/icons/offline-cloud.png")}
+              style={{ width: 24, height: 24, marginRight: 12 }}
+              contentFit="contain"
+              tintColor="#64748B"
+            />
             <View className="flex-1">
               <Text className="text-sm font-semibold text-gray-700 dark:text-slate-200">
                 You are offline

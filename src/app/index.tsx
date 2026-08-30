@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 
 export default function SplashScreen() {
@@ -17,6 +18,7 @@ export default function SplashScreen() {
   const { isAuthenticated, pinSet, isInitialized } = useAuthStore();
   const [currentSlide, setCurrentSlide] = useState(0);
   const { width: screenWidth } = useWindowDimensions();
+  const { bottom: bottomInset } = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -76,10 +78,10 @@ export default function SplashScreen() {
         >
           <View className="flex-1 items-center justify-center">
             {/* Logo */}
-            <View className="w-32 h-32 rounded-3xl bg-primary-50 dark:bg-primary-950/20 items-center justify-center mb-8">
+            <View className="w-52 h-52 rounded-[44px] bg-primary-50 dark:bg-primary-950/20 items-center justify-center mb-8 shadow-sm">
               <Image
                 source={require("../../assets/logo.png")}
-                style={{ width: 80, height: 80 }}
+                style={{ width: 156, height: 156 }}
                 contentFit="contain"
               />
             </View>
@@ -101,13 +103,13 @@ export default function SplashScreen() {
         </View>
 
         {/* Slide 2: Features */}
-        <View className="px-8 justify-center bg-white dark:bg-slate-950" style={{ width: screenWidth }}>
-          <View className="flex-1 justify-center">
-            <Text className="text-2xl font-bold text-center mb-2">
+        <View className="px-6 justify-center bg-white dark:bg-slate-950" style={{ width: screenWidth }}>
+          <View className="flex-1 justify-center py-4">
+            <Text className="text-2xl font-bold text-center mb-1.5">
               <Text className="text-navy dark:text-slate-100">Smart Screening, </Text>
               <Text className="text-primary dark:text-primary-400">Better Outcomes</Text>
             </Text>
-            <Text className="text-sm text-gray-500 dark:text-slate-400 text-center mb-8">
+            <Text className="text-xs text-gray-500 dark:text-slate-400 text-center mb-5">
               DermSight helps you screen, assess and refer with confidence.
             </Text>
 
@@ -131,17 +133,21 @@ export default function SplashScreen() {
         </View>
 
         {/* Slide 3: Permissions */}
-        <View className="px-8 justify-center bg-white dark:bg-slate-950" style={{ width: screenWidth }}>
-          <View className="flex-1 justify-center">
-            {/* Shield icon */}
-            <View className="w-20 h-20 rounded-full bg-primary-50 dark:bg-primary-950/20 items-center justify-center self-center mb-6">
-              <Text className="text-3xl">🛡️</Text>
+        <View className="px-6 justify-center bg-white dark:bg-slate-950" style={{ width: screenWidth }}>
+          <View className="flex-1 justify-center py-4">
+            {/* Privacy Shield icon */}
+            <View className="w-24 h-24 rounded-3xl bg-primary-50 dark:bg-primary-950/20 items-center justify-center self-center mb-4">
+              <Image
+                source={require("../../assets/splash-screens/privacy-matters.png")}
+                style={{ width: 76, height: 76 }}
+                contentFit="contain"
+              />
             </View>
 
-            <Text className="text-2xl font-bold text-navy dark:text-slate-100 text-center mb-2">
+            <Text className="text-2xl font-bold text-navy dark:text-slate-100 text-center mb-1.5">
               Your Privacy Matters
             </Text>
-            <Text className="text-sm text-gray-500 dark:text-slate-400 text-center mb-8">
+            <Text className="text-xs text-gray-500 dark:text-slate-400 text-center mb-4">
               We need a few permissions to help DermSight work properly.
             </Text>
 
@@ -157,13 +163,17 @@ export default function SplashScreen() {
             />
             <PermissionRow
               icon={require("../../assets/icons/location-pin.png")}
-              label="Location (Optional)"
+              label="Location"
               description="Add location to patient records for better follow-up."
             />
 
-            <View className="flex-row items-center justify-center mt-6 bg-gray-50 dark:bg-slate-900 rounded-xl p-3">
-              <Text className="text-xs">🔒</Text>
-              <Text className="text-xs text-gray-500 dark:text-slate-400 ml-2">
+            <View className="flex-row items-center mt-3 bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl p-3">
+              <Image
+                source={require("../../assets/splash-screens/privacy-matters-lock.png")}
+                style={{ width: 24, height: 24, marginRight: 10 }}
+                contentFit="contain"
+              />
+              <Text className="text-xs text-gray-500 dark:text-slate-400 flex-1 leading-snug">
                 We never share your personal data. All data is encrypted and secure.
               </Text>
             </View>
@@ -171,8 +181,25 @@ export default function SplashScreen() {
         </View>
       </ScrollView>
 
-      {/* Bottom section */}
-      <View className="px-8 pb-10 pt-4 bg-white dark:bg-slate-950">
+      {/* Bottom section positioned above system navigation bar */}
+      <View
+        className="px-8 pt-2 bg-white dark:bg-slate-950"
+        style={{ paddingBottom: Math.max(bottomInset + 32, 54) }}
+      >
+        {/* Pagination dots */}
+        <View className="flex-row justify-center mb-4 gap-2">
+          {[0, 1, 2].map((i) => (
+            <View
+              key={i}
+              className={`h-2.5 rounded-full ${
+                i === currentSlide
+                  ? "w-8 bg-primary"
+                  : "w-2.5 bg-gray-200 dark:bg-slate-800"
+              }`}
+            />
+          ))}
+        </View>
+
         <Button
           title={
             currentSlide === 2
@@ -184,18 +211,6 @@ export default function SplashScreen() {
           onPress={handleGetStarted}
           iconRight={<Text className="text-white ml-2">→</Text>}
         />
-
-        {/* Pagination dots */}
-        <View className="flex-row justify-center mt-6 gap-2">
-          {[0, 1, 2].map((i) => (
-            <View
-              key={i}
-              className={`w-2.5 h-2.5 rounded-full ${
-                i === currentSlide ? "bg-primary" : "bg-gray-200 dark:bg-slate-800"
-              }`}
-            />
-          ))}
-        </View>
       </View>
     </View>
   );
@@ -211,17 +226,17 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <View className="flex-row bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-4 mb-3 shadow-sm">
-      <View className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-950/20 items-center justify-center mr-3">
+    <View className="flex-row items-center bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-3 mb-3 shadow-sm">
+      <View className="w-16 h-16 rounded-2xl bg-gray-50 dark:bg-slate-800 items-center justify-center mr-3.5">
         <Image
           source={icon}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 44, height: 44 }}
           contentFit="contain"
         />
       </View>
       <View className="flex-1">
-        <Text className="text-sm font-semibold text-navy dark:text-slate-200 mb-0.5">{title}</Text>
-        <Text className="text-xs text-gray-500 dark:text-slate-400">{description}</Text>
+        <Text className="text-base font-semibold text-navy dark:text-slate-200 mb-0.5">{title}</Text>
+        <Text className="text-xs text-gray-500 dark:text-slate-400 leading-snug">{description}</Text>
       </View>
     </View>
   );
@@ -237,19 +252,18 @@ function PermissionRow({
   description: string;
 }) {
   return (
-    <View className="flex-row items-center bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-4 mb-3">
-      <View className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-slate-800 items-center justify-center mr-3">
+    <View className="flex-row items-center bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-3 mb-3">
+      <View className="w-16 h-16 rounded-2xl bg-gray-50 dark:bg-slate-800 items-center justify-center mr-3.5">
         <Image
           source={icon}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 44, height: 44 }}
           contentFit="contain"
         />
       </View>
       <View className="flex-1">
-        <Text className="text-sm font-medium text-navy dark:text-slate-200">{label}</Text>
-        <Text className="text-xs text-gray-500 dark:text-slate-400">{description}</Text>
+        <Text className="text-base font-medium text-navy dark:text-slate-200 mb-0.5">{label}</Text>
+        <Text className="text-xs text-gray-500 dark:text-slate-400 leading-snug">{description}</Text>
       </View>
-      <Text className="text-gray-300 dark:text-slate-700 text-lg">›</Text>
     </View>
   );
 }

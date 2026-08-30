@@ -165,9 +165,7 @@ export default function SettingsScreen() {
       );
       const infos = await Promise.all(
         names.map((name) =>
-          FileSystem.getInfoAsync(FileSystem.cacheDirectory + name, {
-            size: true,
-          }),
+          FileSystem.getInfoAsync(FileSystem.cacheDirectory + name),
         ),
       );
       return infos.reduce(
