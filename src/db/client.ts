@@ -28,6 +28,17 @@ export function initializeDatabase(): void {
     );
   `);
 
+  // Clean up legacy placeholder names from SQLite users table
+  try {
+    expo.execSync(`
+      UPDATE users 
+      SET full_name = '' 
+      WHERE full_name IN ('Health Worker', 'Community Health Worker', 'Aisha', 'HW', 'User');
+    `);
+  } catch (err) {
+    console.error("Failed to clean legacy user names:", err);
+  }
+
   expo.execSync(`
     CREATE TABLE IF NOT EXISTS patients (
       id TEXT PRIMARY KEY NOT NULL,

@@ -42,9 +42,6 @@ export default function HomeScreen() {
             <Text className="text-xl font-bold text-navy">
               Hello, {workerName || "User"}
             </Text>
-            <Text className="text-sm text-gray-500">
-              Community Health Worker
-            </Text>
           </View>
           <View className="flex-row items-center gap-3">
             <View className="flex-row items-center">

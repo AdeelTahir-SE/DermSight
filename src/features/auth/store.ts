@@ -17,14 +17,22 @@ interface AuthState extends AuthSession {
   loginWithEmail: (email: string, password: string) => Promise<boolean>;
   setupPin: (pin: string, workerName: string) => Promise<void>;
   signUp: (email: string, password: string, fullName: string, region: string) => Promise<{ success: boolean; needsConfirmation?: boolean; error?: string }>;
+  updateWorkerName: (name: string) => Promise<void>;
   logout: () => Promise<void>;
   reset: () => void;
+}
+
+const INVALID_NAMES = new Set(["Health Worker", "Aisha", "User", "HW", "Community Health Worker"]);
+
+function isInvalidName(name?: string | null): boolean {
+  if (!name || !name.trim()) return true;
+  return INVALID_NAMES.has(name.trim());
 }
 
 async function resolveWorkerName(userId?: string): Promise<string> {
   // 1. Try SecureStorage
   let storedName = await SecureStorage.getWorkerName();
-  if (storedName && storedName.trim() && storedName.trim() !== "Health Worker") {
+  if (storedName && !isInvalidName(storedName)) {
     return storedName.trim();
   }
 
@@ -32,13 +40,13 @@ async function resolveWorkerName(userId?: string): Promise<string> {
   try {
     if (userId) {
       const userRow = db.select().from(users).where(eq(users.id, userId)).get();
-      if (userRow?.fullName && userRow.fullName.trim() && userRow.fullName.trim() !== "Health Worker") {
+      if (userRow?.fullName && !isInvalidName(userRow.fullName)) {
         await SecureStorage.saveWorkerName(userRow.fullName.trim());
         return userRow.fullName.trim();
       }
     }
     const firstUser = db.select().from(users).get();
-    if (firstUser?.fullName && firstUser.fullName.trim() && firstUser.fullName.trim() !== "Health Worker") {
+    if (firstUser?.fullName && !isInvalidName(firstUser.fullName)) {
       await SecureStorage.saveWorkerName(firstUser.fullName.trim());
       return firstUser.fullName.trim();
     }
@@ -57,7 +65,7 @@ async function resolveWorkerName(userId?: string): Promise<string> {
         .maybeSingle();
 
       const fullName = workerRow?.full_name || authData.user.user_metadata?.full_name;
-      if (fullName && fullName.trim() && fullName.trim() !== "Health Worker") {
+      if (fullName && !isInvalidName(fullName)) {
         await SecureStorage.saveWorkerName(fullName.trim());
         return fullName.trim();
       }
@@ -66,7 +74,7 @@ async function resolveWorkerName(userId?: string): Promise<string> {
     console.error("Error fetching worker profile from Supabase:", err);
   }
 
-  return storedName || "";
+  return (!isInvalidName(storedName) ? storedName?.trim() : "") || "";
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -241,13 +249,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const pinHashVal = await hashPin(pin);
       await SecureStorage.savePinHash(pinHashVal);
-      await SecureStorage.saveWorkerName(workerName);
 
       const existingUserId = get().userId;
       const userId = existingUserId || `local-${Date.now().toString(36)}`;
       
       if (!existingUserId) {
         await SecureStorage.saveUserId(userId);
+      }
+
+      let validName = (!isInvalidName(workerName) ? workerName.trim() : "");
+      if (!validName) {
+        validName = await resolveWorkerName(userId);
+      }
+      if (validName) {
+        await SecureStorage.saveWorkerName(validName);
       }
 
       const email = get().email || (await SecureStorage.getUserEmail()) || "";
@@ -258,7 +273,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         db.update(users)
           .set({
             pinHash: pinHashVal,
-            fullName: workerName,
+            ...(validName ? { fullName: validName } : {}),
           })
           .where(eq(users.id, userId))
           .run();
@@ -266,7 +281,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         db.insert(users)
           .values({
             id: userId,
-            fullName: workerName,
+            fullName: validName || "User",
             region: "Local",
             pinHash: pinHashVal,
             supabaseUserId: "local",
@@ -277,7 +292,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       set({
         userId,
-        workerName,
+        workerName: validName || get().workerName,
         email,
         pinSet: true,
         isAuthenticated: true,
@@ -377,6 +392,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ isLoading: false });
       return { success: false, error: e?.message || "Email signup failed" };
     }
+  },
+
+  updateWorkerName: async (name: string) => {
+    const trimmed = name.trim();
+    if (isInvalidName(trimmed)) return;
+
+    await SecureStorage.saveWorkerName(trimmed);
+    const userId = get().userId;
+    if (userId) {
+      db.update(users)
+        .set({ fullName: trimmed })
+        .where(eq(users.id, userId))
+        .run();
+    } else {
+      const firstUser = db.select().from(users).get();
+      if (firstUser) {
+        db.update(users)
+          .set({ fullName: trimmed })
+          .where(eq(users.id, firstUser.id))
+          .run();
+      }
+    }
+    set({ workerName: trimmed });
   },
 
   logout: async () => {

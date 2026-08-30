@@ -15,7 +15,7 @@ export default function PinSetupScreen() {
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [error, setError] = useState("");
-  const [workerName, setWorkerName] = useState("Aisha");
+  const [workerName, setWorkerName] = useState("");
 
   const currentPin = step === "enter" ? pin : confirmPin;
   const setCurrentPin = step === "enter" ? setPin : setConfirmPin;

@@ -2,14 +2,26 @@
  * Settings screen — language, model, account, data export, logout.
  */
 
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { useAuthStore } from "@/features/auth/store";
 import { runSync } from "@/features/sync/syncEngine";
 import { useRouter } from "expo-router";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { useState } from "react";
+import { Alert, Modal, Pressable, ScrollView, Text, View } from "react-native";
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { logout, workerName, email } = useAuthStore();
+  const { logout, workerName, email, updateWorkerName } = useAuthStore();
+  const [showEditName, setShowEditName] = useState(false);
+  const [nameInput, setNameInput] = useState(workerName || "");
+
+  const handleSaveName = async () => {
+    if (nameInput.trim()) {
+      await updateWorkerName(nameInput.trim());
+      setShowEditName(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert("Log Out", "Are you sure you want to log out?", [
@@ -30,6 +42,47 @@ export default function SettingsScreen() {
       className="flex-1 bg-gray-50"
       showsVerticalScrollIndicator={false}
     >
+      {/* Edit Name Modal */}
+      <Modal
+        visible={showEditName}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowEditName(false)}
+      >
+        <View className="flex-1 bg-black/50 justify-center px-6">
+          <View className="bg-white rounded-2xl p-6 shadow-xl">
+            <Text className="text-xl font-bold text-navy mb-1">
+              Edit Your Name
+            </Text>
+            <Text className="text-xs text-gray-500 mb-4">
+              Enter your name to display on your profile and assessments.
+            </Text>
+            <Input
+              label="Full Name"
+              placeholder="Enter your full name"
+              value={nameInput}
+              onChangeText={setNameInput}
+            />
+            <View className="flex-row gap-3 mt-4">
+              <View className="flex-1">
+                <Button
+                  title="Cancel"
+                  variant="outline"
+                  onPress={() => setShowEditName(false)}
+                />
+              </View>
+              <View className="flex-1">
+                <Button
+                  title="Save Name"
+                  onPress={handleSaveName}
+                  disabled={!nameInput.trim()}
+                />
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Header */}
       <View className="bg-navy px-5 pt-12 pb-6 rounded-b-[28px] shadow-sm">
         <Text className="text-2xl font-bold text-white">Settings</Text>
@@ -37,32 +90,37 @@ export default function SettingsScreen() {
       </View>
 
       {/* Profile Card */}
-      <View className="bg-white m-5 p-5 rounded-2xl border border-gray-100 flex-row items-center shadow-sm">
+      <Pressable
+        onPress={() => {
+          setNameInput(workerName || "");
+          setShowEditName(true);
+        }}
+        className="bg-white m-5 p-5 rounded-2xl border border-gray-100 flex-row items-center shadow-sm"
+      >
         <View className="w-14 h-14 rounded-full bg-primary-50 items-center justify-center mr-4">
           <Text className="text-2xl">👩‍⚕️</Text>
         </View>
         <View className="flex-1">
-          <Text className="text-lg font-bold text-navy">{workerName || "User Profile"}</Text>
-          <Text className="text-xs text-gray-500">Community Health Worker</Text>
+          <View className="flex-row items-center justify-between">
+            <Text className="text-lg font-bold text-navy">{workerName || "Set Your Name"}</Text>
+            <Text className="text-xs text-primary font-semibold">Edit ✏️</Text>
+          </View>
           {email ? (
-            <Text className="text-xs text-gray-400 mt-1">{email}</Text>
+            <Text className="text-xs text-gray-500 mt-1">{email}</Text>
           ) : null}
         </View>
-      </View>
+      </Pressable>
 
       <View className="px-5 pb-5">
         {/* Account & Security */}
         <SectionHeader title="Account & Security" />
         <SettingsRow
           icon="👤"
-          title="Profile"
-          subtitle="View your profile details."
+          title="Edit Profile Name"
+          subtitle={workerName ? `Current: ${workerName}` : "Tap to set your full name."}
           onPress={() => {
-            Alert.alert(
-              "Profile Details",
-              `Name: ${workerName || "N/A"}\nEmail: ${email || "Offline local account"}\nRole: Community Health Worker`,
-              [{ text: "OK" }]
-            );
+            setNameInput(workerName || "");
+            setShowEditName(true);
           }}
         />
         <SettingsRow
