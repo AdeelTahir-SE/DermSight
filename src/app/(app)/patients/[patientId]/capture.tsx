@@ -11,6 +11,7 @@ import {
 } from "expo-camera";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useRef, useState } from "react";
+import { useAssessmentsStore } from "@/features/assessments/store";
 import {
     ActivityIndicator,
     Pressable,
@@ -20,6 +21,7 @@ import {
 } from "react-native";
 
 export default function CaptureScreen() {
+  const { setCapturedImageUri } = useAssessmentsStore();
   const {
     patientId: rawPatientId,
     patientid: fallbackPatientId,
@@ -98,6 +100,7 @@ export default function CaptureScreen() {
         });
 
       if (photo?.uri) {
+        setCapturedImageUri(photo.uri);
         router.push({
           pathname: `/(app)/patients/${patientId}/review`,
           params: { imageUri: photo.uri },

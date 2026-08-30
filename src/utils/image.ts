@@ -80,3 +80,21 @@ export async function getFileSizeKB(uri: string): Promise<number> {
   }
   return 0;
 }
+
+/**
+ * Recursively decode a URI string to handle single/double URL encoding from router parameters.
+ */
+export function safeDecodeURI(uri?: string | null): string {
+  if (!uri) return "";
+  let decoded = uri;
+  try {
+    while (decoded.includes("%")) {
+      const next = decodeURIComponent(decoded);
+      if (next === decoded) break;
+      decoded = next;
+    }
+  } catch {
+    // If decoding fails, return current string
+  }
+  return decoded;
+}

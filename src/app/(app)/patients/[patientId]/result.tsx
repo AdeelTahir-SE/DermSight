@@ -8,6 +8,7 @@ import { DIAGNOSIS_LABELS } from "@/constants/riskLevels";
 import { useAssessmentsStore } from "@/features/assessments/store";
 import { useAuthStore } from "@/features/auth/store";
 import type { InferenceResult } from "@/types";
+import { safeDecodeURI } from "@/utils/image";
 import { Image } from "expo-image";
 import * as FileSystem from "expo-file-system";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -31,7 +32,7 @@ export default function ResultScreen() {
   const patientId = rawPatientId || fallbackPatientId || "";
 
   const router = useRouter();
-  const { saveAssessment } = useAssessmentsStore();
+  const { saveAssessment, capturedImageUri, setCapturedImageUri } = useAssessmentsStore();
   const { userId } = useAuthStore();
 
   const [inferenceResult, setInferenceResult] = useState<InferenceResult | null>(null);
@@ -95,8 +96,9 @@ export default function ResultScreen() {
             }
           }
         }
-        if (imageUri) {
-          setDisplayImage(decodeURIComponent(imageUri));
+        const activeUri = capturedImageUri || safeDecodeURI(imageUri);
+        if (activeUri) {
+          setDisplayImage(activeUri);
         }
         setLoading(false);
       }
@@ -129,7 +131,8 @@ export default function ResultScreen() {
     if (!inferenceResult) return;
     setSaving(true);
     try {
-      await saveAssessment(patientId, displayImage || imageUri || "", inferenceResult, userId);
+      await saveAssessment(patientId, displayImage || capturedImageUri || safeDecodeURI(imageUri) || "", inferenceResult, userId);
+      setCapturedImageUri(null);
       router.replace(`/(app)/patients/${patientId}`);
     } catch (e) {
       console.error("Failed to save assessment:", e);

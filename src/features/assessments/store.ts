@@ -9,6 +9,7 @@ import * as repo from "./repository";
 interface AssessmentsState {
   assessments: Assessment[];
   currentAssessment: Assessment | null;
+  capturedImageUri: string | null;
   totalCount: number;
   pendingSyncCount: number;
   isLoading: boolean;
@@ -18,6 +19,7 @@ interface AssessmentsState {
   loadAll: () => Promise<void>;
   loadCounts: () => Promise<void>;
   setCurrentAssessment: (assessment: Assessment | null) => void;
+  setCapturedImageUri: (uri: string | null) => void;
   saveAssessment: (
     patientId: string,
     imageUri: string,
@@ -29,9 +31,12 @@ interface AssessmentsState {
 export const useAssessmentsStore = create<AssessmentsState>((set) => ({
   assessments: [],
   currentAssessment: null,
+  capturedImageUri: null,
   totalCount: 0,
   pendingSyncCount: 0,
   isLoading: false,
+
+  setCapturedImageUri: (uri) => set({ capturedImageUri: uri }),
 
   loadByPatient: async (patientId: string) => {
     set({ isLoading: true });

@@ -5,6 +5,8 @@
 
 import { Button } from "@/components/ui/Button";
 import { runInference } from "@/features/assessments/inference/classify";
+import { useAssessmentsStore } from "@/features/assessments/store";
+import { safeDecodeURI } from "@/utils/image";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useState } from "react";
@@ -17,6 +19,7 @@ import {
 } from "react-native";
 
 export default function ReviewScreen() {
+  const { capturedImageUri } = useAssessmentsStore();
   const {
     patientId: rawPatientId,
     patientid: fallbackPatientId,
@@ -27,20 +30,20 @@ export default function ReviewScreen() {
     imageUri?: string;
   }>();
   const patientId = rawPatientId || fallbackPatientId || "";
-  const decodedImageUri = imageUri ? decodeURIComponent(imageUri) : "";
+  const activeImageUri = capturedImageUri || safeDecodeURI(imageUri);
   const router = useRouter();
   const [analyzing, setAnalyzing] = useState(false);
 
   const handleAnalyze = async () => {
     setAnalyzing(true);
     try {
-      const result = await runInference(decodedImageUri || "captured_image");
+      const result = await runInference(activeImageUri || "captured_image");
 
       router.push({
         pathname: `/(app)/patients/${patientId}/result`,
         params: {
           result: JSON.stringify(result),
-          imageUri: decodedImageUri,
+          imageUri: activeImageUri,
         },
       } as Href);
     } catch (e) {
@@ -74,9 +77,9 @@ export default function ReviewScreen() {
 
           {/* Captured image preview */}
           <View className="w-full aspect-square bg-gray-100 rounded-2xl mb-4 overflow-hidden border border-gray-200">
-            {decodedImageUri ? (
+            {activeImageUri ? (
               <Image
-                source={{ uri: decodedImageUri }}
+                source={{ uri: activeImageUri }}
                 style={{ width: "100%", height: "100%" }}
                 contentFit="cover"
                 transition={200}
