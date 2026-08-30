@@ -9,6 +9,7 @@ import "../../global.css";
 import { ToastContainer } from "@/components/ui/ToastContainer";
 import { initializeDatabase } from "@/db/client";
 import { useAuthStore } from "@/features/auth/store";
+import { configureLocalNotifications } from "@/features/notifications/localNotifications";
 import { usePreferencesStore } from "@/features/preferences/store";
 import {
     registerBackgroundSync,
@@ -38,6 +39,7 @@ export default function RootLayout() {
       try {
         await initializeTheme();
         await loadSavedLanguage();
+        configureLocalNotifications();
         await usePreferencesStore.getState().initializePreferences();
         initializeDatabase();
         setDbReady(true);
@@ -91,3 +93,5 @@ export default function RootLayout() {
     </I18nextProvider>
   );
 }
+
+

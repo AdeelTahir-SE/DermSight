@@ -7,6 +7,8 @@ import {
   type FlashMode,
 } from "expo-camera";
 import * as Haptics from "expo-haptics";
+import * as ImagePicker from "expo-image-picker";
+import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useRef, useState } from "react";
@@ -57,7 +59,7 @@ export default function CaptureScreen() {
           onPress={async () => {
             try {
               await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            } catch (e) {}
+            } catch {}
             requestPermission();
           }}
           className="bg-primary px-8 py-4 rounded-xl"
@@ -86,7 +88,7 @@ export default function CaptureScreen() {
           onPress={async () => {
             try {
               await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            } catch (e) {}
+            } catch {}
             router.back();
           }}
           className="bg-white/20 px-8 py-3 rounded-xl"
@@ -97,13 +99,48 @@ export default function CaptureScreen() {
     );
   }
 
+  const openReview = (imageUri: string) => {
+    setCapturedImageUri(imageUri);
+    router.push({
+      pathname: `/(app)/patients/${patientId}/review`,
+      params: { imageUri },
+    } as Href);
+  };
+
+  const handleImportFromGallery = async () => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {}
+
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        toast.error(t("capture:galleryPermission"));
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.9,
+        exif: true,
+      });
+
+      if (!result.canceled && result.assets[0]?.uri) {
+        openReview(result.assets[0].uri);
+      }
+    } catch {
+      toast.error(t("capture:galleryFailed"));
+    }
+  };
   const handleCapture = async () => {
     if (!cameraRef.current || !isCameraReady || isCapturing) return;
 
     setIsCapturing(true);
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (e) {}
+    } catch {}
 
     try {
       const photo: CameraCapturedPicture | undefined =
@@ -114,14 +151,9 @@ export default function CaptureScreen() {
         });
 
       if (photo?.uri) {
-        setCapturedImageUri(photo.uri);
-        router.push({
-          pathname: `/(app)/patients/${patientId}/review`,
-          params: { imageUri: photo.uri },
-        } as Href);
+        openReview(photo.uri);
       }
-    } catch (error) {
-      console.error("[CaptureScreen] Capture failed:", error);
+    } catch {
       toast.error(
         t("capture:captureFailed") || "Capture failed. Please try again.",
       );
@@ -133,7 +165,7 @@ export default function CaptureScreen() {
   const toggleFlash = async () => {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {}
+    } catch {}
     setFlash((prev) =>
       prev === "off" ? "on" : prev === "on" ? "auto" : "off",
     );
@@ -142,14 +174,14 @@ export default function CaptureScreen() {
   const toggleFacing = async () => {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {}
+    } catch {}
     setFacing((prev) => (prev === "back" ? "front" : "back"));
   };
 
   const handleTipsToggle = async () => {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {}
+    } catch {}
     setShowTips(!showTips);
   };
 
@@ -174,7 +206,7 @@ export default function CaptureScreen() {
           onPress={async () => {
             try {
               await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            } catch (e) {}
+            } catch {}
             router.back();
           }}
           className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
@@ -252,15 +284,7 @@ export default function CaptureScreen() {
         {/* Shutter + side controls */}
         <View className="flex-row items-center justify-between mb-4">
           <Pressable
-            onPress={async () => {
-              try {
-                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              } catch (e) {}
-              toast.info(
-                t("capture:galleryDisabled") ||
-                  "Import from gallery is disabled. Use the live camera for diagnostics.",
-              );
-            }}
+            onPress={handleImportFromGallery}
             className="items-center"
           >
             <View className="w-12 h-12 rounded-xl bg-white/10 items-center justify-center mb-1">
@@ -362,3 +386,5 @@ export default function CaptureScreen() {
     </View>
   );
 }
+
+
