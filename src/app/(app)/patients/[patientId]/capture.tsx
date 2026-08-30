@@ -1,13 +1,15 @@
+import { useAssessmentsStore } from "@/features/assessments/store";
+import { toast } from "@/features/notifications/toastStore";
 import { useCameraPermissions } from "@/hooks/useCameraPermissions";
 import {
   CameraView,
   type CameraCapturedPicture,
   type FlashMode,
 } from "expo-camera";
+import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useRef, useState } from "react";
-import { useAssessmentsStore } from "@/features/assessments/store";
-import { toast } from "@/features/notifications/toastStore";
 import {
   ActivityIndicator,
   Pressable,
@@ -15,17 +17,14 @@ import {
   Text,
   View,
 } from "react-native";
-import * as Haptics from "expo-haptics";
 
 export default function CaptureScreen() {
   const { setCapturedImageUri } = useAssessmentsStore();
-  const {
-    patientId: rawPatientId,
-    patientid: fallbackPatientId,
-  } = useLocalSearchParams<{
-    patientId?: string;
-    patientid?: string;
-  }>();
+  const { patientId: rawPatientId, patientid: fallbackPatientId } =
+    useLocalSearchParams<{
+      patientId?: string;
+      patientid?: string;
+    }>();
   const patientId = rawPatientId || fallbackPatientId || "";
   const router = useRouter();
   const cameraRef = useRef<CameraView>(null);
@@ -36,6 +35,7 @@ export default function CaptureScreen() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [showTips, setShowTips] = useState(false);
+  const [activeTab, setActiveTab] = useState<"photo" | "guide">("photo");
 
   // Permission not yet determined — show loading
   if (status === "undetermined") {
@@ -48,7 +48,8 @@ export default function CaptureScreen() {
           Camera Access Required
         </Text>
         <Text className="text-white/60 text-sm text-center mb-8">
-          DermSight needs camera access to capture images of skin lesions for assessment.
+          DermSight needs camera access to capture images of skin lesions for
+          assessment.
         </Text>
         <Pressable
           onPress={async () => {
@@ -76,7 +77,8 @@ export default function CaptureScreen() {
           Camera Access Denied
         </Text>
         <Text className="text-white/60 text-sm text-center mb-6">
-          Please enable camera access in your device settings to capture lesion images.
+          Please enable camera access in your device settings to capture lesion
+          images.
         </Text>
         <Pressable
           onPress={async () => {
@@ -147,8 +149,7 @@ export default function CaptureScreen() {
     setShowTips(!showTips);
   };
 
-  const flashIcon = flash === "off" ? "⚡" : flash === "on" ? "⚡" : "🔄";
-  const flashLabel = flash.toUpperCase();
+  const flashActive = flash !== "off";
 
   return (
     <View style={StyleSheet.absoluteFill} className="bg-black">
@@ -164,7 +165,7 @@ export default function CaptureScreen() {
       />
 
       {/* Top bar */}
-      <View className="flex-row items-center justify-between px-5 pt-4 pb-4 absolute top-0 left-0 right-0 z-10">
+      <View className="flex-row items-center justify-between px-5 pt-12 pb-4 absolute top-0 left-0 right-0 z-10">
         <Pressable
           onPress={async () => {
             try {
@@ -174,68 +175,98 @@ export default function CaptureScreen() {
           }}
           className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
         >
-          <Text className="text-white text-xl">✕</Text>
+          <Image
+            source={require("../../../../assets/icons/capture-close.png")}
+            style={{ width: 20, height: 20 }}
+            contentFit="contain"
+            tintColor="#FFFFFF"
+          />
         </Pressable>
-        <Pressable
-          onPress={toggleFlash}
-          className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
-        >
-          <Text className="text-white text-lg">{flashIcon}</Text>
-        </Pressable>
-        <Pressable
-          onPress={toggleFacing}
-          className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
-        >
-          <Text className="text-white text-lg">🔄</Text>
-        </Pressable>
+        <View className="flex-row gap-3">
+          <Pressable
+            onPress={toggleFlash}
+            className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
+          >
+            <Image
+              source={require("../../../../assets/icons/capture-light.png")}
+              style={{ width: 22, height: 22 }}
+              contentFit="contain"
+              tintColor={flashActive ? "#0D9E94" : "#FFFFFF"}
+            />
+          </Pressable>
+          <Pressable
+            onPress={toggleFacing}
+            className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
+          >
+            <Image
+              source={require("../../../../assets/icons/capture-camera.png")}
+              style={{ width: 22, height: 22 }}
+              contentFit="contain"
+              tintColor="#FFFFFF"
+            />
+          </Pressable>
+        </View>
       </View>
 
       {/* Instruction overlay */}
-      <View className="absolute top-24 left-5 right-5 bg-black/50 rounded-xl p-3 z-10">
-        <Text className="text-white text-sm text-center">
-          Position the lesion within the frame and ensure good lighting.
+      <View className="absolute top-28 left-8 right-8 bg-black/60 rounded-2xl py-3 px-4 z-10">
+        <Text className="text-white text-sm text-center leading-5">
+          Position the lesion within the frame{"\n"}and ensure good lighting
         </Text>
       </View>
 
       {/* Framing guide */}
       <View className="flex-1 items-center justify-center z-0">
-        <View className="w-64 h-64 relative">
-          {/* Corner brackets */}
-          <View className="absolute top-0 left-0 w-10 h-10 border-t-2 border-l-2 border-[#0D9E94] rounded-tl-lg" />
-          <View className="absolute top-0 right-0 w-10 h-10 border-t-2 border-r-2 border-[#0D9E94] rounded-tr-lg" />
-          <View className="absolute bottom-0 left-0 w-10 h-10 border-b-2 border-l-2 border-[#0D9E94] rounded-bl-lg" />
-          <View className="absolute bottom-0 right-0 w-10 h-10 border-b-2 border-r-2 border-[#0D9E94] rounded-br-lg" />
-
-          {/* Center crosshair */}
-          <View className="absolute top-1/2 left-1/2 -ml-4 -mt-0.5 w-8 h-1 bg-[#0D9E94]/50 rounded" />
-          <View className="absolute top-1/2 left-1/2 -ml-0.5 -mt-4 h-8 w-1 bg-[#0D9E94]/50 rounded" />
+        <View className="w-72 h-72 relative">
+          <View className="absolute top-0 left-0 w-12 h-12 border-t-[3px] border-l-[3px] border-[#0D9E94] rounded-tl-2xl" />
+          <View className="absolute top-0 right-0 w-12 h-12 border-t-[3px] border-r-[3px] border-[#0D9E94] rounded-tr-2xl" />
+          <View className="absolute bottom-0 left-0 w-12 h-12 border-b-[3px] border-l-[3px] border-[#0D9E94] rounded-bl-2xl" />
+          <View className="absolute bottom-0 right-0 w-12 h-12 border-b-[3px] border-r-[3px] border-[#0D9E94] rounded-br-2xl" />
         </View>
       </View>
 
       {/* Bottom controls */}
-      <View className="absolute bottom-0 left-0 right-0 bg-black/80 pb-12 pt-4 px-5 rounded-t-3xl z-10">
-        {/* Flash indicator */}
-        <View className="flex-row justify-center mb-2">
-          <View className="bg-black/40 rounded-full px-3 py-1">
-            <Text className="text-white/70 text-xs font-medium">
-              Flash: {flashLabel}
+      <View className="absolute bottom-0 left-0 right-0 bg-black/85 pb-10 pt-4 px-6 rounded-t-3xl z-10">
+        {/* Tabs */}
+        <View className="flex-row justify-center mb-5">
+          <Pressable onPress={() => setActiveTab("photo")} className="mr-6">
+            <Text
+              className={`text-base font-semibold ${activeTab === "photo" ? "text-[#0D9E94]" : "text-white/60"}`}
+            >
+              PHOTO
             </Text>
-          </View>
+          </Pressable>
+          <Pressable onPress={() => setActiveTab("guide")}>
+            <Text
+              className={`text-base font-semibold ${activeTab === "guide" ? "text-[#0D9E94]" : "text-white/60"}`}
+            >
+              GUIDE
+            </Text>
+          </Pressable>
         </View>
 
         {/* Shutter + side controls */}
-        <View className="flex-row items-center justify-around">
-          {/* Gallery placeholder */}
+        <View className="flex-row items-center justify-between mb-4">
           <Pressable
             onPress={async () => {
               try {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               } catch (e) {}
-              toast.info("Import from gallery is disabled. Use the live camera for diagnostics.");
+              toast.info(
+                "Import from gallery is disabled. Use the live camera for diagnostics.",
+              );
             }}
-            className="w-12 h-12 rounded-xl bg-white/10 items-center justify-center"
+            className="items-center"
           >
-            <Text className="text-white text-xl">🖼️</Text>
+            <View className="w-12 h-12 rounded-xl bg-white/10 items-center justify-center mb-1">
+              <Image
+                source={require("../../../../assets/icons/capture-gallery.png")}
+                style={{ width: 24, height: 24 }}
+                contentFit="contain"
+                tintColor="#FFFFFF"
+              />
+            </View>
+            <Text className="text-white text-xs">Gallery</Text>
           </Pressable>
 
           {/* Shutter button */}
@@ -243,52 +274,84 @@ export default function CaptureScreen() {
             onPress={handleCapture}
             disabled={isCapturing}
             className="items-center justify-center"
-            style={{ width: 72, height: 72 }}
+            style={{ width: 76, height: 76 }}
           >
             <View
-              className="rounded-full border-4 border-white items-center justify-center"
-              style={{ width: 72, height: 72 }}
+              className="rounded-full border-[4px] border-white items-center justify-center"
+              style={{ width: 76, height: 76 }}
             >
               <View
-                className={`rounded-full ${isCapturing ? "bg-gray-400" : "bg-white"} items-center justify-center`}
-                style={{ width: 56, height: 56 }}
+                className={`rounded-full items-center justify-center ${isCapturing ? "bg-gray-400" : "bg-white"}`}
+                style={{ width: 60, height: 60 }}
               >
                 {isCapturing && (
-                  <ActivityIndicator
-                    size="small"
-                    color="#0D9E94"
-                  />
+                  <ActivityIndicator size="small" color="#0D9E94" />
                 )}
               </View>
             </View>
           </Pressable>
 
-          {/* Tips toggle */}
-          <Pressable
-            onPress={handleTipsToggle}
-            className="w-12 h-12 rounded-xl bg-white/10 items-center justify-center"
-          >
-            <Text className="text-white text-xl">💡</Text>
+          <Pressable onPress={handleTipsToggle} className="items-center">
+            <View className="w-12 h-12 rounded-xl bg-white/10 items-center justify-center mb-1">
+              <Image
+                source={require("../../../../assets/icons/capture-tips.png")}
+                style={{ width: 24, height: 24 }}
+                contentFit="contain"
+                tintColor="#FFFFFF"
+              />
+            </View>
+            <Text className="text-white text-xs">Tips</Text>
           </Pressable>
         </View>
 
         {/* Expandable tips */}
         {showTips && (
-          <View className="mt-4 bg-white/10 rounded-xl p-3 gap-1">
-            <Text className="text-white/80 text-xs text-left">
-              ☀️ Use natural light when possible
-            </Text>
-            <Text className="text-white/80 text-xs text-left">
-              🎯 Keep the lesion centered and in focus
-            </Text>
-            <Text className="text-white/80 text-xs text-left">
-              📐 Capture the entire lesion with some surrounding skin
-            </Text>
-            <Text className="text-white/80 text-xs text-left">
-              🚫 Avoid shadows and glare on the skin
-            </Text>
+          <View className="bg-white/10 rounded-2xl p-4">
+            <View className="flex-row items-start mb-2">
+              <Text className="text-white/90 text-xs mr-2">•</Text>
+              <Text className="text-white/80 text-xs flex-1">
+                Use natural light when possible
+              </Text>
+            </View>
+            <View className="flex-row items-start mb-2">
+              <Text className="text-white/90 text-xs mr-2">•</Text>
+              <Text className="text-white/80 text-xs flex-1">
+                Keep the lesion centered and in focus
+              </Text>
+            </View>
+            <View className="flex-row items-start mb-2">
+              <Text className="text-white/90 text-xs mr-2">•</Text>
+              <Text className="text-white/80 text-xs flex-1">
+                Capture the entire lesion with some surrounding skin
+              </Text>
+            </View>
+            <View className="flex-row items-start">
+              <Text className="text-white/90 text-xs mr-2">•</Text>
+              <Text className="text-white/80 text-xs flex-1">
+                Avoid shadows and glare on the skin
+              </Text>
+            </View>
           </View>
         )}
+
+        {/* Guide card */}
+        <View className="mt-4 bg-white/10 rounded-2xl p-4 flex-row items-center">
+          <Image
+            source={require("../../../../assets/icons/capture-tips.png")}
+            style={{ width: 28, height: 28, marginRight: 12 }}
+            contentFit="contain"
+            tintColor="#0D9E94"
+          />
+          <View className="flex-1">
+            <Text className="text-white text-sm font-semibold">
+              Capture clear, close-up image
+            </Text>
+            <Text className="text-white/60 text-xs mt-0.5">
+              Avoid shadows and keep steady
+            </Text>
+          </View>
+          <Text className="text-white/60 text-lg">⌄</Text>
+        </View>
       </View>
     </View>
   );
