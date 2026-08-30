@@ -44,8 +44,13 @@ export default function CaptureScreen() {
   if (status === "undetermined") {
     return (
       <View className="flex-1 bg-black items-center justify-center px-8">
-        <View className="w-20 h-20 rounded-full bg-primary/20 items-center justify-center mb-6">
-          <Text className="text-4xl">📷</Text>
+        <View className="w-24 h-24 rounded-full bg-primary/20 border border-primary/40 items-center justify-center mb-6">
+          <Image
+            source={require("../../../../../assets/icons/camera.png")}
+            style={{ width: 52, height: 52 }}
+            contentFit="contain"
+            tintColor="#0D9E94"
+          />
         </View>
         <Text className="text-white text-xl font-bold text-center mb-2">
           {t("capture:cameraRequired") || "Camera Access Required"}
@@ -75,7 +80,14 @@ export default function CaptureScreen() {
   if (status === "denied") {
     return (
       <View className="flex-1 bg-black items-center justify-center px-8">
-        <Text className="text-5xl mb-4">🚫</Text>
+        <View className="w-24 h-24 rounded-full bg-red-950/60 border border-red-500/40 items-center justify-center mb-6">
+          <Image
+            source={require("../../../../../assets/icons/camera.png")}
+            style={{ width: 52, height: 52 }}
+            contentFit="contain"
+            tintColor="#EF4444"
+          />
+        </View>
         <Text className="text-white text-xl font-bold text-center mb-2">
           {t("capture:cameraDenied") || "Camera Access Denied"}
         </Text>
@@ -379,7 +391,6 @@ export default function CaptureScreen() {
               {t("capture:avoidShadows") || "Avoid shadows and keep steady"}
             </Text>
           </View>
-          <Text className="text-white/60 text-lg">⌄</Text>
         </View>
       </View>
     </View>

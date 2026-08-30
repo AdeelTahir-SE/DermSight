@@ -6,9 +6,8 @@ import { usePatientsStore } from "@/features/patients/store";
 import { toast } from "@/features/notifications/toastStore";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import { Platform, Pressable, ScrollView, Text, View } from "react-native";
-import * as Haptics from "expo-haptics";
+import React, { useState } from "react";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 export default function NewPatientScreen() {
   const router = useRouter();
@@ -74,19 +73,13 @@ export default function NewPatientScreen() {
   };
 
   const selectGender = (option: "male" | "female" | "other") => {
-    try {
-      if (Platform.OS !== "web") {
-        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-      }
-    } catch {}
     setSex(option);
-    if (errors.sex) {
-      setErrors((prev: Record<string, string>) => {
-        const next = { ...prev };
-        delete next.sex;
-        return next;
-      });
-    }
+    setErrors((prev: Record<string, string>) => {
+      if (!prev.sex) return prev;
+      const next = { ...prev };
+      delete next.sex;
+      return next;
+    });
   };
 
   return (
@@ -97,17 +90,13 @@ export default function NewPatientScreen() {
       {/* Header */}
       <View className="bg-navy dark:bg-slate-900 px-5 pt-12 pb-6 rounded-b-[28px] shadow-sm">
         <View className="flex-row items-center">
-          <Pressable
-            onPress={async () => {
-              try {
-                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              } catch (e) {}
-              router.back();
-            }}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => router.back()}
             className="mr-4 w-10 h-10 rounded-full bg-white/10 items-center justify-center border border-white/10"
           >
             <Text className="text-white text-xl">←</Text>
-          </Pressable>
+          </TouchableOpacity>
           <View>
             <Text className="text-xl font-bold text-white">
               New Patient Registration
@@ -183,8 +172,9 @@ export default function NewPatientScreen() {
               {(["male", "female", "other"] as const).map((option) => {
                 const isSelected = sex === option;
                 return (
-                  <Pressable
+                  <TouchableOpacity
                     key={option}
+                    activeOpacity={0.7}
                     onPress={() => selectGender(option)}
                     disabled={saving}
                     className={`flex-1 py-3.5 rounded-xl border flex-row items-center justify-center gap-1.5 ${
@@ -206,7 +196,7 @@ export default function NewPatientScreen() {
                     >
                       {option}
                     </Text>
-                  </Pressable>
+                  </TouchableOpacity>
                 );
               })}
             </View>

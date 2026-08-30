@@ -32,16 +32,25 @@ export default function ModelManagementScreen() {
   const [checking, setChecking] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
-  useEffect(() => {
-    void refreshModelInfo();
-  }, []);
-
   const refreshModelInfo = async () => {
     setLoading(true);
     const info = await getActiveModelInfo();
     setModelInfo(info);
     setLoading(false);
   };
+
+  useEffect(() => {
+    let isMounted = true;
+    getActiveModelInfo().then((info) => {
+      if (isMounted) {
+        setModelInfo(info);
+        setLoading(false);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const formatSize = (bytes: number | null) => {
     if (!bytes) return t("common:noData");

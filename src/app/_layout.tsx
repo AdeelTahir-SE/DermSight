@@ -22,8 +22,7 @@ import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "nativewind";
 import { useEffect, useState } from "react";
 import { I18nextProvider } from "react-i18next";
-import { View } from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -65,10 +64,7 @@ export default function RootLayout() {
   }, [resolvedTheme, setColorScheme]);
 
   if (!isInitialized || !dbReady) {
-    const isDark = resolvedTheme === "dark";
-    return (
-      <View className={`flex-1 ${isDark ? "bg-[#0B0F19]" : "bg-white"}`} />
-    );
+    return null;
   }
 
   const isDark = resolvedTheme === "dark";
@@ -78,17 +74,11 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <StatusBar style={isDark ? "light" : "dark"} />
         <ToastContainer />
-        <SafeAreaView
-          className="flex-1 bg-white dark:bg-slate-950"
-          style={{ flex: 1, backgroundColor: isDark ? "#0B0F19" : "#FFFFFF" }}
-          edges={["top", "left", "right"]}
-        >
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            <Stack.Screen name="(app)" options={{ headerShown: false }} />
-          </Stack>
-        </SafeAreaView>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="(app)" options={{ headerShown: false }} />
+        </Stack>
       </SafeAreaProvider>
     </I18nextProvider>
   );
