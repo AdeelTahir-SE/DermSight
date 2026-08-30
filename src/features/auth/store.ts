@@ -17,6 +17,7 @@ interface AuthState extends AuthSession {
   loginWithEmail: (email: string, password: string) => Promise<boolean>;
   setupPin: (pin: string, workerName: string) => Promise<void>;
   signUp: (email: string, password: string, fullName: string, region: string) => Promise<{ success: boolean; needsConfirmation?: boolean; error?: string }>;
+  handleSessionFromDeepLink: (supabaseUser: any) => Promise<{ success: boolean; pinSet?: boolean }>;
   updateWorkerName: (name: string) => Promise<void>;
   logout: () => Promise<void>;
   reset: () => void;
@@ -307,16 +308,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signUp: async (email: string, password: string, fullName: string, region: string) => {
     set({ isLoading: true });
     try {
-      // 1. Authenticate / Create user with Supabase Auth with metadata
+      // 1. Authenticate / Create user with Supabase Auth with metadata & deep link redirect
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo: "dermsight://auth/callback",
           data: {
             full_name: fullName,
             region: region,
-          }
-        }
+          },
+        },
       });
 
       if (error || !data.user) {
@@ -391,6 +393,86 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.error("Email signup failed:", e);
       set({ isLoading: false });
       return { success: false, error: e?.message || "Email signup failed" };
+    }
+  },
+
+  handleSessionFromDeepLink: async (supabaseUser: any) => {
+    set({ isLoading: true });
+    try {
+      let worker = null;
+      const { data: existingWorker } = await supabase
+        .from("health_workers")
+        .select("*")
+        .eq("supabase_user_id", supabaseUser.id)
+        .maybeSingle();
+
+      if (existingWorker) {
+        worker = existingWorker;
+      } else {
+        const fullName =
+          supabaseUser.user_metadata?.full_name ||
+          supabaseUser.email?.split("@")[0] ||
+          "Health Worker";
+        const region = supabaseUser.user_metadata?.region || "Local";
+
+        const { data: newWorker } = await supabase
+          .from("health_workers")
+          .insert({
+            supabase_user_id: supabaseUser.id,
+            full_name: fullName,
+            region: region,
+          })
+          .select()
+          .single();
+        worker = newWorker;
+      }
+
+      if (worker) {
+        await SecureStorage.saveUserId(worker.id);
+        await SecureStorage.saveWorkerName(worker.full_name);
+        await SecureStorage.saveUserEmail(supabaseUser.email || "");
+        const pinSet = await isPinSet();
+
+        const existingUser = db.select().from(users).where(eq(users.id, worker.id)).get();
+        if (existingUser) {
+          db.update(users)
+            .set({
+              fullName: worker.full_name,
+              region: worker.region,
+              supabaseUserId: supabaseUser.id,
+            })
+            .where(eq(users.id, worker.id))
+            .run();
+        } else {
+          db.insert(users)
+            .values({
+              id: worker.id,
+              fullName: worker.full_name,
+              region: worker.region,
+              pinHash: "",
+              supabaseUserId: supabaseUser.id,
+              createdAt: worker.created_at || new Date().toISOString(),
+            })
+            .run();
+        }
+
+        set({
+          userId: worker.id,
+          workerName: worker.full_name,
+          email: supabaseUser.email || "",
+          pinSet,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+
+        return { success: true, pinSet };
+      }
+      set({ isLoading: false });
+      return { success: false };
+    } catch (e) {
+      console.error("handleSessionFromDeepLink failed:", e);
+      set({ isLoading: false });
+      return { success: false };
     }
   },
 

@@ -9,6 +9,7 @@ import "../../global.css";
 import { ToastContainer } from "@/components/ui/ToastContainer";
 import { initializeDatabase } from "@/db/client";
 import { useAuthStore } from "@/features/auth/store";
+import { toast } from "@/features/notifications/toastStore";
 import { configureLocalNotifications } from "@/features/notifications/localNotifications";
 import { usePreferencesStore } from "@/features/preferences/store";
 import {
@@ -16,7 +17,9 @@ import {
     startConnectivityAutoSync,
 } from "@/features/sync/backgroundSync";
 import { useThemeStore } from "@/features/theme/store";
-import { Stack } from "expo-router";
+import { supabase } from "@/lib/supabase";
+import * as Linking from "expo-linking";
+import { router, Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "nativewind";
@@ -55,6 +58,80 @@ export default function RootLayout() {
     bootstrap();
     return () => {
       stopAutoSync?.();
+    };
+  }, []);
+
+  // Handle deep links from email confirmation redirect
+  useEffect(() => {
+    async function handleDeepLink(url: string | null) {
+      if (!url) return;
+
+      try {
+        if (
+          url.includes("access_token") ||
+          url.includes("#") ||
+          url.includes("type=signup") ||
+          url.includes("type=recovery") ||
+          url.includes("type=magiclink") ||
+          url.includes("type=email")
+        ) {
+          const hashOrQuery = url.includes("#") ? url.split("#")[1] : url.split("?")[1] || "";
+          const params = new URLSearchParams(hashOrQuery);
+          const accessToken = params.get("access_token");
+          const refreshToken = params.get("refresh_token");
+
+          if (accessToken && refreshToken) {
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+
+            if (!error && data.session?.user) {
+              const res = await useAuthStore.getState().handleSessionFromDeepLink(data.session.user);
+              toast.success("Email verified successfully!");
+              if (res.pinSet) {
+                router.replace("/(app)/home" as any);
+              } else {
+                router.replace("/(auth)/pin-setup" as any);
+              }
+              return;
+            }
+          }
+        }
+
+        if (url.includes("code=")) {
+          const queryPart = url.split("?")[1] || "";
+          const params = new URLSearchParams(queryPart);
+          const code = params.get("code");
+          if (code) {
+            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+            if (!error && data.session?.user) {
+              const res = await useAuthStore.getState().handleSessionFromDeepLink(data.session.user);
+              toast.success("Email verified successfully!");
+              if (res.pinSet) {
+                router.replace("/(app)/home" as any);
+              } else {
+                router.replace("/(auth)/pin-setup" as any);
+              }
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to process deep link URL:", err);
+      }
+    }
+
+    const subscription = Linking.addEventListener("url", ({ url }) => {
+      handleDeepLink(url);
+    });
+
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink(url);
+    });
+
+    return () => {
+      subscription.remove();
     };
   }, []);
 
