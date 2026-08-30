@@ -3,11 +3,11 @@ schema_version: 1
 locale: en-US
 branch: main
 nodes_managed: true
-exported_at: "2026-08-27T13:03:57Z"
+exported_at: "2026-08-30T07:17:37Z"
 modules:
     "":
-        dir_name: DermSight Expo Project Root (Configuration, Assets & Architecture Docs)
-        title: DermSight Expo Project Root (Configuration, Assets & Architecture Docs)
+        dir_name: DermSight Project Root & Build Configuration
+        title: DermSight Project Root & Build Configuration
         scope:
             - README.md
             - ARCHITECTURE.md

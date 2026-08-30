@@ -4,12 +4,23 @@
 **Referenced Files in This Document**
 - [schema.ts](file://src/db/schema.ts)
 - [client.ts](file://src/db/client.ts)
+- [client.web.ts](file://src/db/client.web.ts)
 - [repository.ts (patients)](file://src/features/patients/repository.ts)
 - [repository.ts (assessments)](file://src/features/assessments/repository.ts)
 - [syncEngine.ts](file://src/features/sync/syncEngine.ts)
 - [index.ts (types)](file://src/types/index.ts)
 - [supabase.ts](file://src/lib/supabase.ts)
+- [date.ts](file://src/utils/date.ts)
+- [secureStorage.ts](file://src/lib/secureStorage.ts)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Added comprehensive web platform support with localStorage-based SQLite mock
+- Enhanced date parsing and validation to prevent NaN rendering issues
+- Implemented automatic data migration for malformed dates in localStorage
+- Improved platform compatibility across iOS, Android, and web environments
+- Updated architecture diagrams to reflect dual database implementation
 
 ## Table of Contents
 1. Introduction
@@ -24,12 +35,13 @@
 10. Appendices
 
 ## Introduction
-This document describes the data model and database design for DermSight’s local SQLite storage, implemented with Drizzle ORM. It covers entity relationships among users, patients, assessments, and the sync queue; field definitions, validation rules, and business constraints; schema diagrams; Drizzle-based type-safe operations; migration strategy; backup/restore guidance; data access patterns; security considerations; and performance optimization techniques.
+This document describes the data model and database design for DermSight's local storage system, implemented with Drizzle ORM and enhanced with cross-platform compatibility. The system supports both native SQLite storage for mobile platforms and a localStorage-based mock for web development environments. It covers entity relationships among users, patients, assessments, and the sync queue; field definitions, validation rules, and business constraints; schema diagrams; Drizzle-based type-safe operations; migration strategy; backup/restore guidance; data access patterns; security considerations; and performance optimization techniques.
 
 ## Project Structure
-The database layer is centralized under src/db:
+The database layer is centralized under src/db with platform-specific implementations:
 - Schema definitions are declared using Drizzle ORM types in schema.ts.
-- A client module initializes the SQLite database via expo-sqlite and creates tables on startup in client.ts.
+- Native SQLite client initializes the database via expo-sqlite in client.ts.
+- Web-specific localStorage mock provides development environment support in client.web.ts.
 - Feature repositories implement CRUD operations and queries over these tables.
 - The sync engine orchestrates background synchronization to a remote service using an outbox pattern.
 
@@ -38,6 +50,7 @@ graph TB
 subgraph "Database Layer"
 S["Schema (Drizzle Tables)"]
 C["Client (SQLite + Drizzle)"]
+CW["Web Client (localStorage Mock)"]
 end
 subgraph "Features"
 PRepo["Patients Repository"]
@@ -48,23 +61,29 @@ subgraph "Remote"
 Supa["Supabase Client"]
 end
 PRepo --> C
+PRepo --> CW
 ARepo --> C
+ARepo --> CW
 Sync --> C
+Sync --> CW
 Sync --> Supa
 C --> S
+CW --> S
 ```
 
 **Diagram sources**
 - [schema.ts:1-102](file://src/db/schema.ts#L1-L102)
-- [client.ts:1-104](file://src/db/client.ts#L1-L104)
-- [repository.ts (patients):1-128](file://src/features/patients/repository.ts#L1-L128)
-- [repository.ts (assessments):1-150](file://src/features/assessments/repository.ts#L1-L150)
-- [syncEngine.ts:1-145](file://src/features/sync/syncEngine.ts#L1-L145)
+- [client.ts:1-171](file://src/db/client.ts#L1-L171)
+- [client.web.ts:1-322](file://src/db/client.web.ts#L1-L322)
+- [repository.ts (patients):1-222](file://src/features/patients/repository.ts#L1-L222)
+- [repository.ts (assessments):1-161](file://src/features/assessments/repository.ts#L1-L161)
+- [syncEngine.ts:1-503](file://src/features/sync/syncEngine.ts#L1-L503)
 - [supabase.ts:1-18](file://src/lib/supabase.ts#L1-L18)
 
 **Section sources**
 - [schema.ts:1-102](file://src/db/schema.ts#L1-L102)
-- [client.ts:1-104](file://src/db/client.ts#L1-L104)
+- [client.ts:1-171](file://src/db/client.ts#L1-L171)
+- [client.web.ts:1-322](file://src/db/client.web.ts#L1-L322)
 
 ## Core Components
 - Users: Health worker identity and session linkage.
@@ -78,24 +97,26 @@ Key characteristics:
 - Foreign keys: assessments.patient_id -> patients.id; assessments.created_by -> users.id; patients.created_by -> users.id.
 - Enumerations enforced at schema level for sex, predicted_class, risk_tier, sync statuses, and operation types.
 - Timestamps stored as ISO strings for created_at, updated_at, captured_at, last_attempted_at, downloaded_at.
+- **Updated**: Cross-platform compatibility with localStorage fallback for web development environments.
 
 **Section sources**
 - [schema.ts:8-102](file://src/db/schema.ts#L8-L102)
-- [client.ts:19-101](file://src/db/client.ts#L19-L101)
+- [client.ts:19-171](file://src/db/client.ts#L19-L171)
+- [client.web.ts:236-322](file://src/db/client.web.ts#L236-L322)
 - [index.ts (types):5-84](file://src/types/index.ts#L5-L84)
 
 ## Architecture Overview
-The app follows an offline-first architecture where the local SQLite database is the single source of truth. UI reads/writes locally without blocking on network. Background sync uses an outbox pattern: writes enqueue operations into sync_queue, which the sync engine processes when online.
+The app follows an offline-first architecture where the local storage is the single source of truth. UI reads/writes locally without blocking on network. The system automatically selects between native SQLite (mobile) and localStorage (web) based on platform detection. Background sync uses an outbox pattern: writes enqueue operations into sync_queue, which the sync engine processes when online.
 
 ```mermaid
 sequenceDiagram
 participant UI as "UI"
 participant Repo as "Repository"
-participant DB as "SQLite (Drizzle)"
+participant DB as "Platform-Specific Storage"
 participant Sync as "Sync Engine"
 participant Remote as "Supabase"
 UI->>Repo : Create Patient / Assessment
-Repo->>DB : Insert row (patients/assessments)
+Repo->>DB : Insert row (SQLite or localStorage)
 Repo->>DB : Insert sync_queue item
 Note over Repo,DB : Immediate local write succeeds
 UI-->>UI : Continue without waiting for network
@@ -106,9 +127,9 @@ Sync->>DB : Update sync_queue status (done/failed)
 ```
 
 **Diagram sources**
-- [repository.ts (patients):44-101](file://src/features/patients/repository.ts#L44-L101)
-- [repository.ts (assessments):53-122](file://src/features/assessments/repository.ts#L53-L122)
-- [syncEngine.ts:55-110](file://src/features/sync/syncEngine.ts#L55-L110)
+- [repository.ts (patients):44-118](file://src/features/patients/repository.ts#L44-L118)
+- [repository.ts (assessments):54-134](file://src/features/assessments/repository.ts#L54-L134)
+- [syncEngine.ts:60-176](file://src/features/sync/syncEngine.ts#L60-L176)
 - [supabase.ts:1-18](file://src/lib/supabase.ts#L1-L18)
 
 ## Detailed Component Analysis
@@ -190,7 +211,7 @@ USERS ||--o{ ASSESSMENTS : "created by"
 
 **Diagram sources**
 - [schema.ts:8-102](file://src/db/schema.ts#L8-L102)
-- [client.ts:19-101](file://src/db/client.ts#L19-L101)
+- [client.ts:19-171](file://src/db/client.ts#L19-L171)
 
 ### Data Model Definitions and Constraints
 
@@ -203,6 +224,7 @@ USERS ||--o{ ASSESSMENTS : "created by"
   - Fields: id (PK), first_name, last_name, date_of_birth, sex (enum male/female/other), phone, address, notes, latitude, longitude, captured_at, created_by (FK users.id), created_at, updated_at, sync_status (enum pending/synced/failed), remote_id.
   - Validation: Sex restricted to enum; required timestamps; optional geolocation; foreign key to users.
   - Business constraints: Represents a patient record; sync_status tracks upload state; remote_id links to server ID after sync.
+  - **Updated**: Enhanced date validation with automatic normalization to prevent NaN rendering issues.
 
 - Assessments
   - Fields: id (PK), patient_id (FK patients.id), image_local_uri, image_remote_url, predicted_class (enum mel/bcc/akiec/bkl/df/vasc/nv), class_probabilities (JSON string), abcd_asymmetry, abcd_border, abcd_color, abcd_diameter, risk_tier (enum low/medium/high/urgent_referral), confidence_score, model_version, body_location, latitude, longitude, captured_at, created_by (FK users.id), sync_status (enum pending/synced/failed), remote_id, created_at.
@@ -221,7 +243,8 @@ USERS ||--o{ ASSESSMENTS : "created by"
 
 **Section sources**
 - [schema.ts:8-102](file://src/db/schema.ts#L8-L102)
-- [client.ts:19-101](file://src/db/client.ts#L19-L101)
+- [client.ts:19-171](file://src/db/client.ts#L19-L171)
+- [client.web.ts:236-322](file://src/db/client.web.ts#L236-L322)
 - [index.ts (types):5-84](file://src/types/index.ts#L5-L84)
 
 ### Data Access Patterns
@@ -243,14 +266,15 @@ USERS ||--o{ ASSESSMENTS : "created by"
 
 ```mermaid
 flowchart TD
-Start(["Create Patient"]) --> InsertPatient["Insert into patients"]
+Start(["Create Patient"]) --> NormalizeDate["Normalize date_of_birth"]
+NormalizeDate --> InsertPatient["Insert into patients"]
 InsertPatient --> Enqueue["Insert sync_queue (entity_type=patient, operation=create)"]
 Enqueue --> ReturnPatient["Return patient object"]
 ReturnPatient --> End(["Done"])
 ```
 
 **Diagram sources**
-- [repository.ts (patients):44-101](file://src/features/patients/repository.ts#L44-L101)
+- [repository.ts (patients):44-118](file://src/features/patients/repository.ts#L44-L118)
 
 ```mermaid
 flowchart TD
@@ -261,12 +285,12 @@ ReturnAssessment --> EndA(["Done"])
 ```
 
 **Diagram sources**
-- [repository.ts (assessments):53-122](file://src/features/assessments/repository.ts#L53-L122)
+- [repository.ts (assessments):54-134](file://src/features/assessments/repository.ts#L54-L134)
 
 ```mermaid
 sequenceDiagram
 participant SE as "Sync Engine"
-participant DB as "SQLite"
+participant DB as "Platform-Specific Storage"
 participant Net as "Network Check"
 participant Up as "Upload"
 SE->>Net : isConnected()
@@ -293,32 +317,36 @@ end
 ```
 
 **Diagram sources**
-- [syncEngine.ts:55-110](file://src/features/sync/syncEngine.ts#L55-L110)
+- [syncEngine.ts:60-176](file://src/features/sync/syncEngine.ts#L60-L176)
 
 **Section sources**
-- [repository.ts (patients):13-42](file://src/features/patients/repository.ts#L13-L42)
-- [repository.ts (assessments):11-51](file://src/features/assessments/repository.ts#L11-L51)
-- [syncEngine.ts:24-50](file://src/features/sync/syncEngine.ts#L24-L50)
+- [repository.ts (patients):13-118](file://src/features/patients/repository.ts#L13-L118)
+- [repository.ts (assessments):12-134](file://src/features/assessments/repository.ts#L12-L134)
+- [syncEngine.ts:29-176](file://src/features/sync/syncEngine.ts#L29-L176)
 
 ### Drizzle ORM Implementation
 - Type safety: Drizzle schema defines column types and constraints; TypeScript interfaces mirror runtime shapes.
 - Queries: Use drizzle-orm functions like select, insert, update, delete with eq, like, or, desc for ordering.
 - Raw SQL fallback: Initialization uses raw SQL CREATE TABLE statements to ensure consistent schema creation on device.
+- **Updated**: Platform abstraction layer that automatically switches between SQLite and localStorage implementations.
 
 Best practices observed:
 - Centralized schema definitions in schema.ts.
 - Consistent timestamp handling via ISO strings.
 - JSON payloads stored as TEXT for complex structures (e.g., class_probabilities, sync_queue.payload).
+- **Updated**: Robust error handling and data validation across all platforms.
 
 **Section sources**
 - [schema.ts:1-102](file://src/db/schema.ts#L1-L102)
-- [client.ts:1-104](file://src/db/client.ts#L1-L104)
-- [repository.ts (patients):1-128](file://src/features/patients/repository.ts#L1-L128)
-- [repository.ts (assessments):1-150](file://src/features/assessments/repository.ts#L1-L150)
+- [client.ts:1-171](file://src/db/client.ts#L1-L171)
+- [client.web.ts:1-322](file://src/db/client.web.ts#L1-L322)
+- [repository.ts (patients):1-222](file://src/features/patients/repository.ts#L1-L222)
+- [repository.ts (assessments):1-161](file://src/features/assessments/repository.ts#L1-L161)
 
 ### Migration Strategy
 Current implementation:
-- Tables are created via raw SQL in initializeDatabase during app startup.
+- Tables are created via raw SQL in initializeDatabase during app startup for native platforms.
+- Web platform includes automatic data cleanup and migration for malformed date formats.
 - No explicit migration framework is present; schema changes require updating both schema.ts and the raw SQL in client.ts.
 
 Recommended evolution approach:
@@ -326,44 +354,50 @@ Recommended evolution approach:
 - Wrap schema changes in transactional scripts that add columns, rename fields, or rebuild indexes safely.
 - Maintain backward compatibility by adding new columns before deprecating old ones.
 - Version schema changes alongside app releases and apply migrations on startup.
+- **Updated**: Enhanced web platform migration handling for localStorage data integrity.
 
 **Section sources**
-- [client.ts:19-101](file://src/db/client.ts#L19-L101)
+- [client.ts:19-171](file://src/db/client.ts#L19-L171)
+- [client.web.ts:243-315](file://src/db/client.web.ts#L243-L315)
 
 ### Backup and Restore Procedures
 Observed behavior:
-- The app uses expo-sqlite to open a local database file named dermsight.db.
+- The app uses expo-sqlite to open a local database file named dermsight.db for native platforms.
+- Web platform uses localStorage for data persistence.
 - No built-in backup/restore logic is implemented in the codebase.
 
 Recommended procedures:
-- Backup: Copy the SQLite database file from device storage to secure cloud storage or local export.
+- **Native Platforms**: Copy the SQLite database file from device storage to secure cloud storage or local export.
+- **Web Platform**: Export localStorage data for patients, sync_queue, and other tables.
 - Restore: Replace the database file with a previously backed-up copy and reinitialize the app to load the restored schema.
 - Ensure backups include associated media (images) referenced by image_local_uri if needed for full recovery.
 
 Note: Implement application-level backup triggers or scheduled exports to automate this process.
-
-[No sources needed since this section provides general guidance]
 
 ### Security Measures
 Observed measures:
 - PIN hashing stored in users.pin_hash for authentication.
 - App messaging indicates encryption and privacy commitments.
 - Supabase client configured for auth persistence and token refresh.
+- **Updated**: Platform-specific secure storage using expo-secure-store for mobile and localStorage for web development.
 
 Recommendations for healthcare data:
 - Enable SQLite encryption at rest (e.g., SQLCipher integration) to protect sensitive data on device.
 - Restrict database access to authenticated sessions; enforce PIN checks before exposing features.
 - Apply least privilege principles for any remote endpoints; validate and sanitize inputs.
 - Comply with applicable regulations (e.g., HIPAA) by ensuring audit trails, consent management, and data minimization.
+- **Updated**: Enhanced security considerations for web localStorage usage in development environments.
 
 **Section sources**
 - [schema.ts:8-16](file://src/db/schema.ts#L8-L16)
 - [supabase.ts:1-18](file://src/lib/supabase.ts#L1-L18)
+- [secureStorage.ts:1-155](file://src/lib/secureStorage.ts#L1-L155)
 
 ### Performance Optimization
 Current state:
 - No explicit indexes are defined beyond primary keys.
 - Queries use ORDER BY created_at and WHERE clauses on id, patient_id, and sync_status.
+- **Updated**: localStorage-based web implementation provides fast in-memory operations for development.
 
 Recommended indexing strategies:
 - Add indexes on frequently queried columns:
@@ -378,29 +412,34 @@ Query optimization tips:
 - Limit result sets with pagination for large lists.
 - Use selective projections to fetch only necessary columns.
 - Batch updates for bulk operations to reduce transaction overhead.
+- **Updated**: Leverage localStorage efficiency for web development workflows.
 
 Data archiving policies:
 - Archive older assessments or patients to cold storage while keeping lightweight summaries in the active dataset.
 - Purge completed sync_queue entries periodically to maintain performance.
 
 **Section sources**
-- [repository.ts (patients):13-42](file://src/features/patients/repository.ts#L13-L42)
-- [repository.ts (assessments):11-51](file://src/features/assessments/repository.ts#L11-L51)
-- [syncEngine.ts:24-50](file://src/features/sync/syncEngine.ts#L24-L50)
+- [repository.ts (patients):13-118](file://src/features/patients/repository.ts#L13-L118)
+- [repository.ts (assessments):12-134](file://src/features/assessments/repository.ts#L12-L134)
+- [syncEngine.ts:29-176](file://src/features/sync/syncEngine.ts#L29-L176)
 
 ## Dependency Analysis
 - Features depend on the db client for type-safe queries.
 - Repositories import schema entities to construct queries and inserts.
 - Sync engine depends on connectivity checks and updates sync_queue status based on outcomes.
 - Supabase client is used for remote sync but does not affect local schema.
+- **Updated**: Platform abstraction layer enables seamless switching between SQLite and localStorage implementations.
 
 ```mermaid
 graph LR
 Types["Types (index.ts)"] --> RepoP["Patients Repository"]
 Types --> RepoA["Assessments Repository"]
 Schema["Schema (schema.ts)"] --> Client["Client (client.ts)"]
+Schema --> WebClient["Web Client (client.web.ts)"]
 Client --> RepoP
 Client --> RepoA
+WebClient --> RepoP
+WebClient --> RepoA
 RepoP --> Sync["Sync Engine"]
 RepoA --> Sync
 Sync --> Supa["Supabase Client"]
@@ -409,24 +448,24 @@ Sync --> Supa["Supabase Client"]
 **Diagram sources**
 - [index.ts (types):5-84](file://src/types/index.ts#L5-L84)
 - [schema.ts:1-102](file://src/db/schema.ts#L1-L102)
-- [client.ts:1-104](file://src/db/client.ts#L1-L104)
-- [repository.ts (patients):1-128](file://src/features/patients/repository.ts#L1-L128)
-- [repository.ts (assessments):1-150](file://src/features/assessments/repository.ts#L1-L150)
-- [syncEngine.ts:1-145](file://src/features/sync/syncEngine.ts#L1-L145)
+- [client.ts:1-171](file://src/db/client.ts#L1-L171)
+- [client.web.ts:1-322](file://src/db/client.web.ts#L1-L322)
+- [repository.ts (patients):1-222](file://src/features/patients/repository.ts#L1-L222)
+- [repository.ts (assessments):1-161](file://src/features/assessments/repository.ts#L1-L161)
+- [syncEngine.ts:1-503](file://src/features/sync/syncEngine.ts#L1-L503)
 - [supabase.ts:1-18](file://src/lib/supabase.ts#L1-L18)
 
 **Section sources**
-- [repository.ts (patients):1-128](file://src/features/patients/repository.ts#L1-L128)
-- [repository.ts (assessments):1-150](file://src/features/assessments/repository.ts#L1-L150)
-- [syncEngine.ts:1-145](file://src/features/sync/syncEngine.ts#L1-L145)
+- [repository.ts (patients):1-222](file://src/features/patients/repository.ts#L1-L222)
+- [repository.ts (assessments):1-161](file://src/features/assessments/repository.ts#L1-L161)
+- [syncEngine.ts:1-503](file://src/features/sync/syncEngine.ts#L1-L503)
 
 ## Performance Considerations
 - Add targeted indexes to support frequent queries and improve sync throughput.
 - Use pagination and filtering to reduce memory footprint on large datasets.
 - Optimize JSON parsing/serialization for class_probabilities and sync payloads.
 - Schedule periodic cleanup of sync_queue entries to prevent unbounded growth.
-
-[No sources needed since this section provides general guidance]
+- **Updated**: Leverage localStorage efficiency for rapid development iterations on web platform.
 
 ## Troubleshooting Guide
 Common issues and resolutions:
@@ -434,6 +473,8 @@ Common issues and resolutions:
 - Failed sync items: Inspect error logs; retry via retrySyncItem; adjust MAX_RETRIES and BASE_DELAY_MS if needed.
 - Data inconsistencies: Validate foreign key integrity between assessments and patients; ensure created_by references valid users.
 - Schema mismatch: Confirm initializeDatabase runs successfully; align schema.ts with raw SQL in client.ts.
+- **Updated**: Web platform issues - check localStorage permissions and data format validation.
+- **Updated**: Date parsing errors - verify date normalization functions are working correctly across platforms.
 
 Operational utilities:
 - getPendingSyncItems and getAllSyncItems for diagnostics.
@@ -441,13 +482,11 @@ Operational utilities:
 - retrySyncItem for manual intervention.
 
 **Section sources**
-- [syncEngine.ts:24-50](file://src/features/sync/syncEngine.ts#L24-L50)
-- [syncEngine.ts:115-125](file://src/features/sync/syncEngine.ts#L115-L125)
+- [syncEngine.ts:29-176](file://src/features/sync/syncEngine.ts#L29-L176)
+- [syncEngine.ts:181-191](file://src/features/sync/syncEngine.ts#L181-L191)
 
 ## Conclusion
-DermSight’s database design centers on a robust, offline-first SQLite schema with clear entity relationships and strict validation via Drizzle ORM. The outbox pattern ensures reliable synchronization to a remote service while maintaining responsiveness. To enhance performance and compliance, introduce indexes, formalize migrations, enable encryption at rest, and implement automated backup/restore workflows. These improvements will strengthen scalability, reliability, and privacy for healthcare data.
-
-[No sources needed since this section summarizes without analyzing specific files]
+DermSight's database design centers on a robust, offline-first storage system with clear entity relationships and strict validation via Drizzle ORM. The enhanced cross-platform architecture seamlessly supports both native SQLite for mobile platforms and localStorage for web development environments. The automatic data migration and validation systems ensure data integrity across all platforms while maintaining responsiveness. The outbox pattern ensures reliable synchronization to a remote service. To enhance performance and compliance, introduce indexes, formalize migrations, enable encryption at rest, and implement automated backup/restore workflows. These improvements will strengthen scalability, reliability, and privacy for healthcare data across all supported platforms.
 
 ## Appendices
 
@@ -469,6 +508,24 @@ DermSight’s database design centers on a robust, offline-first SQLite schema w
 - Pending sync items: SELECT * FROM sync_queue WHERE status = 'pending'.
 
 **Section sources**
-- [repository.ts (patients):13-42](file://src/features/patients/repository.ts#L13-L42)
-- [repository.ts (assessments):11-51](file://src/features/assessments/repository.ts#L11-L51)
-- [syncEngine.ts:24-50](file://src/features/sync/syncEngine.ts#L24-L50)
+- [repository.ts (patients):13-118](file://src/features/patients/repository.ts#L13-L118)
+- [repository.ts (assessments):12-134](file://src/features/assessments/repository.ts#L12-L134)
+- [syncEngine.ts:29-176](file://src/features/sync/syncEngine.ts#L29-L176)
+
+### Appendix C: Platform-Specific Implementation Details
+
+#### Native SQLite Implementation (Mobile Platforms)
+- Uses expo-sqlite for persistent storage
+- Full SQL schema enforcement with foreign key constraints
+- Transaction support for data integrity
+- File-based backup and restore capabilities
+
+#### Web localStorage Implementation (Development Environment)
+- In-memory storage with localStorage persistence
+- Automatic data migration for malformed dates
+- Simplified query operations with JavaScript array methods
+- Development-focused debugging and inspection capabilities
+
+**Section sources**
+- [client.ts:1-171](file://src/db/client.ts#L1-L171)
+- [client.web.ts:1-322](file://src/db/client.web.ts#L1-L322)

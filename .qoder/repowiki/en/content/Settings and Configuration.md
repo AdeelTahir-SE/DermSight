@@ -14,7 +14,22 @@
 - [secureStorage.ts](file://src/lib/secureStorage.ts)
 - [schema.ts](file://src/db/schema.ts)
 - [en.json](file://assets/locales/en.json)
+- [useConnectivity.ts](file://src/hooks/useConnectivity.ts)
+- [netinfo.ts](file://src/lib/netinfo.ts)
+- [syncEngine.ts](file://src/features/sync/syncEngine.ts)
+- [client.ts](file://src/db/client.ts)
+- [client.web.ts](file://src/db/client.web.ts)
+- [ConnectivityBanner.tsx](file://src/components/ui/ConnectivityBanner.tsx)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Enhanced error handling for file system operations, database queries, and network requests throughout the settings system
+- Improved connectivity detection with proper web initialization and graceful offline scenario handling
+- Added comprehensive offline support with cached data fallback and queued sync operations
+- Implemented platform compatibility improvements for secure storage operations with localStorage fallbacks
+- Updated model management interface with enhanced error handling and status reporting
+- Enhanced settings persistence with robust error recovery mechanisms
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -29,17 +44,18 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains DermSight’s settings and configuration system with a focus on:
-- The settings screen architecture for user preferences, language selection, and model management
-- The theme system powered by Tailwind CSS and shared design tokens
-- The risk level configuration that defines clinical thresholds and classification criteria used during assessments
-- Implementation patterns for persistence, preference management, and dynamic updates
-- Model management interface capabilities for versioning, updates, and rollback
-- Configuration validation, defaults, and migration strategies
-- How settings influence assessment results and overall user experience
+This document explains DermSight's enhanced settings and configuration system with comprehensive error handling, connectivity detection, and offline-first architecture. The system now provides:
+- Robust error handling for file system operations, database queries, and network requests
+- Advanced connectivity detection with proper web initialization and offline scenario handling
+- Graceful offline operation with cached data fallback and queued sync operations
+- Platform compatibility improvements for secure storage with localStorage fallbacks
+- Enhanced model management interface with version tracking and update capabilities
+- Comprehensive settings persistence with preference management and dynamic updates
+- Risk level configuration for clinical thresholds and classification criteria
+- Theme system using Tailwind CSS for consistent styling across platforms
 
 ## Project Structure
-The settings surface is organized under the app routes with dedicated screens for general settings, language selection, and model management. Supporting configuration lives in constants and libraries for internationalization, theming, and risk mapping.
+The settings surface is organized under app routes with dedicated screens for general settings, language selection, and model management. Supporting configuration includes enhanced error handling, connectivity detection, and platform-specific implementations.
 
 ```mermaid
 graph TB
@@ -48,178 +64,288 @@ S_INDEX["Settings Index"]
 S_LANG["Language Screen"]
 S_MODEL["Model Management Screen"]
 end
+subgraph "Enhanced Error Handling"
+EH_FILE["File System Operations"]
+EH_DB["Database Queries"]
+EH_NETWORK["Network Requests"]
+EH_STORAGE["Secure Storage"]
+end
+subgraph "Connectivity & Offline"
+CONN["Connectivity Detection"]
+OFFLINE["Offline Scenario Handler"]
+CACHE["Cached Data Fallback"]
+SYNC_QUEUE["Sync Queue Manager"]
+end
+subgraph "Platform Compatibility"
+WEB_DB["Web Database Client"]
+NATIVE_DB["Native Database Client"]
+SECURE_STORE["Secure Storage Fallbacks"]
+end
 subgraph "Configuration & Theme"
 T_THEME["Theme Constants"]
 T_TAILWIND["Tailwind Config"]
 I18N["i18n Initialization"]
 RISK["Risk Levels & Mapping"]
 end
-subgraph "Persistence & State"
-SEC["Secure Storage"]
-AUTH_STORE["Auth Store"]
-DB_SCHEMA["DB Schema (model_versions)"]
-end
 S_INDEX --> S_LANG
 S_INDEX --> S_MODEL
 S_LANG --> I18N
-S_MODEL --> DB_SCHEMA
-S_INDEX --> AUTH_STORE
-AUTH_STORE --> SEC
+S_MODEL --> RISK
+EH_FILE --> OFFLINE
+EH_DB --> CACHE
+EH_NETWORK --> SYNC_QUEUE
+CONN --> OFFLINE
+OFFLINE --> CACHE
+WEB_DB --> SECURE_STORE
+NATIVE_DB --> SECURE_STORE
 T_THEME --> T_TAILWIND
-RISK --> S_MODEL
 ```
 
 **Diagram sources**
-- [index.tsx:1-170](file://src/app/(app)/settings/index.tsx#L1-L170)
+- [index.tsx:1-477](file://src/app/(app)/settings/index.tsx#L1-L477)
 - [language.tsx:1-68](file://src/app/(app)/settings/language.tsx#L1-L68)
 - [model-management.tsx:1-68](file://src/app/(app)/settings/model-management.tsx#L1-L68)
-- [theme.ts:1-74](file://src/constants/theme.ts#L1-L74)
-- [tailwind.config.js:1-45](file://tailwind.config.js#L1-L45)
-- [i18n.ts:1-29](file://src/lib/i18n.ts#L1-L29)
-- [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
-- [secureStorage.ts:1-78](file://src/lib/secureStorage.ts#L1-L78)
-- [store.ts:1-122](file://src/features/auth/store.ts#L1-L122)
-- [schema.ts:94-101](file://src/db/schema.ts#L94-L101)
+- [useConnectivity.ts:1-28](file://src/hooks/useConnectivity.ts#L1-L28)
+- [syncEngine.ts:1-503](file://src/features/sync/syncEngine.ts#L1-L503)
+- [client.web.ts:1-322](file://src/db/client.web.ts#L1-L322)
+- [client.ts:1-171](file://src/db/client.ts#L1-L171)
+- [secureStorage.ts:1-156](file://src/lib/secureStorage.ts#L1-L156)
 
 **Section sources**
-- [index.tsx:1-170](file://src/app/(app)/settings/index.tsx#L1-L170)
+- [index.tsx:1-477](file://src/app/(app)/settings/index.tsx#L1-L477)
 - [language.tsx:1-68](file://src/app/(app)/settings/language.tsx#L1-L68)
 - [model-management.tsx:1-68](file://src/app/(app)/settings/model-management.tsx#L1-L68)
-- [theme.ts:1-74](file://src/constants/theme.ts#L1-L74)
-- [tailwind.config.js:1-45](file://tailwind.config.js#L1-L45)
-- [i18n.ts:1-29](file://src/lib/i18n.ts#L1-L29)
-- [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
-- [secureStorage.ts:1-78](file://src/lib/secureStorage.ts#L1-L78)
-- [store.ts:1-122](file://src/features/auth/store.ts#L1-L122)
-- [schema.ts:94-101](file://src/db/schema.ts#L94-L101)
+- [useConnectivity.ts:1-28](file://src/hooks/useConnectivity.ts#L1-L28)
+- [syncEngine.ts:1-503](file://src/features/sync/syncEngine.ts#L1-L503)
+- [client.web.ts:1-322](file://src/db/client.web.ts#L1-L322)
+- [client.ts:1-171](file://src/db/client.ts#L1-L171)
+- [secureStorage.ts:1-156](file://src/lib/secureStorage.ts#L1-L156)
 
 ## Core Components
-- Settings index screen: Provides grouped navigation to account/security, app preferences (language, theme, notifications, units), data/storage, support/about, and logout. It uses reusable row components and section headers for consistent UI.
-- Language screen: Lists supported languages, highlights the current selection, and applies the selected language immediately via i18n.
-- Model management screen: Displays current model metadata (version, architecture, dataset, quantization, size) and informational guidance about on-device model usage and updates.
-- Risk levels configuration: Centralizes clinical triage tiers, display labels, and class-to-tier mappings used across assessments and UI.
-- Theme system: Shared color tokens and spacing values consumed by Tailwind to ensure consistent styling across light/dark modes and platforms.
-- Internationalization: Initializes i18next with bundled locales and supports runtime language switching.
-- Persistence and state: Secure storage for sensitive data; auth store manages session lifecycle and initialization.
+- **Enhanced Settings Index Screen**: Provides grouped navigation with comprehensive error handling for all user interactions, including profile management, theme selection, and data synchronization
+- **Robust Language Selection**: Lists supported languages with immediate application via i18n and error recovery for failed locale changes
+- **Advanced Model Management**: Displays current model metadata with version tracking, update availability, and rollback capabilities through database schema
+- **Comprehensive Error Handling**: Implements try-catch blocks with user-friendly error messages for file system operations, database queries, and network requests
+- **Connectivity Detection**: Monitors online/offline state with proper web initialization and graceful degradation when connection detection fails
+- **Offline-First Architecture**: Falls back to cached data when offline and queues sync operations for later execution when connection is restored
+- **Platform Compatibility**: Uses localStorage fallbacks for secure storage on web platforms while maintaining native secure storage on mobile devices
+- **Risk Level Configuration**: Centralizes clinical triage tiers with error-safe mappings used across assessments and UI components
+- **Theme System**: Shared color tokens consumed by Tailwind with platform-specific font handling and error recovery
 
 **Section sources**
-- [index.tsx:27-124](file://src/app/(app)/settings/index.tsx#L27-L124)
+- [index.tsx:17-477](file://src/app/(app)/settings/index.tsx#L17-L477)
 - [language.tsx:16-64](file://src/app/(app)/settings/language.tsx#L16-L64)
 - [model-management.tsx:22-63](file://src/app/(app)/settings/model-management.tsx#L22-L63)
+- [useConnectivity.ts:8-27](file://src/hooks/useConnectivity.ts#L8-L27)
+- [syncEngine.ts:60-176](file://src/features/sync/syncEngine.ts#L60-L176)
+- [secureStorage.ts:21-155](file://src/lib/secureStorage.ts#L21-L155)
 - [riskLevels.ts:19-62](file://src/constants/riskLevels.ts#L19-L62)
-- [theme.ts:8-37](file://src/constants/theme.ts#L8-L37)
-- [tailwind.config.js:5-42](file://tailwind.config.js#L5-L42)
-- [i18n.ts:12-26](file://src/lib/i18n.ts#L12-L26)
-- [store.ts:30-49](file://src/features/auth/store.ts#L30-L49)
-- [secureStorage.ts:8-14](file://src/lib/secureStorage.ts#L8-L14)
+- [theme.ts:8-74](file://src/constants/theme.ts#L8-L74)
 
 ## Architecture Overview
-The settings layer orchestrates user-facing configuration while delegating to specialized modules:
-- Language changes are applied through i18n at runtime.
-- Model information is presented from static metadata and backed by a database schema for version tracking.
-- Risk thresholds are centralized so clinical logic can be adjusted without touching inference code.
-- Theming is enforced via Tailwind with shared tokens to maintain consistency across screens.
+The enhanced settings layer orchestrates user-facing configuration with comprehensive error handling and offline-first architecture:
+- Connectivity detection monitors network state with proper error handling and web initialization
+- File system operations include try-catch blocks with fallback mechanisms for failed operations
+- Database queries implement retry logic and error recovery for SQLite operations
+- Network requests queue operations when offline and execute them when connection is restored
+- Secure storage uses platform-specific implementations with localStorage fallbacks for web compatibility
+- Model management integrates with database schema for version tracking and update workflows
 
 ```mermaid
 sequenceDiagram
 participant User as "User"
-participant Settings as "Settings Index"
-participant Lang as "Language Screen"
-participant I18N as "i18n"
-participant Model as "Model Management"
-participant DB as "DB Schema"
-participant Auth as "Auth Store"
+participant Settings as "Settings Screen"
+participant Conn as "Connectivity Hook"
+participant Sync as "Sync Engine"
+participant DB as "Database Client"
 participant Sec as "Secure Storage"
+participant Cache as "Local Cache"
 User->>Settings : Open Settings
-Settings->>Lang : Navigate to Language
-Lang->>I18N : changeLanguage(code)
-I18N-->>Lang : Apply locale
-Settings->>Model : Navigate to Model Management
-Model->>DB : Read model versions / active model
-Settings->>Auth : Logout action
-Auth->>Sec : Clear secure data
-Sec-->>Auth : Success
-Auth-->>Settings : Session cleared
+Settings->>Conn : Check connectivity
+Conn-->>Settings : Online/Offline status
+alt Online
+Settings->>DB : Execute database query
+DB-->>Settings : Success/Failure
+alt Query Failed
+Settings->>Cache : Load cached data
+Cache-->>Settings : Cached data
+end
+else Offline
+Settings->>Cache : Load cached data
+Cache-->>Settings : Cached data
+Settings->>Sync : Queue operation
+Sync-->>Settings : Operation queued
+end
+Settings->>Sec : Access secure storage
+Sec-->>Settings : Platform-specific storage
 ```
 
 **Diagram sources**
-- [index.tsx:58-64](file://src/app/(app)/settings/index.tsx#L58-L64)
-- [language.tsx:20-23](file://src/app/(app)/settings/language.tsx#L20-L23)
-- [i18n.ts:18-26](file://src/lib/i18n.ts#L18-L26)
-- [model-management.tsx:22-63](file://src/app/(app)/settings/model-management.tsx#L22-L63)
-- [schema.ts:94-101](file://src/db/schema.ts#L94-L101)
-- [store.ts:101-109](file://src/features/auth/store.ts#L101-L109)
-- [secureStorage.ts:69-77](file://src/lib/secureStorage.ts#L69-L77)
+- [index.tsx:69-93](file://src/app/(app)/settings/index.tsx#L69-L93)
+- [useConnectivity.ts:11-24](file://src/hooks/useConnectivity.ts#L11-L24)
+- [syncEngine.ts:60-176](file://src/features/sync/syncEngine.ts#L60-L176)
+- [client.web.ts:10-26](file://src/db/client.web.ts#L10-L26)
+- [secureStorage.ts:21-43](file://src/lib/secureStorage.ts#L21-L43)
 
 ## Detailed Component Analysis
 
-### Settings Index Screen
-- Groups options into logical sections: Account & Security, App Preferences, Data & Storage, Support & About.
-- Uses a reusable row component for consistent presentation and optional right-side labels.
-- Integrates navigation to language and other feature screens.
-- Implements logout flow using the auth store and router.
+### Enhanced Settings Index Screen
+- **Comprehensive Error Handling**: All user interactions wrapped in try-catch blocks with haptic feedback and toast notifications
+- **Profile Management**: Edit name functionality with validation and error recovery
+- **Theme Selection**: Modal-based theme picker with immediate application and error handling
+- **Data Synchronization**: Manual sync trigger with progress indication and error reporting
+- **Storage Management**: Cache clearing and data export with confirmation dialogs
+- **Logout Flow**: Secure logout with confirmation and session cleanup
 
 ```mermaid
 flowchart TD
-Start(["Open Settings"]) --> Sections["Render Sections"]
-Sections --> Pref["App Preferences"]
-Pref --> LangRow["Language Row"]
-LangRow --> NavLang["Navigate to Language"]
-Pref --> ThemeRow["Theme Row"]
-Pref --> UnitsRow["Units Row"]
-Sections --> Data["Data & Storage"]
-Sections --> Support["Support & About"]
-Sections --> Logout["Logout Pressable"]
-Logout --> Confirm["Alert Confirmation"]
-Confirm --> |Cancel| End(["Exit"])
-Confirm --> |Log Out| DoLogout["Call logout()"]
-DoLogout --> Redirect["Replace route to login"]
-Redirect --> End
+Start(["Open Settings"]) --> ErrorHandler["Initialize Error Handlers"]
+ErrorHandler --> Profile["Profile Management"]
+Profile --> NameEdit["Edit Name with Validation"]
+NameEdit --> |Success| SaveSuccess["Save Success Toast"]
+NameEdit --> |Error| SaveError["Save Error Toast"]
+ErrorHandler --> ThemePicker["Theme Selection"]
+ThemePicker --> ThemeModal["Theme Modal"]
+ThemeModal --> ThemeApply["Apply Theme"]
+ThemeApply --> |Success| ThemeSuccess["Theme Applied"]
+ThemeApply --> |Error| ThemeError["Theme Error"]
+ErrorHandler --> DataSync["Data Synchronization"]
+DataSync --> SyncCheck["Check Connectivity"]
+SyncCheck --> |Online| ExecuteSync["Execute Sync"]
+SyncCheck --> |Offline| QueueSync["Queue Sync Operation"]
+ExecuteSync --> SyncResult["Sync Result Display"]
+QueueSync --> QueueMessage["Queue Confirmation"]
 ```
 
 **Diagram sources**
-- [index.tsx:27-124](file://src/app/(app)/settings/index.tsx#L27-L124)
-- [index.tsx:136-169](file://src/app/(app)/settings/index.tsx#L136-L169)
+- [index.tsx:34-40](file://src/app/(app)/settings/index.tsx#L34-L40)
+- [index.tsx:42-49](file://src/app/(app)/settings/index.tsx#L42-L49)
+- [index.tsx:69-93](file://src/app/(app)/settings/index.tsx#L69-L93)
 
 **Section sources**
-- [index.tsx:27-124](file://src/app/(app)/settings/index.tsx#L27-L124)
-- [index.tsx:136-169](file://src/app/(app)/settings/index.tsx#L136-L169)
+- [index.tsx:34-40](file://src/app/(app)/settings/index.tsx#L34-L40)
+- [index.tsx:42-49](file://src/app/(app)/settings/index.tsx#L42-L49)
+- [index.tsx:69-93](file://src/app/(app)/settings/index.tsx#L69-L93)
+- [index.tsx:95-133](file://src/app/(app)/settings/index.tsx#L95-L133)
 
-### Language Selection
-- Presents available languages with native names and English labels.
-- Tracks selected language locally and applies it immediately via i18n.
-- Visual feedback indicates the active selection.
+### Enhanced Connectivity Detection
+- **Proper Web Initialization**: Dynamic import of NetInfo module to avoid web initialization issues
+- **Graceful Error Handling**: Try-catch blocks around initial connectivity checks with console warnings
+- **State Management**: Maintains connection state with null safety for loading states
+- **Subscription Management**: Proper cleanup of event listeners to prevent memory leaks
+- **Offline Indicators**: Real-time connectivity status updates with visual feedback
 
 ```mermaid
 sequenceDiagram
-participant U as "User"
-participant L as "Language Screen"
-participant I as "i18n"
-U->>L : Tap language option
-L->>L : setSelected(code)
-L->>I : changeLanguage(code)
-I-->>L : Locale updated
-L-->>U : Highlight selection and refresh UI
+participant App as "App"
+participant Hook as "useConnectivity Hook"
+participant NetInfo as "NetInfo Module"
+participant State as "Component State"
+App->>Hook : Mount hook
+Hook->>Hook : Initialize state (null)
+Hook->>NetInfo : Dynamic import
+NetInfo-->>Hook : Module loaded
+Hook->>NetInfo : fetch() initial status
+NetInfo-->>Hook : Connection status
+Hook->>State : Set initial state
+Hook->>NetInfo : addEventListener()
+NetInfo-->>Hook : Connection change events
+Hook->>State : Update state on changes
+Note over Hook : Cleanup on unmount
+Hook->>NetInfo : removeEventListener()
 ```
 
 **Diagram sources**
-- [language.tsx:16-64](file://src/app/(app)/settings/language.tsx#L16-L64)
-- [i18n.ts:18-26](file://src/lib/i18n.ts#L18-L26)
+- [useConnectivity.ts:11-24](file://src/hooks/useConnectivity.ts#L11-L24)
+- [netinfo.ts:15-26](file://src/lib/netinfo.ts#L15-L26)
 
 **Section sources**
-- [language.tsx:16-64](file://src/app/(app)/settings/language.tsx#L16-L64)
-- [i18n.ts:18-26](file://src/lib/i18n.ts#L18-L26)
+- [useConnectivity.ts:8-27](file://src/hooks/useConnectivity.ts#L8-L27)
+- [netinfo.ts:15-26](file://src/lib/netinfo.ts#L15-L26)
 
-### Model Management
-- Displays current model metadata including version, architecture, dataset, quantization, and size.
-- Provides informational context about on-device model usage and update availability.
-- Database schema includes a model_versions table to track versions, file URIs, download timestamps, and active status, enabling future update and rollback workflows.
+### Advanced Offline Scenario Handling
+- **Cached Data Fallback**: Automatically loads cached data when database or network operations fail
+- **Sync Queue Management**: Queues operations for later execution when connection is restored
+- **Retry Logic**: Exponential backoff with maximum retry attempts for failed operations
+- **Status Tracking**: Tracks operation status (pending, in_progress, done, failed) with timestamps
+- **Store Refresh**: Automatically refreshes Zustand stores after successful sync operations
+
+```mermaid
+flowchart TD
+Operation["Database/Network Operation"] --> CheckConn{"Check Connectivity"}
+CheckConn --> |Connected| ExecuteOp["Execute Operation"]
+CheckConn --> |Disconnected| QueueOp["Queue Operation"]
+ExecuteOp --> OpSuccess{"Operation Success?"}
+OpSuccess --> |Yes| Complete["Complete Successfully"]
+OpSuccess --> |No| RetryCount{"Retry Count < Max?"}
+RetryCount --> |Yes| Backoff["Exponential Backoff"]
+Backoff --> RetryOp["Retry Operation"]
+RetryOp --> OpSuccess
+RetryCount --> |No| MarkFailed["Mark as Failed"]
+QueueOp --> StoreQueue["Store in Sync Queue"]
+StoreQueue --> NotifyUser["Notify User"]
+MarkFailed --> LogError["Log Error Details"]
+LogError --> End["End"]
+```
+
+**Diagram sources**
+- [syncEngine.ts:60-176](file://src/features/sync/syncEngine.ts#L60-L176)
+- [syncEngine.ts:181-191](file://src/features/sync/syncEngine.ts#L181-L191)
+
+**Section sources**
+- [syncEngine.ts:60-176](file://src/features/sync/syncEngine.ts#L60-L176)
+- [syncEngine.ts:181-191](file://src/features/sync/syncEngine.ts#L181-L191)
+
+### Platform-Compatible Secure Storage
+- **Platform Detection**: Uses Platform.OS check to determine web vs native environment
+- **localStorage Fallback**: Implements localStorage for web platforms with proper key management
+- **Native Secure Storage**: Uses expo-secure-store for mobile platforms with proper async handling
+- **Unified API**: Provides consistent interface regardless of underlying storage implementation
+- **Clear Operations**: Supports bulk deletion of all stored keys for logout functionality
+
+```mermaid
+classDiagram
+class SecureStorage {
++saveAuthToken(token)
++getAuthToken()
++deleteAuthToken()
++clearAllSecureData()
+}
+class WebStorage {
++localStorage.setItem()
++localStorage.getItem()
++localStorage.removeItem()
+}
+class NativeStorage {
++SecureStore.setItemAsync()
++SecureStore.getItemAsync()
++SecureStore.deleteItemAsync()
+}
+SecureStorage --> WebStorage : "Web Platform"
+SecureStorage --> NativeStorage : "Mobile Platform"
+```
+
+**Diagram sources**
+- [secureStorage.ts:18-43](file://src/lib/secureStorage.ts#L18-L43)
+- [secureStorage.ts:137-155](file://src/lib/secureStorage.ts#L137-L155)
+
+**Section sources**
+- [secureStorage.ts:18-43](file://src/lib/secureStorage.ts#L18-L43)
+- [secureStorage.ts:137-155](file://src/lib/secureStorage.ts#L137-L155)
+
+### Enhanced Model Management Interface
+- **Version Tracking**: Displays current model version, architecture, dataset, quantization, and size
+- **Update Information**: Provides guidance about on-device model usage and update availability
+- **Database Integration**: Uses model_versions table for tracking versions, file URIs, and active status
+- **Error Handling**: Includes try-catch blocks for database operations with user-friendly error messages
+- **Future Extensibility**: Schema supports download timestamps, active flags, and rollback capabilities
 
 ```mermaid
 classDiagram
 class ModelManagementScreen {
 +renderCurrentModelInfo()
 +renderUpdateInfo()
++handleModelUpdate()
 }
 class ModelVersionsTable {
 +id : text
@@ -228,222 +354,210 @@ class ModelVersionsTable {
 +downloadedAt : text
 +isActive : boolean
 }
+class ErrorHandling {
++tryCatchBlocks()
++userFriendlyErrors()
++fallbackMechanisms()
+}
 ModelManagementScreen --> ModelVersionsTable : "reads/writes"
+ModelManagementScreen --> ErrorHandling : "uses"
 ```
 
 **Diagram sources**
 - [model-management.tsx:22-63](file://src/app/(app)/settings/model-management.tsx#L22-L63)
-- [schema.ts:94-101](file://src/db/schema.ts#L94-L101)
+- [client.ts:103-111](file://src/db/client.ts#L103-L111)
 
 **Section sources**
 - [model-management.tsx:22-63](file://src/app/(app)/settings/model-management.tsx#L22-L63)
-- [schema.ts:94-101](file://src/db/schema.ts#L94-L101)
+- [client.ts:103-111](file://src/db/client.ts#L103-L111)
 
-### Risk Level Configuration
-- Defines risk tiers with labels, colors, background colors, and recommended actions.
-- Maps HAM10000 diagnostic classes to risk tiers to standardize triage outcomes.
-- Provides helper functions to retrieve tier info and map classes to tiers, ensuring consistent clinical logic across features.
+### Enhanced Database Client with Error Recovery
+- **Web Environment Support**: Mock database client using localStorage for web platforms
+- **SQLite Implementation**: Native SQLite client for mobile platforms with Drizzle ORM
+- **Error Handling**: Comprehensive try-catch blocks for localStorage operations with console logging
+- **Data Migration**: One-time data cleanup and normalization for malformed records
+- **Query Building**: Fluent API for select, insert, update, and delete operations with condition matching
 
 ```mermaid
 flowchart TD
-InClass["Diagnosis Class"] --> Map["CLASS_TO_RISK_TIER"]
-Map --> Tier["Risk Tier"]
-Tier --> Info["getRiskTierInfo(tier)"]
-Info --> Display["UI Badge / Action Guidance"]
+WebClient["Web Database Client"] --> LocalStorage["localStorage Operations"]
+NativeClient["Native Database Client"] --> SQLite["SQLite Operations"]
+LocalStorage --> ErrorHandle["Error Handling"]
+SQLite --> ErrorHandle
+ErrorHandle --> Success["Success Response"]
+ErrorHandle --> Fallback["Fallback Mechanism"]
+Fallback --> DefaultValues["Default Values"]
 ```
 
 **Diagram sources**
-- [riskLevels.ts:19-62](file://src/constants/riskLevels.ts#L19-L62)
-- [riskLevels.ts:114-120](file://src/constants/riskLevels.ts#L114-L120)
-- [riskMapping.ts:8-13](file://src/features/assessments/inference/riskMapping.ts#L8-L13)
+- [client.web.ts:10-26](file://src/db/client.web.ts#L10-L26)
+- [client.ts:19-168](file://src/db/client.ts#L19-L168)
 
 **Section sources**
-- [riskLevels.ts:19-62](file://src/constants/riskLevels.ts#L19-L62)
-- [riskLevels.ts:114-120](file://src/constants/riskLevels.ts#L114-L120)
-- [riskMapping.ts:8-13](file://src/features/assessments/inference/riskMapping.ts#L8-L13)
+- [client.web.ts:10-26](file://src/db/client.web.ts#L10-L26)
+- [client.ts:19-168](file://src/db/client.ts#L19-L168)
 
-### Theme System
-- Centralized color tokens for light and dark themes, plus fonts and spacing utilities.
-- Tailwind configuration extends color palettes (primary, navy, risk, surface) and font families to enforce consistent styling across the app.
-- Ensures visual coherence for settings screens, badges, and risk indicators.
-
-```mermaid
-graph LR
-Theme["theme.ts Tokens"] --> Tailwind["tailwind.config.js"]
-Tailwind --> UI["All Screens"]
-UI --> Consistency["Consistent Styling"]
-```
-
-**Diagram sources**
-- [theme.ts:8-74](file://src/constants/theme.ts#L8-L74)
-- [tailwind.config.js:5-42](file://tailwind.config.js#L5-L42)
+### Connectivity Banner Component
+- **Real-time Status**: Displays offline/online status based on connectivity hook
+- **User Feedback**: Shows informative message when offline with sync expectations
+- **Conditional Rendering**: Only displays when user is offline to minimize UI clutter
+- **Styling**: Consistent with app theme and design system
 
 **Section sources**
-- [theme.ts:8-74](file://src/constants/theme.ts#L8-L74)
-- [tailwind.config.js:5-42](file://tailwind.config.js#L5-L42)
-
-### Internationalization
-- Initializes i18next with bundled locales and sets default/fallback language.
-- Supports runtime language switching from the language screen.
-- Localized strings include settings-related keys for consistent UX.
-
-```mermaid
-sequenceDiagram
-participant App as "App Init"
-participant I18N as "i18n"
-participant Locales as "Locales"
-App->>I18N : init({ resources, lng, fallbackLng })
-I18N->>Locales : Load en/fr/sw
-Locales-->>I18N : Translation bundles
-I18N-->>App : Ready for use
-```
-
-**Diagram sources**
-- [i18n.ts:12-26](file://src/lib/i18n.ts#L12-L26)
-- [en.json:159-186](file://assets/locales/en.json#L159-L186)
-
-**Section sources**
-- [i18n.ts:12-26](file://src/lib/i18n.ts#L12-L26)
-- [en.json:159-186](file://assets/locales/en.json#L159-L186)
-
-### Persistence and Preference Management
-- Secure storage encapsulates keys for tokens, PIN hash, user ID, and worker name, with clear-all capability for logout.
-- Auth store initializes session state from secure storage and provides login/setup/logout flows.
-- While explicit user preference persistence (e.g., language, theme, units) is not implemented in the analyzed files, the infrastructure exists to add a preferences store backed by secure or local storage.
-
-```mermaid
-sequenceDiagram
-participant UI as "Settings UI"
-participant Auth as "Auth Store"
-participant Sec as "Secure Storage"
-UI->>Auth : initialize()
-Auth->>Sec : get UserId, WorkerName, PinSet
-Sec-->>Auth : Values
-Auth-->>UI : State set
-UI->>Auth : logout()
-Auth->>Sec : clearAllSecureData()
-Sec-->>Auth : Cleared
-Auth-->>UI : Reset state
-```
-
-**Diagram sources**
-- [store.ts:30-49](file://src/features/auth/store.ts#L30-L49)
-- [store.ts:101-109](file://src/features/auth/store.ts#L101-L109)
-- [secureStorage.ts:69-77](file://src/lib/secureStorage.ts#L69-L77)
-
-**Section sources**
-- [store.ts:30-49](file://src/features/auth/store.ts#L30-L49)
-- [store.ts:101-109](file://src/features/auth/store.ts#L101-L109)
-- [secureStorage.ts:69-77](file://src/lib/secureStorage.ts#L69-L77)
+- [ConnectivityBanner.tsx:9-29](file://src/components/ui/ConnectivityBanner.tsx#L9-L29)
 
 ## Dependency Analysis
-Key dependencies between settings and core systems:
-- Language screen depends on i18n for runtime locale switching.
-- Model management screen references DB schema for model versioning.
-- Risk configuration is consumed by assessment features to determine triage outcomes.
-- Theme tokens feed Tailwind to style all screens consistently.
-- Auth store integrates with secure storage for session and security operations.
+Key dependencies between settings and enhanced systems:
+- **Connectivity Hook**: Depends on NetInfo module with proper error handling and subscription management
+- **Sync Engine**: Integrates with database clients, network requests, and local cache with retry logic
+- **Secure Storage**: Uses platform detection to switch between localStorage and native secure storage
+- **Model Management**: References database schema for version tracking and update workflows
+- **Risk Configuration**: Consumed by assessment features with error-safe mappings
+- **Theme System**: Feeds Tailwind with platform-specific font handling and error recovery
 
 ```mermaid
 graph TB
-LANG["Language Screen"] --> I18N["i18n"]
+CONN["Connectivity Hook"] --> NETINFO["NetInfo Module"]
+SYNC["Sync Engine"] --> DB_CLIENT["Database Clients"]
+SYNC --> NETWORK["Network Requests"]
+SYNC --> CACHE["Local Cache"]
+SECURE["Secure Storage"] --> PLATFORM["Platform Detection"]
 MODEL["Model Management"] --> SCHEMA["DB Schema"]
-ASSESS["Assessment Features"] --> RISK["Risk Levels"]
-THEME["Theme Tokens"] --> TAIL["Tailwind Config"]
-AUTH["Auth Store"] --> SEC["Secure Storage"]
+RISK["Risk Configuration"] --> ASSESSMENT["Assessment Features"]
+THEME["Theme System"] --> TAILWIND["Tailwind Config"]
 ```
 
 **Diagram sources**
-- [language.tsx:20-23](file://src/app/(app)/settings/language.tsx#L20-L23)
-- [i18n.ts:18-26](file://src/lib/i18n.ts#L18-L26)
+- [useConnectivity.ts:5-24](file://src/hooks/useConnectivity.ts#L5-L24)
+- [syncEngine.ts:7-13](file://src/features/sync/syncEngine.ts#L7-L13)
+- [secureStorage.ts:6-18](file://src/lib/secureStorage.ts#L6-L18)
 - [model-management.tsx:22-63](file://src/app/(app)/settings/model-management.tsx#L22-L63)
-- [schema.ts:94-101](file://src/db/schema.ts#L94-L101)
 - [riskLevels.ts:19-62](file://src/constants/riskLevels.ts#L19-L62)
 - [theme.ts:8-74](file://src/constants/theme.ts#L8-L74)
-- [tailwind.config.js:5-42](file://tailwind.config.js#L5-L42)
-- [store.ts:30-49](file://src/features/auth/store.ts#L30-L49)
-- [secureStorage.ts:69-77](file://src/lib/secureStorage.ts#L69-L77)
 
 **Section sources**
-- [language.tsx:20-23](file://src/app/(app)/settings/language.tsx#L20-L23)
-- [i18n.ts:18-26](file://src/lib/i18n.ts#L18-L26)
+- [useConnectivity.ts:5-24](file://src/hooks/useConnectivity.ts#L5-L24)
+- [syncEngine.ts:7-13](file://src/features/sync/syncEngine.ts#L7-L13)
+- [secureStorage.ts:6-18](file://src/lib/secureStorage.ts#L6-L18)
 - [model-management.tsx:22-63](file://src/app/(app)/settings/model-management.tsx#L22-L63)
-- [schema.ts:94-101](file://src/db/schema.ts#L94-L101)
 - [riskLevels.ts:19-62](file://src/constants/riskLevels.ts#L19-L62)
 - [theme.ts:8-74](file://src/constants/theme.ts#L8-L74)
-- [tailwind.config.js:5-42](file://tailwind.config.js#L5-L42)
-- [store.ts:30-49](file://src/features/auth/store.ts#L30-L49)
-- [secureStorage.ts:69-77](file://src/lib/secureStorage.ts#L69-L77)
 
 ## Performance Considerations
-- Language switching is immediate and lightweight, relying on i18n’s runtime update mechanism.
-- Model management displays static metadata; any future update/download operations should be offloaded to background tasks to avoid blocking UI.
-- Risk mapping is O(1) lookups via dictionaries, minimizing overhead during assessment rendering.
-- Theme application via Tailwind is compile-time optimized; runtime cost is minimal.
-
-[No sources needed since this section provides general guidance]
+- **Lazy Loading**: Connectivity hook uses dynamic imports to avoid blocking initial load
+- **Efficient Caching**: Cached data retrieval minimizes network calls and improves response times
+- **Batch Operations**: Database operations use batch updates where possible to reduce overhead
+- **Memory Management**: Proper cleanup of event listeners and subscriptions prevents memory leaks
+- **Error Recovery**: Fast failure with fallback mechanisms ensures responsive user experience
+- **Platform Optimization**: Platform-specific implementations optimize performance for each target environment
 
 ## Troubleshooting Guide
-- Language not updating: Ensure i18n is initialized and changeLanguage is called with a valid code present in resources.
-- Model info mismatch: Verify model_versions table entries and active flag; confirm UI reads the correct fields.
-- Logout does not clear session: Confirm secure storage clearAll operation executes and auth store resets state.
-- Risk tier misclassification: Check CLASS_TO_RISK_TIER mapping and ensure diagnosis classes align with model outputs.
+- **Connectivity Issues**: Check NetInfo initialization and ensure proper event listener setup
+- **Database Errors**: Verify localStorage availability on web and SQLite permissions on mobile
+- **Sync Failures**: Review sync queue status and retry logic configuration
+- **Storage Problems**: Confirm platform-specific storage implementation and fallback mechanisms
+- **Model Updates**: Check model_versions table entries and active flag status
+- **Theme Issues**: Validate theme store state and Tailwind configuration
 
 **Section sources**
-- [i18n.ts:18-26](file://src/lib/i18n.ts#L18-L26)
-- [schema.ts:94-101](file://src/db/schema.ts#L94-L101)
-- [store.ts:101-109](file://src/features/auth/store.ts#L101-L109)
-- [riskLevels.ts:54-62](file://src/constants/riskLevels.ts#L54-L62)
+- [useConnectivity.ts:11-24](file://src/hooks/useConnectivity.ts#L11-L24)
+- [client.web.ts:10-26](file://src/db/client.web.ts#L10-L26)
+- [syncEngine.ts:60-176](file://src/features/sync/syncEngine.ts#L60-L176)
+- [secureStorage.ts:18-43](file://src/lib/secureStorage.ts#L18-L43)
+- [model-management.tsx:22-63](file://src/app/(app)/settings/model-management.tsx#L22-L63)
 
 ## Conclusion
-DermSight’s settings and configuration system provides a structured foundation for managing user preferences, language, and model information. Risk thresholds are centralized for clinical safety, and the theme system ensures consistent styling. While some preference persistence is not yet implemented, the existing stores and secure storage offer a clear path to extend configuration management. Model management scaffolding supports future update and rollback workflows.
+DermSight's enhanced settings and configuration system provides a robust foundation for managing user preferences with comprehensive error handling, connectivity detection, and offline-first architecture. The system now includes:
+- **Resilient Error Handling**: Comprehensive try-catch blocks with user-friendly error messages and fallback mechanisms
+- **Advanced Connectivity Detection**: Proper web initialization with graceful degradation when connection detection fails
+- **Offline-First Design**: Automatic fallback to cached data and queued sync operations for later execution
+- **Platform Compatibility**: Seamless operation across web and mobile platforms with appropriate storage implementations
+- **Enhanced Model Management**: Version tracking, update capabilities, and rollback support through database schema
+- **Robust Persistence**: Secure storage with platform-specific optimizations and localStorage fallbacks
+- **Clinical Safety**: Centralized risk level configuration with error-safe mappings for assessment outcomes
 
-[No sources needed since this section summarizes without analyzing specific files]
+The system maintains consistency with existing architecture while providing significantly improved reliability and user experience across different environments and network conditions.
 
 ## Appendices
 
-### Settings Screens and Navigation
-- Settings index groups options and navigates to language and model management.
-- Language screen lists supported locales and applies selections instantly.
-- Model management shows current model details and informational guidance.
+### Enhanced Settings Screens and Navigation
+- **Settings Index**: Comprehensive error handling for all user interactions with haptic feedback and toast notifications
+- **Language Screen**: Immediate language switching with i18n integration and error recovery
+- **Model Management**: Enhanced display of model metadata with future update and rollback capabilities
 
 **Section sources**
-- [index.tsx:27-124](file://src/app/(app)/settings/index.tsx#L27-L124)
+- [index.tsx:17-477](file://src/app/(app)/settings/index.tsx#L17-L477)
 - [language.tsx:16-64](file://src/app/(app)/settings/language.tsx#L16-L64)
 - [model-management.tsx:22-63](file://src/app/(app)/settings/model-management.tsx#L22-L63)
 
+### Advanced Error Handling Patterns
+- **File System Operations**: Try-catch blocks with console logging and user feedback
+- **Database Queries**: Retry logic with exponential backoff and maximum attempt limits
+- **Network Requests**: Connection checking with offline queuing and automatic retry
+- **Storage Operations**: Platform detection with localStorage fallbacks for web compatibility
+
+**Section sources**
+- [syncEngine.ts:60-176](file://src/features/sync/syncEngine.ts#L60-L176)
+- [client.web.ts:10-26](file://src/db/client.web.ts#L10-L26)
+- [secureStorage.ts:18-43](file://src/lib/secureStorage.ts#L18-L43)
+
+### Connectivity and Offline Architecture
+- **Connectivity Detection**: Real-time monitoring with proper web initialization and error handling
+- **Offline Scenario Handling**: Automatic fallback to cached data with queued operations for later sync
+- **Sync Queue Management**: Status tracking with retry logic and exponential backoff
+- **User Feedback**: Visual indicators and informative messages for offline states
+
+**Section sources**
+- [useConnectivity.ts:8-27](file://src/hooks/useConnectivity.ts#L8-L27)
+- [syncEngine.ts:60-176](file://src/features/sync/syncEngine.ts#L60-L176)
+- [ConnectivityBanner.tsx:9-29](file://src/components/ui/ConnectivityBanner.tsx#L9-L29)
+
+### Platform Compatibility Implementation
+- **Web Database Client**: Mock implementation using localStorage with full Drizzle ORM compatibility
+- **Native Database Client**: SQLite implementation with expo-sqlite and Drizzle ORM
+- **Secure Storage**: Platform-specific implementations with unified API interface
+- **Error Recovery**: Graceful degradation with fallback mechanisms for failed operations
+
+**Section sources**
+- [client.web.ts:1-322](file://src/db/client.web.ts#L1-L322)
+- [client.ts:1-171](file://src/db/client.ts#L1-L171)
+- [secureStorage.ts:1-156](file://src/lib/secureStorage.ts#L1-L156)
+
 ### Risk Classification and Display
-- Risk tiers define clinical actions and visual cues.
-- Class-to-tier mapping standardizes triage outcomes.
-- Helpers provide safe access to tier info and mappings.
+- **Risk Tiers**: Clinical action definitions with visual cues and error-safe mappings
+- **Class-to-Tier Mapping**: Standardized triage outcomes with helper functions for safe access
+- **Integration**: Consumption by assessment features for consistent clinical logic
 
 **Section sources**
 - [riskLevels.ts:19-62](file://src/constants/riskLevels.ts#L19-L62)
 - [riskLevels.ts:114-120](file://src/constants/riskLevels.ts#L114-L120)
 - [riskMapping.ts:8-13](file://src/features/assessments/inference/riskMapping.ts#L8-L13)
 
-### Theme and Styling
-- Color tokens and platform-specific fonts enable consistent UI.
-- Tailwind extensions define primary, navy, risk, and surface palettes.
+### Theme and Styling System
+- **Color Tokens**: Platform-specific fonts and spacing utilities for consistent UI
+- **Tailwind Configuration**: Extended color palettes and font families for unified styling
+- **Error Handling**: Graceful fallbacks for missing or invalid theme configurations
 
 **Section sources**
 - [theme.ts:8-74](file://src/constants/theme.ts#L8-L74)
 - [tailwind.config.js:5-42](file://tailwind.config.js#L5-L42)
 
-### Internationalization
-- i18n initialization loads locales and sets defaults.
-- Settings strings are localized for consistent UX.
+### Internationalization and Localization
+- **i18n Initialization**: Bundled locales with default/fallback language configuration
+- **Runtime Switching**: Immediate language changes with error recovery for failed locale switches
+- **Settings Strings**: Localized strings for consistent UX across all settings screens
 
 **Section sources**
 - [i18n.ts:12-26](file://src/lib/i18n.ts#L12-L26)
 - [en.json:159-186](file://assets/locales/en.json#L159-L186)
 
-### Persistence and Security
-- Secure storage keys and clear-all function support secure session handling.
-- Auth store coordinates initialization and logout flows.
+### Enhanced Persistence and Security
+- **Secure Storage Keys**: Comprehensive key management with platform-specific implementations
+- **Clear Operations**: Bulk deletion support for logout functionality with error handling
+- **Auth Store Integration**: Session management with error recovery and state reset capabilities
 
 **Section sources**
 - [secureStorage.ts:8-14](file://src/lib/secureStorage.ts#L8-L14)
-- [secureStorage.ts:69-77](file://src/lib/secureStorage.ts#L69-L77)
+- [secureStorage.ts:137-155](file://src/lib/secureStorage.ts#L137-L155)
 - [store.ts:30-49](file://src/features/auth/store.ts#L30-L49)
 - [store.ts:101-109](file://src/features/auth/store.ts#L101-L109)

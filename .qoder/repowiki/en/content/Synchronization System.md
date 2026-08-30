@@ -3,13 +3,15 @@
 <cite>
 **Referenced Files in This Document**
 - [syncEngine.ts](file://src/features/sync/syncEngine.ts)
+- [store.ts (auth)](file://src/features/auth/store.ts)
+- [repository.ts (patients)](file://src/features/patients/repository.ts)
+- [repository.ts (assessments)](file://src/features/assessments/repository.ts)
+- [image.ts](file://src/utils/image.ts)
 - [schema.ts](file://src/db/schema.ts)
 - [client.ts](file://src/db/client.ts)
 - [netinfo.ts](file://src/lib/netinfo.ts)
 - [useConnectivity.ts](file://src/hooks/useConnectivity.ts)
 - [useSyncStatus.ts](file://src/hooks/useSyncStatus.ts)
-- [repository.ts (patients)](file://src/features/patients/repository.ts)
-- [repository.ts (assessments)](file://src/features/assessments/repository.ts)
 - [SyncQueueItem.tsx](file://src/components/sync/SyncQueueItem.tsx)
 - [ConnectivityBanner.tsx](file://src/components/ui/ConnectivityBanner.tsx)
 - [supabase.ts](file://src/lib/supabase.ts)
@@ -22,13 +24,12 @@
 
 ## Update Summary
 **Changes Made**
-- Updated Sync Engine section to reflect production-ready Supabase integration with RPC functions
-- Added comprehensive Supabase backend architecture section covering database schema, RLS policies, and storage
-- Enhanced RPC function documentation with upsert_patient and upsert_assessment implementations
-- Updated Storage Integration section with lesion-images bucket configuration and security policies
-- Added Server-Side Processing section covering database migrations and analytics functions
-- Revised error handling and retry logic to reflect actual Supabase client integration
-- Updated performance considerations for real network operations and image uploads
+- Added comprehensive automatic remote data pulling functionality triggered on email authentication
+- Implemented sophisticated offline-first data management with circular dependency resolution using dynamic imports
+- Enhanced parameter validation and graceful fallback mechanisms for missing local files and network connectivity issues
+- Improved robust error handling for image copy operations, permission issues, and network connectivity problems
+- Updated sync engine with advanced patient-assessment dependency resolution during sync operations
+- Added multi-device data portability support through automatic remote data synchronization
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -44,19 +45,24 @@
 11. [Appendices](#appendices)
 
 ## Introduction
-This document explains DermSight's offline-first synchronization system that ensures reliable data consistency between the local SQLite database and the Supabase cloud backend. The system implements a production-ready outbox pattern with real-time data synchronization using Supabase RPC functions, comprehensive database migrations, row-level security policies, and secure storage bucket management. It covers the sync engine architecture including queue management, background processing, retry logic with exponential backoff, conflict resolution strategies, network connectivity monitoring via NetInfo API, automatic sync triggering based on connection status, user feedback for sync progress, error handling strategies, performance considerations for large datasets, battery optimization for background sync, debugging techniques, and seamless integration with patient management and assessments features.
+This document explains DermSight's enhanced offline-first synchronization system that ensures reliable data consistency between the local SQLite database and the Supabase cloud backend. The system implements a production-ready outbox pattern with real-time data synchronization using Supabase RPC functions, comprehensive database migrations, row-level security policies, and secure storage bucket management. It features automatic remote data pulling on email authentication, sophisticated circular dependency resolution, parameter validation, graceful fallbacks when local files are missing, and robust error handling for image copy operations, permission issues, and network connectivity problems. The system covers the sync engine architecture including queue management, background processing, retry logic with exponential backoff, conflict resolution strategies, network connectivity monitoring via NetInfo API, automatic sync triggering based on connection status, user feedback for sync progress, error handling strategies, performance considerations for large datasets, battery optimization for background sync, debugging techniques, and seamless integration with patient management and assessments features.
 
 ## Project Structure
-The synchronization system is implemented across several layers with comprehensive Supabase backend integration:
+The enhanced synchronization system is implemented across several layers with comprehensive Supabase backend integration and automatic data synchronization capabilities:
 - Data layer: SQLite schema and Drizzle ORM client define tables including a dedicated sync queue table for outbox entries.
-- Sync engine: Orchestrates reading pending items from the outbox, marking them in progress, attempting uploads to Supabase via RPC functions, updating statuses, and applying retry/backoff logic.
+- Authentication layer: Email-based authentication with automatic remote data pulling upon successful login.
+- Sync engine: Orchestrates reading pending items from the outbox, marking them in progress, attempting uploads to Supabase via RPC functions, updating statuses, and applying retry/backoff logic with circular dependency resolution.
 - Supabase backend: PostgreSQL database with Row Level Security (RLS), storage buckets for lesion images, and server-side RPC functions for data synchronization.
 - Connectivity layer: Monitors online/offline state using NetInfo and exposes hooks for UI components.
-- Feature repositories: Patient and Assessment modules enqueue sync operations after local writes.
+- Feature repositories: Patient and Assessment modules enqueue sync operations after local writes with enhanced error handling.
 - UI: Displays connectivity status and per-item sync status with retry actions.
 
 ```mermaid
 graph TB
+subgraph "Authentication Layer"
+AUTH["Auth Store"]
+PULL["pullRemoteData()"]
+end
 subgraph "App Features"
 PAT["Patients Repository"]
 ASS["Assessments Repository"]
@@ -65,8 +71,9 @@ subgraph "Data Layer"
 DB["SQLite Client"]
 SCHEMA["Drizzle Schema"]
 end
-subgraph "Sync Engine"
+subgraph "Enhanced Sync Engine"
 ENGINE["Sync Engine"]
+CIRCULAR["Circular Dependency Resolution"]
 RPC["RPC Functions"]
 end
 subgraph "Supabase Backend"
@@ -78,10 +85,13 @@ subgraph "Network"
 NETINFO["NetInfo Wrapper"]
 SUPABASE["Supabase Client"]
 end
+AUTH --> PULL
+PULL --> DB
 PAT --> DB
 ASS --> DB
 DB --> SCHEMA
 ENGINE --> DB
+ENGINE --> CIRCULAR
 ENGINE --> NETINFO
 ENGINE --> SUPABASE
 SUPABASE --> PG
@@ -90,33 +100,38 @@ PG --> RLS
 ```
 
 **Diagram sources**
+- [store.ts (auth):230-236](file://src/features/auth/store.ts#L230-L236)
+- [syncEngine.ts:351-502](file://src/features/sync/syncEngine.ts#L351-L502)
+- [syncEngine.ts:82-108](file://src/features/sync/syncEngine.ts#L82-L108)
 - [schema.ts:77-92](file://src/db/schema.ts#L77-L92)
 - [client.ts:1-14](file://src/db/client.ts#L1-L14)
-- [syncEngine.ts:55-110](file://src/features/sync/syncEngine.ts#L55-L110)
 - [netinfo.ts:15-34](file://src/lib/netinfo.ts#L15-L34)
 - [supabase.ts:1-19](file://src/lib/supabase.ts#L1-L19)
-- [001_initial_schema.sql:40-101](file://supabase/migrations/001_initial_schema.sql#L40-L101)
-- [003_storage_bucket.sql:7-17](file://supabase/migrations/003_storage_bucket.sql#L7-L17)
 
 **Section sources**
+- [store.ts (auth):230-236](file://src/features/auth/store.ts#L230-L236)
+- [syncEngine.ts:351-502](file://src/features/sync/syncEngine.ts#L351-L502)
+- [syncEngine.ts:82-108](file://src/features/sync/syncEngine.ts#L82-L108)
 - [schema.ts:77-92](file://src/db/schema.ts#L77-L92)
 - [client.ts:1-14](file://src/db/client.ts#L1-L14)
-- [syncEngine.ts:55-110](file://src/features/sync/syncEngine.ts#L55-L110)
 - [netinfo.ts:15-34](file://src/lib/netinfo.ts#L15-L34)
 - [supabase.ts:1-19](file://src/lib/supabase.ts#L1-L19)
 
 ## Core Components
 - Outbox table (sync_queue): Stores entity changes to be pushed to Supabase. Each row tracks entity type, operation, payload, attempt count, last attempted timestamp, and status transitions.
-- Sync engine: Reads pending items, marks them in_progress, attempts upload via Supabase RPC functions, updates statuses, applies exponential backoff, and supports manual retry.
+- Enhanced sync engine: Reads pending items, marks them in_progress, attempts upload via Supabase RPC functions, updates statuses, applies exponential backoff, supports manual retry, and includes circular dependency resolution for patient-assessment relationships.
+- Automatic data synchronization: Triggers remote data pulling on email authentication to ensure multi-device data portability.
 - Supabase RPC functions: Server-side functions (upsert_patient, upsert_assessment) handle data synchronization with proper validation and audit logging.
 - Storage bucket: Secure lesion-images bucket with Row Level Security policies for image upload and access control.
 - Connectivity monitoring: Subscribes to NetInfo events to detect online/offline transitions and provides current connectivity state.
-- Feature integration: Patient and Assessment repositories write locally first and enqueue an outbox entry for later sync.
+- Feature integration: Patient and Assessment repositories write locally first and enqueue an outbox entry for later sync with enhanced error handling.
 - UI feedback: Connectivity banner shows offline state; sync queue item component displays per-item status and retry action.
 
 **Section sources**
 - [schema.ts:77-92](file://src/db/schema.ts#L77-L92)
 - [syncEngine.ts:24-125](file://src/features/sync/syncEngine.ts#L24-L125)
+- [syncEngine.ts:351-502](file://src/features/sync/syncEngine.ts#L351-L502)
+- [store.ts (auth):230-236](file://src/features/auth/store.ts#L230-L236)
 - [004_functions_and_analytics.sql:9-65](file://supabase/migrations/004_functions_and_analytics.sql#L9-L65)
 - [003_storage_bucket.sql:7-80](file://supabase/migrations/003_storage_bucket.sql#L7-L80)
 - [netinfo.ts:15-43](file://src/lib/netinfo.ts#L15-L43)
@@ -126,16 +141,18 @@ PG --> RLS
 - [ConnectivityBanner.tsx:9-28](file://src/components/ui/ConnectivityBanner.tsx#L9-L28)
 
 ## Architecture Overview
-DermSight uses an outbox pattern to decouple local writes from network operations with production-ready Supabase integration:
+DermSight uses an enhanced outbox pattern to decouple local writes from network operations with production-ready Supabase integration and automatic data synchronization:
 - Local writes are immediate and persistent in SQLite.
 - A sync queue records each change as an outbox entry.
-- The sync engine processes outbox entries when the device is online, calling Supabase RPC functions for data synchronization.
-- Images are uploaded to the secure lesion-images storage bucket before assessment sync.
+- Email authentication automatically triggers remote data pulling to synchronize existing data across devices.
+- The sync engine processes outbox entries when the device is online, calling Supabase RPC functions for data synchronization with circular dependency resolution.
+- Images are uploaded to the secure lesion-images storage bucket before assessment sync with robust error handling.
 - Row Level Security ensures data isolation between health workers.
 - UI remains responsive; it never blocks on network calls.
 
 ```mermaid
 sequenceDiagram
+participant Auth as "Auth Store"
 participant UI as "UI"
 participant Repo as "Feature Repository"
 participant DB as "SQLite"
@@ -143,6 +160,18 @@ participant Engine as "Sync Engine"
 participant Net as "NetInfo"
 participant SB as "Supabase"
 participant Storage as "Storage Bucket"
+Note over Auth : Email Authentication
+Auth->>SB : Authenticate User
+SB-->>Auth : Success + Worker ID
+Auth->>Engine : pullRemoteData(workerId)
+Engine->>SB : Fetch Remote Patients
+SB-->>Engine : Remote Patients
+Engine->>DB : Upsert Patients
+Engine->>SB : Fetch Remote Assessments
+SB-->>Engine : Remote Assessments
+Engine->>DB : Upsert Assessments
+Engine->>DB : Refresh Zustand Stores
+Note over UI : User Creates New Data
 UI->>Repo : Create/Update Entity
 Repo->>DB : Insert/Update Row
 Repo->>DB : Enqueue Outbox Entry
@@ -153,6 +182,7 @@ alt Online
 Engine->>DB : Select Pending Items
 loop For each item
 Engine->>DB : Mark in_progress
+Engine->>DB : Resolve Dependencies
 Engine->>SB : Call RPC Function
 alt Assessment with Image
 SB->>Storage : Upload Image
@@ -169,8 +199,11 @@ end
 ```
 
 **Diagram sources**
+- [store.ts (auth):230-236](file://src/features/auth/store.ts#L230-L236)
+- [syncEngine.ts:351-502](file://src/features/sync/syncEngine.ts#L351-L502)
 - [repository.ts (patients):44-101](file://src/features/patients/repository.ts#L44-L101)
 - [repository.ts (assessments):53-123](file://src/features/assessments/repository.ts#L53-L123)
+- [syncEngine.ts:82-108](file://src/features/sync/syncEngine.ts#L82-L108)
 - [syncEngine.ts:55-110](file://src/features/sync/syncEngine.ts#L55-L110)
 - [syncEngine.ts:148-200](file://src/features/sync/syncEngine.ts#L148-L200)
 - [netinfo.ts:15-34](file://src/lib/netinfo.ts#L15-L34)
@@ -311,10 +344,48 @@ Server-side RPC functions handle data synchronization with proper validation and
 
 ## Detailed Component Analysis
 
-### Outbox Pattern and Queue Management
+### Automatic Remote Data Pulling on Authentication
+The enhanced system automatically pulls remote data when users authenticate via email/password, enabling seamless multi-device data portability:
+
+**Authentication Flow**: Upon successful email authentication, the auth store dynamically imports and executes `pullRemoteData()` with the authenticated worker ID.
+
+**Data Synchronization**: The function fetches all remote patients and assessments created by the current worker, maps them to local SQLite format, and performs upsert operations to maintain data consistency.
+
+**Circular Dependency Resolution**: During sync, the system ensures patients are synced before assessments by checking patient remote IDs and skipping assessments until their parent patients are available.
+
+**Store Refresh**: After successful data pull, the system refreshes Zustand stores to ensure UI reflects the synchronized state.
+
+```mermaid
+flowchart TD
+Start(["Email Authentication"]) --> Verify["Verify Credentials"]
+Verify --> Success{"Auth Success?"}
+Success --> |No| Fail["Return Error"]
+Success --> |Yes| GetWorker["Get Worker ID"]
+GetWorker --> Import["Dynamic Import pullRemoteData"]
+Import --> Pull["Fetch Remote Patients"]
+Pull --> UpsertPatients["Upsert Patients to SQLite"]
+UpsertPatients --> FetchAssessments["Fetch Remote Assessments"]
+FetchAssessments --> ResolveDeps["Resolve Circular Dependencies"]
+ResolveDeps --> UpsertAssessments["Upsert Assessments to SQLite"]
+UpsertAssessments --> RefreshStores["Refresh Zustand Stores"]
+RefreshStores --> Complete["Authentication Complete"]
+```
+
+**Diagram sources**
+- [store.ts (auth):230-236](file://src/features/auth/store.ts#L230-L236)
+- [syncEngine.ts:351-502](file://src/features/sync/syncEngine.ts#L351-L502)
+- [syncEngine.ts:82-108](file://src/features/sync/syncEngine.ts#L82-L108)
+
+**Section sources**
+- [store.ts (auth):230-236](file://src/features/auth/store.ts#L230-L236)
+- [syncEngine.ts:351-502](file://src/features/sync/syncEngine.ts#L351-L502)
+- [syncEngine.ts:82-108](file://src/features/sync/syncEngine.ts#L82-L108)
+
+### Enhanced Outbox Pattern and Queue Management
 - The sync_queue table stores entity_type, entity_id, operation, payload, attempt_count, last_attempted_at, status, and created_at.
 - Statuses include pending, in_progress, failed, and done.
 - Feature repositories insert rows into patients or assessments and then enqueue a corresponding sync_queue entry with the serialized payload.
+- Enhanced circular dependency resolution ensures assessments are only processed after their parent patients have been successfully synced.
 
 ```mermaid
 flowchart TD
@@ -324,7 +395,9 @@ Enqueue --> StatusPending{"Status = pending?"}
 StatusPending --> |Yes| WaitForSync["Wait for Sync Engine"]
 StatusPending --> |No| End(["Done"])
 WaitForSync --> Process["Sync Engine Processes Item"]
-Process --> UpdateStatus["Mark in_progress"]
+Process --> CheckDeps{"Check Dependencies"}
+CheckDeps --> |Missing| Skip["Skip - Wait for Dependencies"]
+CheckDeps --> |Available| UpdateStatus["Mark in_progress"]
 UpdateStatus --> AttemptUpload["Attempt Upload to Supabase via RPC"]
 AttemptUpload --> Success{"Success?"}
 Success --> |Yes| StoreRemoteId["Store remote_id in local table"]
@@ -333,25 +406,28 @@ Success --> |No| RetryLogic["Increment attemptCount<br/>Set pending or failed"]
 RetryLogic --> Backoff["Exponential Backoff Delay"]
 Backoff --> WaitForSync
 MarkDone --> End
+Skip --> WaitForSync
 ```
 
 **Diagram sources**
 - [schema.ts:77-92](file://src/db/schema.ts#L77-L92)
 - [repository.ts (patients):44-101](file://src/features/patients/repository.ts#L44-L101)
 - [repository.ts (assessments):53-123](file://src/features/assessments/repository.ts#L53-L123)
-- [syncEngine.ts:55-110](file://src/features/sync/syncEngine.ts#L55-L110)
+- [syncEngine.ts:82-108](file://src/features/sync/syncEngine.ts#L82-L108)
 
 **Section sources**
 - [schema.ts:77-92](file://src/db/schema.ts#L77-L92)
 - [repository.ts (patients):44-101](file://src/features/patients/repository.ts#L44-L101)
 - [repository.ts (assessments):53-123](file://src/features/assessments/repository.ts#L53-L123)
+- [syncEngine.ts:82-108](file://src/features/sync/syncEngine.ts#L82-L108)
 
-### Sync Engine: Production-Ready Supabase Integration
+### Enhanced Sync Engine: Production-Ready Supabase Integration
 - runSync checks connectivity; if offline, returns skipped counts without processing.
 - For each pending item:
+  - Performs circular dependency resolution for assessments to ensure parent patients exist remotely.
   - Marks status as in_progress and updates last_attempted_at.
   - Calls appropriate Supabase RPC function (upsert_patient or upsert_assessment).
-  - For assessments with images, uploads to storage bucket first and includes remote URL.
+  - For assessments with images, uploads to storage bucket first and includes remote URL with robust error handling.
   - On success, stores remote_id in local table, updates sync_status to "synced", marks status as done.
   - On failure, increments attemptCount, sets status to pending or failed based on MAX_RETRIES, updates last_attempted_at, and waits with exponential backoff capped at maximum delay.
 - retrySyncItem resets a specific failed item to pending with zero attempts.
@@ -362,7 +438,9 @@ RunStart["runSync()"] --> CheckOnline{"isConnected()?"}
 CheckOnline --> |No| ReturnSkip["Return {success:0,failed:0,skipped:N}"]
 CheckOnline --> |Yes| FetchPending["Select pending items"]
 FetchPending --> LoopItems{"For each item"}
-LoopItems --> MarkInProg["Update status=in_progress,<br/>last_attempted_at=now"]
+LoopItems --> CheckDeps{"Assessment Dependencies?"}
+CheckDeps --> |Missing| Continue["Continue to next item"]
+CheckDeps --> |Available| MarkInProg["Update status=in_progress,<br/>last_attempted_at=now"]
 MarkInProg --> TryRPC["Call Supabase RPC Function"]
 TryRPC --> UploadImage{"Assessment with image?"}
 UploadImage --> |Yes| UploadToStorage["Upload to lesion-images bucket"]
@@ -380,18 +458,21 @@ MarkFailed --> Backoff["Delay = BASE_DELAY_MS * 2^attemptCount<br/>capped at 30s
 KeepPending --> Backoff
 Backoff --> LoopItems
 MarkDone --> LoopItems
+Continue --> LoopItems
 LoopItems --> |End| ReturnResult["Return {success,failed,skipped:0}"]
 ```
 
 **Diagram sources**
 - [syncEngine.ts:55-110](file://src/features/sync/syncEngine.ts#L55-L110)
 - [syncEngine.ts:115-125](file://src/features/sync/syncEngine.ts#L115-L125)
+- [syncEngine.ts:82-108](file://src/features/sync/syncEngine.ts#L82-L108)
 - [syncEngine.ts:148-200](file://src/features/sync/syncEngine.ts#L148-L200)
 - [syncEngine.ts:206-244](file://src/features/sync/syncEngine.ts#L206-L244)
 
 **Section sources**
 - [syncEngine.ts:55-110](file://src/features/sync/syncEngine.ts#L55-L110)
 - [syncEngine.ts:115-125](file://src/features/sync/syncEngine.ts#L115-L125)
+- [syncEngine.ts:82-108](file://src/features/sync/syncEngine.ts#L82-L108)
 - [syncEngine.ts:148-200](file://src/features/sync/syncEngine.ts#L148-L200)
 
 ### Network Connectivity Monitoring and Auto Triggering
@@ -458,6 +539,7 @@ Hook-->>UI : Update UI (pendingCount, isSyncing, lastSynced)
 - Patient creation inserts a patient row and enqueues a sync_queue entry with entityType "patient", operation "create", and serialized payload.
 - Assessment creation inserts an assessment row and enqueues a sync_queue entry with entityType "assessment", operation "create", and serialized payload.
 - Both repositories mark entities with sync_status "pending" until the sync engine completes and updates remote references.
+- Enhanced error handling ensures graceful degradation when image copy operations fail.
 
 ```mermaid
 classDiagram
@@ -482,6 +564,7 @@ class SyncEngine {
 +getPendingCount()
 +runSync()
 +retrySyncItem(itemId)
++pullRemoteData(workerId)
 }
 class SupabaseClient {
 +rpc("upsert_patient")
@@ -504,19 +587,42 @@ SyncEngine --> SupabaseClient : "RPC calls"
 - [repository.ts (assessments):53-123](file://src/features/assessments/repository.ts#L53-L123)
 - [schema.ts:77-92](file://src/db/schema.ts#L77-L92)
 - [syncEngine.ts:24-125](file://src/features/sync/syncEngine.ts#L24-L125)
+- [syncEngine.ts:351-502](file://src/features/sync/syncEngine.ts#L351-L502)
 - [syncEngine.ts:148-200](file://src/features/sync/syncEngine.ts#L148-L200)
 
 **Section sources**
 - [repository.ts (patients):44-101](file://src/features/patients/repository.ts#L44-L101)
 - [repository.ts (assessments):53-123](file://src/features/assessments/repository.ts#L53-L123)
 
+### Enhanced Error Handling and Graceful Fallbacks
+The system implements comprehensive error handling throughout the synchronization pipeline:
+
+**Image Copy Operations**: When saving images locally fails, the system gracefully falls back to using the original URI while logging the error for debugging.
+
+**Network Connectivity Issues**: All network operations include try-catch blocks with detailed error logging and appropriate fallback behavior.
+
+**Permission Issues**: File system operations handle permission errors gracefully, ensuring the app continues to function even when certain permissions are denied.
+
+**Circular Dependency Resolution**: The sync engine handles cases where assessments reference patients that haven't been synced yet by skipping those assessments until dependencies are resolved.
+
+**Store Refresh Errors**: Zustand store refresh operations are wrapped in try-catch blocks to prevent sync failures from affecting the overall process.
+
+**Section sources**
+- [repository.ts (assessments):64-72](file://src/features/assessments/repository.ts#L64-L72)
+- [syncEngine.ts:67-74](file://src/features/sync/syncEngine.ts#L67-L74)
+- [syncEngine.ts:167-173](file://src/features/sync/syncEngine.ts#L167-L173)
+- [syncEngine.ts:488-494](file://src/features/sync/syncEngine.ts#L488-L494)
+- [image.ts:64-71](file://src/utils/image.ts#L64-L71)
+
 ## Dependency Analysis
 - Sync engine depends on:
   - SQLite client for reading/writing sync_queue.
   - NetInfo wrapper for connectivity checks.
   - Supabase client for RPC calls and storage operations.
+  - Dynamic imports to resolve circular dependencies between auth and sync modules.
 - Feature repositories depend on:
   - SQLite client and schema for writing entities and enqueueing outbox entries.
+  - Enhanced error handling for file operations and network requests.
 - UI depends on:
   - Connectivity hook and sync status hook for reactive feedback.
 
@@ -528,6 +634,9 @@ DB --> Schema["Drizzle Schema"]
 Engine["Sync Engine"] --> DB
 Engine --> NetInfo["NetInfo Wrapper"]
 Engine --> Supabase["Supabase Client"]
+Engine --> Dynamic["Dynamic Imports"]
+Auth["Auth Store"] --> Dynamic
+Dynamic --> Engine
 Supabase --> RPC["RPC Functions"]
 Supabase --> Storage["Storage Bucket"]
 UI["ConnectivityBanner / SyncQueueItem"] --> Hooks["useConnectivity / useSyncStatus"]
@@ -540,6 +649,7 @@ Hooks --> NetInfo
 - [client.ts:1-14](file://src/db/client.ts#L1-L14)
 - [schema.ts:77-92](file://src/db/schema.ts#L77-L92)
 - [syncEngine.ts:55-110](file://src/features/sync/syncEngine.ts#L55-L110)
+- [store.ts (auth):230-236](file://src/features/auth/store.ts#L230-L236)
 - [netinfo.ts:15-34](file://src/lib/netinfo.ts#L15-L34)
 - [supabase.ts:1-19](file://src/lib/supabase.ts#L1-L19)
 - [useConnectivity.ts:8-17](file://src/hooks/useConnectivity.ts#L8-L17)
@@ -549,6 +659,7 @@ Hooks --> NetInfo
 - [client.ts:1-14](file://src/db/client.ts#L1-L14)
 - [schema.ts:77-92](file://src/db/schema.ts#L77-L92)
 - [syncEngine.ts:55-110](file://src/features/sync/syncEngine.ts#L55-L110)
+- [store.ts (auth):230-236](file://src/features/auth/store.ts#L230-L236)
 - [netinfo.ts:15-34](file://src/lib/netinfo.ts#L15-L34)
 - [supabase.ts:1-19](file://src/lib/supabase.ts#L1-L19)
 - [useConnectivity.ts:8-17](file://src/hooks/useConnectivity.ts#L8-L17)
@@ -564,6 +675,8 @@ Hooks --> NetInfo
 - Image uploads: Large images may impact sync performance; consider compression or progressive loading strategies.
 - Storage bucket limits: 10MB per image limit enforced by Supabase configuration; implement client-side validation to prevent oversized uploads.
 - RPC function efficiency: Server-side functions are optimized with proper indexing and minimal round trips; leverage existing functions rather than creating custom endpoints.
+- Circular dependency resolution: Enhanced dependency checking prevents unnecessary sync attempts and reduces network overhead.
+- Dynamic imports: Used to resolve circular dependencies between auth and sync modules, improving startup performance.
 
 ## Troubleshooting Guide
 - No sync happening:
@@ -587,17 +700,28 @@ Hooks --> NetInfo
   - Ensure health worker profile exists in Supabase database.
   - Verify auth.uid() resolves correctly in RPC functions.
   - Check that worker_id lookup succeeds in get_worker_id() function.
+- Automatic data pulling issues:
+  - Verify email authentication flow triggers pullRemoteData() correctly.
+  - Check network connectivity during authentication for remote data fetching.
+  - Inspect console logs for any errors during the automatic data synchronization process.
+- Image upload failures:
+  - Check file permissions and storage directory accessibility.
+  - Verify image file paths and ensure files exist before upload attempts.
+  - Review error handling in saveImageLocally function for graceful fallbacks.
 
 **Section sources**
 - [syncEngine.ts:55-125](file://src/features/sync/syncEngine.ts#L55-L125)
 - [syncEngine.ts:148-200](file://src/features/sync/syncEngine.ts#L148-L200)
+- [syncEngine.ts:351-502](file://src/features/sync/syncEngine.ts#L351-L502)
 - [useSyncStatus.ts:9-45](file://src/hooks/useSyncStatus.ts#L9-L45)
 - [ConnectivityBanner.tsx:9-28](file://src/components/ui/ConnectivityBanner.tsx#L9-L28)
 - [supabase.ts:1-19](file://src/lib/supabase.ts#L1-L19)
+- [store.ts (auth):230-236](file://src/features/auth/store.ts#L230-L236)
+- [repository.ts (assessments):64-72](file://src/features/assessments/repository.ts#L64-L72)
 - [002_rls_policies.sql:153-159](file://supabase/migrations/002_rls_policies.sql#L153-L159)
 
 ## Conclusion
-DermSight's offline-first synchronization leverages a production-ready outbox pattern to guarantee eventual consistency between local SQLite and Supabase backend. The sync engine manages queue processing, retry logic with exponential backoff, and clear status transitions while integrating seamlessly with Supabase RPC functions for data synchronization. Comprehensive Row Level Security ensures data isolation between health workers, while the secure storage bucket handles lesion image uploads with proper access controls. Connectivity monitoring enables automatic sync triggering, while UI components provide transparent feedback. The integration with patient and assessment repositories ensures that all critical data changes are captured and synchronized reliably. Future enhancements should focus on optimizing batch processing for large datasets, implementing real-time sync notifications, and expanding analytics capabilities through additional RPC functions.
+DermSight's enhanced offline-first synchronization leverages a production-ready outbox pattern to guarantee eventual consistency between local SQLite and Supabase backend. The system now features automatic remote data pulling on email authentication, enabling seamless multi-device data portability. The sync engine manages queue processing, retry logic with exponential backoff, clear status transitions, and circular dependency resolution while integrating seamlessly with Supabase RPC functions for data synchronization. Comprehensive Row Level Security ensures data isolation between health workers, while the secure storage bucket handles lesion image uploads with proper access controls. Enhanced error handling and graceful fallback mechanisms ensure robust operation even when facing network connectivity issues, permission problems, or missing local files. Connectivity monitoring enables automatic sync triggering, while UI components provide transparent feedback. The integration with patient and assessment repositories ensures that all critical data changes are captured and synchronized reliably. Future enhancements should focus on optimizing batch processing for large datasets, implementing real-time sync notifications, and expanding analytics capabilities through additional RPC functions.
 
 ## Appendices
 

@@ -8,17 +8,22 @@
 - [Badge.tsx](file://src/components/ui/Badge.tsx)
 - [EmptyState.tsx](file://src/components/ui/EmptyState.tsx)
 - [ConnectivityBanner.tsx](file://src/components/ui/ConnectivityBanner.tsx)
+- [Skeleton.tsx](file://src/components/ui/Skeleton.tsx)
+- [ToastContainer.tsx](file://src/components/ui/ToastContainer.tsx)
 - [theme.ts](file://src/constants/theme.ts)
 - [riskLevels.ts](file://src/constants/riskLevels.ts)
+- [toastStore.ts](file://src/features/notifications/toastStore.ts)
+- [store.ts](file://src/features/theme/store.ts)
 - [tailwind.config.js](file://tailwind.config.js)
 - [global.css](file://global.css)
 - [ABCDPanel.tsx](file://src/components/assessment/ABCDPanel.tsx)
 - [ClassProbabilityList.tsx](file://src/components/assessment/ClassProbabilityList.tsx)
 - [RiskTierBadge.tsx](file://src/components/assessment/RiskTierBadge.tsx)
+- [AssessmentListSkeleton.tsx](file://src/components/assessment/AssessmentListSkeleton.tsx)
 - [PatientListItem.tsx](file://src/components/patient/PatientListItem.tsx)
+- [PatientListSkeleton.tsx](file://src/components/patient/PatientListSkeleton.tsx)
 - [SyncQueueItem.tsx](file://src/components/sync/SyncQueueItem.tsx)
 - [useConnectivity.ts](file://src/hooks/useConnectivity.ts)
-- [index.ts](file://src/types/index.ts)
 - [_layout.tsx](file://src/app/(app)/_layout.tsx)
 - [index.tsx](file://src/app/index.tsx)
 - [app.json](file://app.json)
@@ -26,11 +31,11 @@
 
 ## Update Summary
 **Changes Made**
-- Updated tab navigation system with dedicated PNG icon files replacing emoji-based icons
-- Enhanced splash screen with improved image rendering and custom PNG integration
-- Added FeatureCard and PermissionRow components with proper image handling
-- Integrated automated icon processing for consistent visual appearance across platforms
-- Updated app configuration for enhanced splash screen and adaptive icons
+- Added comprehensive skeleton loading component system with animated placeholders for content loading states
+- Implemented toast notification system with haptic feedback and theme-aware styling
+- Enhanced tab navigation with improved icon sizing, focus states, and dark mode support
+- Integrated theme-aware color schemes throughout the application for light/dark modes
+- Added specialized skeleton components for assessment and patient lists
 
 ## Table of Contents
 1. Introduction
@@ -38,18 +43,21 @@
 3. Core Components
 4. Architecture Overview
 5. Detailed Component Analysis
-6. Icon System and Asset Management
-7. Dependency Analysis
-8. Performance Considerations
-9. Troubleshooting Guide
-10. Conclusion
-11. Appendices
+6. Skeleton Loading System
+7. Toast Notification System
+8. Theme-Aware Design System
+9. Icon System and Asset Management
+10. Dependency Analysis
+11. Performance Considerations
+12. Troubleshooting Guide
+13. Conclusion
+14. Appendices
 
 ## Introduction
-This document describes DermSight's reusable UI component library built with React Native, NativeWind, and Tailwind CSS. It covers each component's visual appearance, behavior, props, customization options, styling guidelines, theme configuration, responsive design principles, states, animations/transitions, accessibility, composition patterns, prop validation, error handling, cross-platform considerations, performance optimization, testing approaches, and guidance for extending or creating new components. The library now features a comprehensive PNG icon system replacing emoji-based icons for better visual consistency and platform compatibility.
+This document describes DermSight's reusable UI component library built with React Native, NativeWind, and Tailwind CSS. It covers each component's visual appearance, behavior, props, customization options, styling guidelines, theme configuration, responsive design principles, states, animations/transitions, accessibility, composition patterns, prop validation, error handling, cross-platform considerations, performance optimization, testing approaches, and guidance for extending or creating new components. The library now features a comprehensive skeleton loading system, toast notifications, enhanced tab navigation, and theme-aware design for optimal user experience across light and dark modes.
 
 ## Project Structure
-The UI library is organized under src/components/ui for base primitives and feature-specific components under src/components/assessment, src/components/patient, and src/components/sync. Styling is centralized via Tailwind configuration and global CSS, while shared tokens live in constants. The icon system has been enhanced with dedicated PNG assets in the assets/icons directory and bottom-tab-icons for optimized tab navigation.
+The UI library is organized under src/components/ui for base primitives and feature-specific components under src/components/assessment, src/components/patient, and src/components/sync. Styling is centralized via Tailwind configuration and global CSS, while shared tokens live in constants. The architecture now includes skeleton loading components, toast notifications, and enhanced theme management.
 
 ```mermaid
 graph TB
@@ -60,6 +68,8 @@ C["Card.tsx"]
 BD["Badge.tsx"]
 ES["EmptyState.tsx"]
 CB["ConnectivityBanner.tsx"]
+SK["Skeleton.tsx"]
+TC["ToastContainer.tsx"]
 end
 subgraph "Feature Components"
 ABCD["ABCDPanel.tsx"]
@@ -67,62 +77,36 @@ CPL["ClassProbabilityList.tsx"]
 RTB["RiskTierBadge.tsx"]
 PLI["PatientListItem.tsx"]
 SQI["SyncQueueItem.tsx"]
-FC["FeatureCard.tsx"]
-PR["PermissionRow.tsx"]
+ALS["AssessmentListSkeleton.tsx"]
+PLS["PatientListSkeleton.tsx"]
 end
-subgraph "Icon System"
-TI["Tab Icons"]
-FI["Feature Icons"]
-SI["Splash Icons"]
-end
-subgraph "Styling & Tokens"
-TW["tailwind.config.js"]
-GCSS["global.css"]
+subgraph "Theme & State"
 TH["theme.ts"]
-RL["riskLevels.ts"]
+TS["toastStore.ts"]
+TSM["theme store.ts"]
 end
-subgraph "Hooks & Types"
-UC["useConnectivity.ts"]
-TYP["types/index.ts"]
+subgraph "Navigation"
+TL["_layout.tsx"]
 end
-B --> TW
-I --> TW
-C --> TW
-BD --> RL
-ES --> TW
-CB --> UC
-ABCD --> RL
-CPL --> RL
-RTB --> RL
-PLI --> BD
-SQI --> TYP
-CB --> GCSS
-TW --> GCSS
-TI --> FC
-FI --> PR
-SI --> ES
+B --> TH
+I --> TH
+C --> TH
+BD --> TH
+SK --> TH
+TC --> TS
+ALS --> SK
+PLS --> SK
+TL --> TSM
 ```
 
 **Diagram sources**
-- [Button.tsx:1-101](file://src/components/ui/Button.tsx#L1-L101)
-- [Input.tsx:1-90](file://src/components/ui/Input.tsx#L1-L90)
-- [Card.tsx:1-30](file://src/components/ui/Card.tsx#L1-L30)
-- [Badge.tsx:1-71](file://src/components/ui/Badge.tsx#L1-L71)
-- [EmptyState.tsx:1-36](file://src/components/ui/EmptyState.tsx#L1-L36)
-- [ConnectivityBanner.tsx:1-30](file://src/components/ui/ConnectivityBanner.tsx#L1-L30)
-- [ABCDPanel.tsx:1-68](file://src/components/assessment/ABCDPanel.tsx#L1-L68)
-- [ClassProbabilityList.tsx:1-83](file://src/components/assessment/ClassProbabilityList.tsx#L1-L83)
-- [RiskTierBadge.tsx:1-40](file://src/components/assessment/RiskTierBadge.tsx#L1-L40)
-- [PatientListItem.tsx:1-52](file://src/components/patient/PatientListItem.tsx#L1-L52)
-- [SyncQueueItem.tsx:1-55](file://src/components/sync/SyncQueueItem.tsx#L1-L55)
-- [_layout.tsx:11-34](file://src/app/(app)/_layout.tsx#L11-L34)
-- [index.tsx:197-248](file://src/app/index.tsx#L197-L248)
-- [tailwind.config.js:1-45](file://tailwind.config.js#L1-L45)
-- [global.css:1-4](file://global.css#L1-L4)
-- [theme.ts:1-74](file://src/constants/theme.ts#L1-L74)
-- [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
-- [useConnectivity.ts:1-18](file://src/hooks/useConnectivity.ts#L1-L18)
-- [index.ts:1-98](file://src/types/index.ts#L1-L98)
+- [Skeleton.tsx:1-63](file://src/components/ui/Skeleton.tsx#L1-L63)
+- [ToastContainer.tsx:1-89](file://src/components/ui/ToastContainer.tsx#L1-L89)
+- [toastStore.ts:1-46](file://src/features/notifications/toastStore.ts#L1-L46)
+- [store.ts:1-67](file://src/features/theme/store.ts#L1-L67)
+- [AssessmentListSkeleton.tsx:1-33](file://src/components/assessment/AssessmentListSkeleton.tsx#L1-L33)
+- [PatientListSkeleton.tsx:1-33](file://src/components/patient/PatientListSkeleton.tsx#L1-L33)
+- [_layout.tsx:1-126](file://src/app/(app)/_layout.tsx#L1-L126)
 
 **Section sources**
 - [tailwind.config.js:1-45](file://tailwind.config.js#L1-L45)
@@ -183,7 +167,7 @@ This section documents the base UI primitives used across the app.
 - [ConnectivityBanner.tsx:9-30](file://src/components/ui/ConnectivityBanner.tsx#L9-L30)
 
 ## Architecture Overview
-The UI layer composes primitives into feature components. Styling is driven by Tailwind classes configured in tailwind.config.js and extended via global CSS. Shared tokens (colors, fonts, spacing) are defined in theme.ts and consumed by both Tailwind and components. Data-driven components like badges and panels rely on constants from riskLevels.ts and types from index.ts. The architecture now includes a robust icon system with dedicated PNG assets for tabs, features, and splash screens.
+The UI layer composes primitives into feature components. Styling is driven by Tailwind classes configured in tailwind.config.js and extended via global CSS. Shared tokens (colors, fonts, spacing) are defined in theme.ts and consumed by both Tailwind and components. Data-driven components like badges and panels rely on constants from riskLevels.ts and types from index.ts. The architecture now includes skeleton loading components, toast notifications, and enhanced theme management with system preference detection.
 
 ```mermaid
 graph LR
@@ -192,25 +176,25 @@ GCSS["Global CSS"] --> UI
 TH["Theme Tokens"] --> TW
 RL["Risk Levels Config"] --> BADGE["Badge / RiskTierBadge"]
 TYP["Types"] --> FEAT["Feature Components"]
-ICON["PNG Icon System"] --> TAB["Tab Navigation"]
-ICON --> FEATURE["Feature Cards"]
-ICON --> SPLASH["Splash Screen"]
+TS["Toast Store"] --> TC["Toast Container"]
+TSM["Theme Store"] --> APP["App Layout"]
+SK["Skeleton Component"] --> ALS["Assessment List Skeleton"]
+SK --> PLS["Patient List Skeleton"]
 UI --> PRIMS["Primitives (Button, Input, Card, etc.)"]
 PRIMS --> FEAT
-FEAT --> APP["App Screens"]
-TAB --> APP
-FEATURE --> APP
-SPLASH --> APP
+FEAT --> APP
+TC --> APP
 ```
 
 **Diagram sources**
 - [tailwind.config.js:1-45](file://tailwind.config.js#L1-L45)
 - [global.css:1-4](file://global.css#L1-L4)
 - [theme.ts:1-74](file://src/constants/theme.ts#L1-L74)
-- [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
-- [index.ts:1-98](file://src/types/index.ts#L1-L98)
-- [_layout.tsx:55-102](file://src/app/(app)/_layout.tsx#L55-L102)
-- [index.tsx:107-121](file://src/app/index.tsx#L107-L121)
+- [toastStore.ts:1-46](file://src/features/notifications/toastStore.ts#L1-L46)
+- [store.ts:1-67](file://src/features/theme/store.ts#L1-L67)
+- [Skeleton.tsx:1-63](file://src/components/ui/Skeleton.tsx#L1-L63)
+- [AssessmentListSkeleton.tsx:1-33](file://src/components/assessment/AssessmentListSkeleton.tsx#L1-L33)
+- [PatientListSkeleton.tsx:1-33](file://src/components/patient/PatientListSkeleton.tsx#L1-L33)
 
 ## Detailed Component Analysis
 
@@ -410,6 +394,127 @@ Render --> End(["End"])
 **Section sources**
 - [SyncQueueItem.tsx:10-55](file://src/components/sync/SyncQueueItem.tsx#L10-L55)
 
+## Skeleton Loading System
+
+### Skeleton Component
+- Purpose: Provides smooth animated placeholders for content loading states with multiple visual variants.
+- Visuals: Animated opacity transitions with slate-colored backgrounds that adapt to light/dark themes; supports circle, rect, and line variants.
+- Behavior: Uses react-native-reanimated for smooth 800ms opacity animations between 0.35 and 0.7; infinite repeating animation cycle.
+- Props: width, height, variant ("circle" | "rect" | "line"), className, style.
+- Customization: Extend variantClasses for new shapes; customize animation timing via useEffect hooks.
+- Theme Integration: Automatically adapts to light mode (slate-200) and dark mode (slate-850) backgrounds.
+
+```mermaid
+flowchart TD
+A["Skeleton Mount"] --> B["Initialize opacity: 0.35"]
+B --> C["Start Animation Loop"]
+C --> D["Fade In: 0.35 → 0.7 (800ms)"]
+D --> E["Fade Out: 0.7 → 0.35 (800ms)"]
+E --> C
+F["Apply Variant Styles"] --> G["Circle: rounded-full"]
+F --> H["Rect: rounded-2xl"]
+F --> I["Line: rounded-md"]
+```
+
+**Diagram sources**
+- [Skeleton.tsx:26-47](file://src/components/ui/Skeleton.tsx#L26-L47)
+
+**Section sources**
+- [Skeleton.tsx:1-63](file://src/components/ui/Skeleton.tsx#L1-L63)
+
+### AssessmentListSkeleton
+- Purpose: Specialized skeleton for assessment list items with structured layout placeholders.
+- Visuals: Two-column layout with info lines on the left and status badge placeholder on the right.
+- Behavior: Renders configurable number of skeleton rows (default 3); mimics actual assessment list structure.
+- Props: count (number of skeleton rows to display).
+- Usage: Replace assessment list during data loading states.
+
+**Section sources**
+- [AssessmentListSkeleton.tsx:1-33](file://src/components/assessment/AssessmentListSkeleton.tsx#L1-L33)
+
+### PatientListSkeleton
+- Purpose: Specialized skeleton for patient list items with avatar and information placeholders.
+- Visuals: Three-section layout with circular avatar placeholder, two-line text content, and status badge.
+- Behavior: Renders configurable number of skeleton rows (default 4); matches patient list item structure.
+- Props: count (number of skeleton rows to display).
+- Usage: Replace patient list during data loading states.
+
+**Section sources**
+- [PatientListSkeleton.tsx:1-33](file://src/components/patient/PatientListSkeleton.tsx#L1-L33)
+
+## Toast Notification System
+
+### ToastContainer
+- Purpose: Centralized notification system providing user feedback with haptic feedback and animations.
+- Visuals: Positioned at top of screen with slide-in/up animations; type-specific color schemes (success=green, error=red, warning=orange, info=blue).
+- Behavior: Manages toast lifecycle with auto-dismiss after 4 seconds; supports manual dismissal via close button; integrates haptic feedback.
+- Props: None (consumes state from toastStore).
+- Theme Integration: Full dark mode support with appropriate color contrasts.
+
+### Toast Store
+- Purpose: Global state management for toast notifications using Zustand.
+- Features: Auto-generated unique IDs, automatic cleanup after timeout, type-safe toast creation with helper functions.
+- API: showToast(message, type), hideToast(id), toast.success(), toast.error(), toast.warning(), toast.info().
+- Integration: Seamlessly integrated throughout the application for consistent user feedback.
+
+```mermaid
+sequenceDiagram
+participant User as "User Action"
+participant Store as "Toast Store"
+participant Container as "Toast Container"
+participant Haptics as "Haptic Feedback"
+User->>Store : showToast("Message", "success")
+Store->>Store : Generate unique ID
+Store->>Container : Add to toasts array
+Container->>Haptics : Trigger success haptic
+Note over Container : SlideInUp animation (300ms)
+Store->>Store : setTimeout(4000ms)
+Store->>Store : Remove toast from array
+Container->>Container : SlideOutUp animation (200ms)
+```
+
+**Diagram sources**
+- [toastStore.ts:17-37](file://src/features/notifications/toastStore.ts#L17-L37)
+- [ToastContainer.tsx:22-88](file://src/components/ui/ToastContainer.tsx#L22-L88)
+
+**Section sources**
+- [ToastContainer.tsx:1-89](file://src/components/ui/ToastContainer.tsx#L1-L89)
+- [toastStore.ts:1-46](file://src/features/notifications/toastStore.ts#L1-L46)
+
+## Theme-Aware Design System
+
+### Theme Store
+- Purpose: Centralized theme management supporting light, dark, and system preferences with persistence.
+- Features: Automatic system theme detection, persistent storage via SecureStore/localStorage, real-time theme switching.
+- Integration: Used throughout the application for consistent theming including tab navigation, skeletons, and toasts.
+
+### Tab Navigation Enhancement
+- Visuals: Improved icon sizing (24x24px), dynamic color adaptation for active/inactive states, proper dark mode support.
+- Behavior: Context-aware icon rendering with tintColor adjustments based on resolved theme state.
+- Implementation: Custom TabIcon component with proper image handling and focus state management.
+
+```mermaid
+flowchart TD
+A["System Theme Detection"] --> B{"Theme Preference"}
+B --> |System| C["Detect OS Theme"]
+B --> |Light| D["Force Light Mode"]
+B --> |Dark| E["Force Dark Mode"]
+C --> F["Resolved Theme"]
+D --> F
+E --> F
+F --> G["Update Tab Icons"]
+F --> H["Update Skeleton Colors"]
+F --> I["Update Toast Colors"]
+```
+
+**Diagram sources**
+- [store.ts:35-67](file://src/features/theme/store.ts#L35-L67)
+- [_layout.tsx:17-43](file://src/app/(app)/_layout.tsx#L17-L43)
+
+**Section sources**
+- [store.ts:1-67](file://src/features/theme/store.ts#L1-L67)
+- [_layout.tsx:1-126](file://src/app/(app)/_layout.tsx#L1-L126)
+
 ## Icon System and Asset Management
 
 ### Tab Navigation Icons
@@ -475,6 +580,7 @@ E --> K["Tab Navigation with PNG Icons"]
 - Hook dependencies: ConnectivityBanner depends on useConnectivity for real-time network state.
 - Type dependencies: Feature components consume shared types from index.ts for consistency across screens.
 - Icon dependencies: Tab navigation and feature components depend on PNG assets in assets/icons directory for consistent visual presentation.
+- **New Dependencies**: Skeleton components depend on react-native-reanimated for animations; Toast system depends on expo-haptics for tactile feedback.
 
 ```mermaid
 graph LR
@@ -486,22 +592,24 @@ UC["useConnectivity.ts"] --> CB["ConnectivityBanner"]
 ICON["PNG Assets"] --> TAB["Tab Navigation"]
 ICON --> FEATURE["Feature Cards"]
 ICON --> PERMISSION["Permission Rows"]
+REANIM["react-native-reanimated"] --> SK["Skeleton"]
+HAPTICS["expo-haptics"] --> TC["Toast Container"]
+ZUSTAND["zustand"] --> TS["Toast Store"]
 ```
 
 **Diagram sources**
 - [tailwind.config.js:1-45](file://tailwind.config.js#L1-L45)
 - [theme.ts:1-74](file://src/constants/theme.ts#L1-L74)
 - [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
-- [index.ts:1-98](file://src/types/index.ts#L1-L98)
 - [useConnectivity.ts:1-18](file://src/hooks/useConnectivity.ts#L1-L18)
-- [_layout.tsx:55-102](file://src/app/(app)/_layout.tsx#L55-L102)
-- [index.tsx:107-154](file://src/app/index.tsx#L107-L154)
+- [Skeleton.tsx:3-9](file://src/components/ui/Skeleton.tsx#L3-L9)
+- [ToastContainer.tsx:3-5](file://src/components/ui/ToastContainer.tsx#L3-L5)
+- [toastStore.ts:1](file://src/features/notifications/toastStore.ts#L1)
 
 **Section sources**
 - [tailwind.config.js:1-45](file://tailwind.config.js#L1-L45)
 - [theme.ts:1-74](file://src/constants/theme.ts#L1-L74)
 - [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
-- [index.ts:1-98](file://src/types/index.ts#L1-L98)
 - [useConnectivity.ts:1-18](file://src/hooks/useConnectivity.ts#L1-L18)
 
 ## Performance Considerations
@@ -512,6 +620,8 @@ ICON --> PERMISSION["Permission Rows"]
 - Defer heavy operations off the main thread; use hooks like useDebounce for search inputs if added later.
 - **Icon Optimization**: PNG icons are pre-optimized for mobile display; use contentFit="contain" for proper scaling without distortion.
 - **Asset Loading**: Leverage expo-image for efficient image loading and caching across the application.
+- **Animation Performance**: Skeleton animations use react-native-reanimated for smooth 60fps performance; toast animations are optimized for quick transitions.
+- **Memory Management**: Toast store automatically cleans up old toasts; skeleton components are lightweight and don't maintain complex state.
 
 ## Troubleshooting Guide
 - Connectivity issues: ConnectivityBanner will appear when offline; verify useConnectivity subscription and netinfo integration.
@@ -521,6 +631,9 @@ ICON --> PERMISSION["Permission Rows"]
 - **Icon Display Issues**: Ensure PNG files are properly sized (24x24 recommended) and located in correct asset directories; verify file paths in require statements.
 - **Tab Navigation Problems**: Check that tab icon files exist and are properly referenced; verify TabIcon component receives correct props.
 - **Splash Screen Issues**: Verify app.json configuration matches actual asset locations; ensure splash images are properly formatted.
+- **Skeleton Animation Issues**: Ensure react-native-reanimated is properly configured; check that width/height props are valid DimensionValue types.
+- **Toast Display Issues**: Verify ToastContainer is mounted in app layout; check toastStore initialization and ensure proper imports.
+- **Theme Switching Issues**: Confirm theme store is initialized before use; verify system theme detection is working correctly.
 
 **Section sources**
 - [ConnectivityBanner.tsx:9-30](file://src/components/ui/ConnectivityBanner.tsx#L9-L30)
@@ -531,9 +644,12 @@ ICON --> PERMISSION["Permission Rows"]
 - [_layout.tsx:55-102](file://src/app/(app)/_layout.tsx#L55-L102)
 - [index.tsx:107-154](file://src/app/index.tsx#L107-L154)
 - [app.json:10-27](file://app.json#L10-L27)
+- [Skeleton.tsx:11-17](file://src/components/ui/Skeleton.tsx#L11-L17)
+- [ToastContainer.tsx:7-19](file://src/components/ui/ToastContainer.tsx#L7-L19)
+- [store.ts:52-57](file://src/features/theme/store.ts#L52-L57)
 
 ## Conclusion
-DermSight's UI component library provides a cohesive set of primitives and feature components styled with NativeWind and Tailwind CSS. The enhanced icon system with PNG assets ensures consistent visual presentation across platforms, while the improved splash screen and tab navigation provide a polished user experience. The design system leverages shared tokens and configuration for consistency across platforms. Components are accessible, composable, and extensible, enabling rapid development of robust mobile interfaces.
+DermSight's UI component library provides a cohesive set of primitives and feature components styled with NativeWind and Tailwind CSS. The enhanced skeleton loading system offers smooth animated placeholders for better user experience during data loading, while the toast notification system provides consistent user feedback with haptic feedback and theme-aware styling. The improved tab navigation with PNG icons and enhanced theme management ensures a polished, professional interface across light and dark modes. The design system leverages shared tokens and configuration for consistency across platforms, with robust performance optimizations and comprehensive accessibility support.
 
 ## Appendices
 
@@ -542,44 +658,60 @@ DermSight's UI component library provides a cohesive set of primitives and featu
 - Global styles: Import global.css to enable Tailwind directives.
 - Consistency: Use predefined variants and sizes for Buttons and Badges; prefer className over inline styles for maintainability.
 - **Icon Guidelines**: Use PNG icons sized at 24x24 pixels for optimal display; maintain consistent visual weight and style across all icons.
+- **Skeleton Styling**: Customize skeleton appearance via className prop; extend variantClasses for new shapes; adjust animation timing in useEffect hooks.
+- **Toast Customization**: Modify typeConfig in ToastContainer for custom colors and icons; extend toastStore for additional toast types.
 
 **Section sources**
 - [tailwind.config.js:1-45](file://tailwind.config.js#L1-L45)
 - [global.css:1-4](file://global.css#L1-L4)
 - [theme.ts:1-74](file://src/constants/theme.ts#L1-L74)
+- [Skeleton.tsx:43-47](file://src/components/ui/Skeleton.tsx#L43-L47)
+- [ToastContainer.tsx:44-69](file://src/components/ui/ToastContainer.tsx#L44-L69)
 
 ### Responsive Design Principles
 - Use Tailwind utilities for spacing and sizing; components adapt to different screen sizes via relative units and flex layouts.
 - Keep critical information within safe areas; consider platform insets from theme.ts for bottom tabs on iOS vs Android.
 - **Icon Responsiveness**: PNG icons scale appropriately across different screen densities using contentFit="contain" property.
+- **Skeleton Responsiveness**: Skeleton components accept percentage widths and fixed heights for flexible layouts.
+- **Toast Responsiveness**: Toast notifications adapt to screen width with proper margins and positioning.
 
 **Section sources**
 - [theme.ts:62-74](file://src/constants/theme.ts#L62-L74)
+- [Skeleton.tsx:12-13](file://src/components/ui/Skeleton.tsx#L12-L13)
+- [ToastContainer.tsx:11-14](file://src/components/ui/ToastContainer.tsx#L11-L14)
 
 ### Accessibility Features
 - Keyboard navigation: Native components handle focus and activation; ensure logical tab order in composed screens.
 - Screen reader support: Provide descriptive labels and error messages; avoid relying solely on color for meaning (complement with text/icons).
 - **Icon Accessibility**: Ensure icons have appropriate alt text or labels when used in interactive contexts; maintain sufficient contrast ratios for icon visibility.
+- **Skeleton Accessibility**: Skeleton components provide visual loading feedback but should be paired with proper loading states for screen readers.
+- **Toast Accessibility**: Toast notifications include semantic roles and are announced by screen readers; ensure messages are descriptive and actionable.
 
 **Section sources**
 - [Input.tsx:24-90](file://src/components/ui/Input.tsx#L24-L90)
 - [Button.tsx:27-101](file://src/components/ui/Button.tsx#L27-L101)
+- [ToastContainer.tsx:73-86](file://src/components/ui/ToastContainer.tsx#L73-L86)
 
 ### Cross-Platform Compatibility
 - Fonts and spacing: Platform.select in theme.ts ensures appropriate defaults on iOS, Android, and web.
 - Inset handling: BottomTabInset accounts for platform differences in tab bar spacing.
 - **Icon Compatibility**: PNG icons provide consistent appearance across iOS, Android, and web platforms; adaptive icons configured separately for Android.
 - **Splash Screen**: Enhanced configuration supports platform-specific splash screen behaviors and adaptive icon rendering.
+- **Animation Compatibility**: Skeleton animations use react-native-reanimated which provides consistent performance across platforms.
+- **Haptic Feedback**: Toast system gracefully handles missing haptic feedback on web or simulated environments.
 
 **Section sources**
 - [theme.ts:41-74](file://src/constants/theme.ts#L41-L74)
 - [app.json:10-27](file://app.json#L10-L27)
+- [ToastContainer.tsx:25-42](file://src/components/ui/ToastContainer.tsx#L25-L42)
 
 ### Testing Approaches
 - Unit tests: Assert component rendering and prop behaviors (e.g., Button loading/disabled states, Input focus/error visuals).
 - Integration tests: Validate flows like ConnectivityBanner visibility based on network state.
 - Snapshot tests: Capture UI structure for primitives and feature components to detect regressions.
 - **Icon Testing**: Verify icon rendering across different screen sizes and orientations; test icon loading performance and error handling.
+- **Skeleton Testing**: Test skeleton animation triggers and variant rendering; verify responsive behavior with different dimensions.
+- **Toast Testing**: Validate toast creation, auto-dismiss functionality, and haptic feedback integration; test theme switching effects.
 
 ### Extending and Creating New Components
 - Follow established patterns: Define TypeScript interfaces for props; use Tailwind classes for styling; compose primitives to build complex UI.
@@ -587,8 +719,13 @@ DermSight's UI component library provides a cohesive set of primitives and featu
 - Maintain consistency: Reuse existing components (Button, Input, Card, Badge) to ensure uniform behavior and appearance.
 - **Icon Integration**: Create new PNG icons following established naming conventions (tab-*, feature-*); integrate with existing components using Image component from expo-image.
 - **Asset Management**: Organize icons in appropriate directories (assets/icons/, assets/bottom-tab-icons/) with consistent naming and sizing standards.
+- **Skeleton Extension**: Add new skeleton variants by extending variantClasses; create specialized skeleton components for common layouts.
+- **Toast Extension**: Add new toast types by extending ToastType and typeConfig; implement custom haptic feedback patterns.
 
 **Section sources**
 - [tailwind.config.js:1-45](file://tailwind.config.js#L1-L45)
 - [theme.ts:1-74](file://src/constants/theme.ts#L1-L74)
 - [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
+- [Skeleton.tsx:43-47](file://src/components/ui/Skeleton.tsx#L43-L47)
+- [toastStore.ts:3-9](file://src/features/notifications/toastStore.ts#L3-L9)
+- [ToastContainer.tsx:44-69](file://src/components/ui/ToastContainer.tsx#L44-L69)
