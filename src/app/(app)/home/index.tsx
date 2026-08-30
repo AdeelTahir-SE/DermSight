@@ -40,7 +40,7 @@ export default function HomeScreen() {
         <View className="flex-row items-center justify-between mb-1">
           <View>
             <Text className="text-xl font-bold text-navy">
-              Hello, {workerName || "Health Worker"}
+              Hello, {workerName || "User"}
             </Text>
             <Text className="text-sm text-gray-500">
               Community Health Worker
@@ -60,7 +60,7 @@ export default function HomeScreen() {
             </Pressable>
             <View className="w-9 h-9 rounded-full bg-primary-50 items-center justify-center">
               <Text className="text-primary font-bold text-sm">
-                {(workerName || "HW")[0].toUpperCase()}
+                {(workerName || "U")[0].toUpperCase()}
               </Text>
             </View>
           </View>

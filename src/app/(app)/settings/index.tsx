@@ -42,7 +42,7 @@ export default function SettingsScreen() {
           <Text className="text-2xl">👩‍⚕️</Text>
         </View>
         <View className="flex-1">
-          <Text className="text-lg font-bold text-navy">{workerName || "Health Worker"}</Text>
+          <Text className="text-lg font-bold text-navy">{workerName || "User Profile"}</Text>
           <Text className="text-xs text-gray-500">Community Health Worker</Text>
           {email ? (
             <Text className="text-xs text-gray-400 mt-1">{email}</Text>
@@ -60,7 +60,7 @@ export default function SettingsScreen() {
           onPress={() => {
             Alert.alert(
               "Profile Details",
-              `Name: ${workerName || "Health Worker"}\nEmail: ${email || "Offline local account"}\nRole: Community Health Worker`,
+              `Name: ${workerName || "N/A"}\nEmail: ${email || "Offline local account"}\nRole: Community Health Worker`,
               [{ text: "OK" }]
             );
           }}

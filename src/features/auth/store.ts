@@ -21,6 +21,54 @@ interface AuthState extends AuthSession {
   reset: () => void;
 }
 
+async function resolveWorkerName(userId?: string): Promise<string> {
+  // 1. Try SecureStorage
+  let storedName = await SecureStorage.getWorkerName();
+  if (storedName && storedName.trim() && storedName.trim() !== "Health Worker") {
+    return storedName.trim();
+  }
+
+  // 2. Try local SQLite users table
+  try {
+    if (userId) {
+      const userRow = db.select().from(users).where(eq(users.id, userId)).get();
+      if (userRow?.fullName && userRow.fullName.trim() && userRow.fullName.trim() !== "Health Worker") {
+        await SecureStorage.saveWorkerName(userRow.fullName.trim());
+        return userRow.fullName.trim();
+      }
+    }
+    const firstUser = db.select().from(users).get();
+    if (firstUser?.fullName && firstUser.fullName.trim() && firstUser.fullName.trim() !== "Health Worker") {
+      await SecureStorage.saveWorkerName(firstUser.fullName.trim());
+      return firstUser.fullName.trim();
+    }
+  } catch (err) {
+    console.error("Error reading user name from SQLite:", err);
+  }
+
+  // 3. Try Supabase Auth user or health_workers table
+  try {
+    const { data: authData } = await supabase.auth.getUser();
+    if (authData?.user) {
+      const { data: workerRow } = await supabase
+        .from("health_workers")
+        .select("full_name")
+        .eq("supabase_user_id", authData.user.id)
+        .maybeSingle();
+
+      const fullName = workerRow?.full_name || authData.user.user_metadata?.full_name;
+      if (fullName && fullName.trim() && fullName.trim() !== "Health Worker") {
+        await SecureStorage.saveWorkerName(fullName.trim());
+        return fullName.trim();
+      }
+    }
+  } catch (err) {
+    console.error("Error fetching worker profile from Supabase:", err);
+  }
+
+  return storedName || "";
+}
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   userId: "",
   workerName: "",
@@ -34,7 +82,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true });
     try {
       const userId = await SecureStorage.getUserId();
-      const workerName = await SecureStorage.getWorkerName();
+      const workerName = await resolveWorkerName(userId || undefined);
       const email = await SecureStorage.getUserEmail();
       const pinSet = await isPinSet();
 
@@ -63,9 +111,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
       const isValid = await verifyPin(pin, storedHash);
       if (isValid) {
-        const workerName =
-          (await SecureStorage.getWorkerName()) || "Health Worker";
         const userId = (await SecureStorage.getUserId()) || "local-user";
+        const workerName = await resolveWorkerName(userId);
         const email = (await SecureStorage.getUserEmail()) || "";
         set({
           isAuthenticated: true,
@@ -111,7 +158,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       } else {
         // Fallback: If no profile exists (e.g. database trigger wasn't applied yet),
         // create one dynamically using the user metadata populated on signup.
-        const fullName = data.user.user_metadata?.full_name || "Health Worker";
+        const fullName = data.user.user_metadata?.full_name || email.split("@")[0];
         const region = data.user.user_metadata?.region || "Local";
 
         console.warn("No health worker profile found. Creating fallback profile for user:", data.user.id);
