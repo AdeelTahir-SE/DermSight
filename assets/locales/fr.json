@@ -60,6 +60,10 @@
     "records": "{{count}} dossiers",
     "total": "{{count}} total",
     "viewSummary": "Voir le résumé",
+    "patientsSub": "dossiers",
+    "assessmentsSub": "total",
+    "pendingSyncSub": "dossiers",
+    "reportsSub": "résumé",
     "offlineBanner": "Vous êtes hors ligne",
     "offlineBannerDesc": "Les données se synchroniseront automatiquement."
   },
@@ -183,7 +187,15 @@
     "helpSupportDesc": "FAQ et contact support.",
     "about": "À propos de DermSight",
     "logout": "Déconnexion",
+    "languageDesc": "Changer la langue",
+    "themeDesc": "Personnaliser le thème",
+    "unitsDesc": "Basculer les unités",
     "version": "Version {{version}} (Build {{build}})"
+  },
+  "language": {
+    "en": "Anglais",
+    "fr": "Français",
+    "sw": "Swahili"
   },
   "common": {
     "save": "Enregistrer",
@@ -197,6 +209,11 @@
     "retry": "Réessayer",
     "noData": "Aucune donnée disponible",
     "required": "Obligatoire",
-    "optional": "Facultatif"
+    "optional": "Facultatif",
+    "system": "Système",
+    "light": "Clair",
+    "dark": "Sombre",
+    "close": "Fermer",
+    "ok": "OK"
   }
 }

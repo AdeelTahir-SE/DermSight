@@ -9,6 +9,7 @@ import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   Linking,
@@ -20,9 +21,9 @@ import {
 
 const ICON_SIZE = 20;
 const ICON_COLOR = "#64748B";
-const ICON_COLOR_DARK = "#94A3B8";
 
 export default function PatientDetailScreen() {
+  const { t } = useTranslation();
   const { patientId: rawPatientId, patientid: fallbackPatientId } =
     useLocalSearchParams<{
       patientId?: string;
@@ -31,6 +32,8 @@ export default function PatientDetailScreen() {
   const patientId = rawPatientId || fallbackPatientId || "";
   const router = useRouter();
   const { patients } = usePatientsStore();
+  const { resolvedTheme } = useThemeStore();
+  const isDark = resolvedTheme === "dark";
   const [dbPatient, setDbPatient] = useState<Patient | null>(null);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
 
@@ -41,15 +44,14 @@ export default function PatientDetailScreen() {
     }
   }, [patientId]);
 
-  const { resolvedTheme } = useThemeStore();
-  const isDark = resolvedTheme === "dark";
-
   const patient = patients.find((p) => p.id === patientId) || dbPatient;
 
   if (!patient) {
     return (
       <View className="flex-1 items-center justify-center bg-white dark:bg-slate-950">
-        <Text className="text-gray-500 dark:text-slate-400">Loading...</Text>
+        <Text className="text-gray-500 dark:text-slate-400">
+          {t("common:loading")}
+        </Text>
       </View>
     );
   }
@@ -63,6 +65,13 @@ export default function PatientDetailScreen() {
     (a) => a.riskTier === "high" || a.riskTier === "urgent_referral",
   ).length;
   const lowRiskCount = assessments.length - highRiskCount;
+
+  const sexLabel =
+    patient.sex === "male"
+      ? t("patients:male")
+      : patient.sex === "female"
+        ? t("patients:female")
+        : t("patients:other");
 
   const handleBack = async () => {
     try {
@@ -122,7 +131,7 @@ export default function PatientDetailScreen() {
             tintColor="#0D9E94"
           />
           <Text className="text-sm font-semibold text-primary dark:text-primary-400">
-            Edit
+            {t("common:edit")}
           </Text>
         </Pressable>
       </View>
@@ -142,21 +151,17 @@ export default function PatientDetailScreen() {
               </Text>
               <View className="px-2 py-0.5 rounded-full bg-primary-50 dark:bg-primary-950/20">
                 <Text className="text-xs font-semibold text-primary dark:text-primary-400">
-                  Active
+                  {t("patientDetail:active")}
                 </Text>
               </View>
             </View>
             <Text className="text-sm text-gray-500 dark:text-slate-400 mt-1">
-              {displayId} •{" "}
-              {patient.sex === "male"
-                ? "Male"
-                : patient.sex === "female"
-                  ? "Female"
-                  : "Other"}
-              , {age} yrs
+              {displayId} • {sexLabel}, {age} {t("patients:yrs")}
             </Text>
             <Text className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
-              Registered on: {formatDate(patient.createdAt)}
+              {t("patientDetail:registeredOn", {
+                date: formatDate(patient.createdAt),
+              })}
             </Text>
           </View>
         </View>
@@ -165,29 +170,30 @@ export default function PatientDetailScreen() {
         <View className="flex-row justify-around mt-5 bg-gray-50 dark:bg-slate-850 rounded-2xl py-4">
           <QuickAction
             icon={require("../../../../../assets/icons/profile-phone.png")}
-            label="Call"
+            label={t("patientDetail:call")}
             onPress={() =>
               patient.phone && Linking.openURL(`tel:${patient.phone}`)
             }
           />
           <QuickAction
             icon={require("../../../../../assets/icons/profile-message.png")}
-            label="Message"
+            label={t("patientDetail:message")}
             onPress={() =>
               patient.phone && Linking.openURL(`sms:${patient.phone}`)
             }
           />
           <QuickAction
             icon={require("../../../../../assets/icons/profile-location.png")}
-            label="View Location"
+            label={t("patientDetail:viewLocation")}
             onPress={() => {
               if (patient.latitude && patient.longitude) {
                 const url = `https://maps.google.com/?q=${patient.latitude},${patient.longitude}`;
                 Linking.openURL(url);
               } else {
                 Alert.alert(
-                  "Location",
-                  "No location data available for this patient.",
+                  t("patientDetail:viewLocation"),
+                  t("patientDetail:noLocation") ||
+                    "No location data available for this patient.",
                 );
               }
             }}
@@ -197,64 +203,61 @@ export default function PatientDetailScreen() {
 
       <View className="px-5 pb-8">
         {/* Patient Information */}
-        <SectionHeader title="Patient Information" />
+        <SectionHeader title={t("patientDetail:patientInfo")} />
         <Card>
           <InfoRow
             icon={require("../../../../../assets/icons/profile-dob.png")}
-            label="Date of Birth"
+            label={t("patientDetail:dob")}
             value={formatDate(patient.dateOfBirth)}
           />
           <InfoRow
             icon={require("../../../../../assets/icons/profile-gender.png")}
-            label="Gender"
-            value={
-              patient.sex === "male"
-                ? "Male"
-                : patient.sex === "female"
-                  ? "Female"
-                  : "Other"
-            }
+            label={t("patients:gender")}
+            value={sexLabel}
           />
           <InfoRow
             icon={require("../../../../../assets/icons/profile-id.png")}
-            label="Patient ID"
+            label={t("patients:patientId")}
             value={displayId}
           />
           <InfoRow
             icon={require("../../../../../assets/icons/profile-location.png")}
-            label="Address"
-            value={patient.address || "Not provided"}
+            label={t("patients:address")}
+            value={patient.address || t("common:noData")}
           />
           <InfoRow
             icon={require("../../../../../assets/icons/profile-phone.png")}
-            label="Phone Number"
-            value={patient.phone || "Not provided"}
+            label={t("patients:phone")}
+            value={patient.phone || t("common:noData")}
             isLast
           />
         </Card>
 
         {/* Assessment Summary */}
-        <SectionHeader title="Assessment Summary" />
+        <SectionHeader title={t("patientDetail:assessmentSummary")} />
         <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-gray-100 dark:border-slate-800/80">
           <View className="flex-row gap-2 mb-4">
             <SummaryCard
               count={assessments.length}
-              label="Assessments"
-              sublabel="Total"
+              label={t("patientDetail:totalAssessments", {
+                count: assessments.length,
+              })}
               bgClass="bg-primary-50 dark:bg-primary-950/20"
               textClass="text-primary dark:text-primary-400"
             />
             <SummaryCard
               count={highRiskCount}
-              label="High Risk"
-              sublabel="Findings"
+              label={t("patientDetail:highRiskFindings", {
+                count: highRiskCount,
+              })}
               bgClass="bg-amber-50 dark:bg-amber-950/20"
               textClass="text-amber-600 dark:text-amber-400"
             />
             <SummaryCard
               count={lowRiskCount}
-              label="Low Risk"
-              sublabel="Findings"
+              label={t("patientDetail:lowRiskFindings", {
+                count: lowRiskCount,
+              })}
               bgClass="bg-blue-50 dark:bg-blue-950/20"
               textClass="text-blue-600 dark:text-blue-400"
             />
@@ -264,7 +267,7 @@ export default function PatientDetailScreen() {
             className="bg-primary dark:bg-primary-600 rounded-xl py-3.5 items-center flex-row justify-center"
           >
             <Text className="text-white font-semibold">
-              New Skin Assessment
+              {t("home:newAssessment")}
             </Text>
           </Pressable>
         </View>
@@ -274,7 +277,7 @@ export default function PatientDetailScreen() {
           <>
             <View className="flex-row items-center justify-between mt-6 mb-2">
               <Text className="text-sm font-semibold text-primary dark:text-primary-400">
-                Recent Assessments
+                {t("patientDetail:recentAssessments")}
               </Text>
               <Pressable
                 onPress={async () => {
@@ -287,7 +290,7 @@ export default function PatientDetailScreen() {
                 }}
               >
                 <Text className="text-sm text-primary dark:text-primary-400 font-semibold">
-                  View All
+                  {t("patientDetail:viewAll")}
                 </Text>
               </Pressable>
             </View>
@@ -320,7 +323,9 @@ export default function PatientDetailScreen() {
                       {formatDateTime(assessment.capturedAt)}
                     </Text>
                     <Text className="text-sm font-semibold text-navy dark:text-slate-200 mt-0.5">
-                      {assessment.bodyLocation || "Unknown location"}
+                      {assessment.bodyLocation ||
+                        t("patientDetail:unknownLocation") ||
+                        "Unknown location"}
                     </Text>
                   </View>
                   <Badge riskTier={assessment.riskTier} size="sm" />
@@ -418,13 +423,11 @@ function InfoRow({
 function SummaryCard({
   count,
   label,
-  sublabel,
   bgClass,
   textClass,
 }: {
   count: number;
   label: string;
-  sublabel: string;
   bgClass: string;
   textClass: string;
 }) {
@@ -432,7 +435,6 @@ function SummaryCard({
     <View className={`flex-1 rounded-xl p-3 ${bgClass}`}>
       <Text className={`text-2xl font-bold ${textClass}`}>{count}</Text>
       <Text className={`text-xs font-medium mt-0.5 ${textClass}`}>{label}</Text>
-      <Text className={`text-xs ${textClass} opacity-70`}>{sublabel}</Text>
     </View>
   );
 }

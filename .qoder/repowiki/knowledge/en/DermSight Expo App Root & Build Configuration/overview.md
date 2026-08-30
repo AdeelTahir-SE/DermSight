@@ -1,0 +1,1 @@
+Top-level project manifest and build configuration for the DermSight offline-first dermatological screening app, wiring Expo SDK 57, expo-router, NativeWind/Tailwind styling, TypeScript, assets, and native capabilities.

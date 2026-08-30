@@ -1,3 +1,5 @@
+Based on my analysis of the codebase, I can now update the documentation to reflect the recent changes related to the sync engine migration from legacy expo-file-system API to the newer File API, the custom base64 encoding/decoding utility, and enhanced image upload process. Here's the updated documentation:
+
 # Synchronization System
 
 <cite>
@@ -7,6 +9,7 @@
 - [repository.ts (patients)](file://src/features/patients/repository.ts)
 - [repository.ts (assessments)](file://src/features/assessments/repository.ts)
 - [image.ts](file://src/utils/image.ts)
+- [base64.ts](file://src/utils/base64.ts)
 - [schema.ts](file://src/db/schema.ts)
 - [client.ts](file://src/db/client.ts)
 - [netinfo.ts](file://src/lib/netinfo.ts)
@@ -24,12 +27,11 @@
 
 ## Update Summary
 **Changes Made**
-- Added comprehensive automatic remote data pulling functionality triggered on email authentication
-- Implemented sophisticated offline-first data management with circular dependency resolution using dynamic imports
-- Enhanced parameter validation and graceful fallback mechanisms for missing local files and network connectivity issues
-- Improved robust error handling for image copy operations, permission issues, and network connectivity problems
-- Updated sync engine with advanced patient-assessment dependency resolution during sync operations
-- Added multi-device data portability support through automatic remote data synchronization
+- Migrated sync engine from legacy expo-file-system API to newer File API for improved performance and reliability
+- Implemented custom base64 encoding/decoding utility in src/utils/base64.ts for React Native compatibility without relying on global atob polyfill
+- Enhanced image upload process using normalized URI approach through normalizeImageUri() function for better Android Expo Go compatibility
+- Improved error handling with descriptive messages and file existence validation throughout the sync pipeline
+- Updated image storage operations to use modern File API with Directory and File objects for better cross-platform support
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -46,6 +48,8 @@
 
 ## Introduction
 This document explains DermSight's enhanced offline-first synchronization system that ensures reliable data consistency between the local SQLite database and the Supabase cloud backend. The system implements a production-ready outbox pattern with real-time data synchronization using Supabase RPC functions, comprehensive database migrations, row-level security policies, and secure storage bucket management. It features automatic remote data pulling on email authentication, sophisticated circular dependency resolution, parameter validation, graceful fallbacks when local files are missing, and robust error handling for image copy operations, permission issues, and network connectivity problems. The system covers the sync engine architecture including queue management, background processing, retry logic with exponential backoff, conflict resolution strategies, network connectivity monitoring via NetInfo API, automatic sync triggering based on connection status, user feedback for sync progress, error handling strategies, performance considerations for large datasets, battery optimization for background sync, debugging techniques, and seamless integration with patient management and assessments features.
+
+**Updated** The sync engine has been significantly enhanced with modern File API integration, custom base64 utilities, and improved image handling for better performance and reliability across platforms.
 
 ## Project Structure
 The enhanced synchronization system is implemented across several layers with comprehensive Supabase backend integration and automatic data synchronization capabilities:
@@ -75,6 +79,8 @@ subgraph "Enhanced Sync Engine"
 ENGINE["Sync Engine"]
 CIRCULAR["Circular Dependency Resolution"]
 RPC["RPC Functions"]
+FILEAPI["Modern File API"]
+BASE64["Custom Base64 Utils"]
 end
 subgraph "Supabase Backend"
 PG["PostgreSQL Database"]
@@ -92,6 +98,8 @@ ASS --> DB
 DB --> SCHEMA
 ENGINE --> DB
 ENGINE --> CIRCULAR
+ENGINE --> FILEAPI
+ENGINE --> BASE64
 ENGINE --> NETINFO
 ENGINE --> SUPABASE
 SUPABASE --> PG
@@ -127,6 +135,8 @@ PG --> RLS
 - Feature integration: Patient and Assessment repositories write locally first and enqueue an outbox entry for later sync with enhanced error handling.
 - UI feedback: Connectivity banner shows offline state; sync queue item component displays per-item status and retry action.
 
+**Updated** The sync engine now uses modern File API for improved performance and includes custom base64 utilities for React Native compatibility.
+
 **Section sources**
 - [schema.ts:77-92](file://src/db/schema.ts#L77-L92)
 - [syncEngine.ts:24-125](file://src/features/sync/syncEngine.ts#L24-L125)
@@ -146,7 +156,7 @@ DermSight uses an enhanced outbox pattern to decouple local writes from network 
 - A sync queue records each change as an outbox entry.
 - Email authentication automatically triggers remote data pulling to synchronize existing data across devices.
 - The sync engine processes outbox entries when the device is online, calling Supabase RPC functions for data synchronization with circular dependency resolution.
-- Images are uploaded to the secure lesion-images storage bucket before assessment sync with robust error handling.
+- Images are uploaded to the secure lesion-images storage bucket before assessment sync with robust error handling using modern File API.
 - Row Level Security ensures data isolation between health workers.
 - UI remains responsive; it never blocks on network calls.
 
@@ -157,6 +167,7 @@ participant UI as "UI"
 participant Repo as "Feature Repository"
 participant DB as "SQLite"
 participant Engine as "Sync Engine"
+participant FileAPI as "Modern File API"
 participant Net as "NetInfo"
 participant SB as "Supabase"
 participant Storage as "Storage Bucket"
@@ -183,14 +194,11 @@ Engine->>DB : Select Pending Items
 loop For each item
 Engine->>DB : Mark in_progress
 Engine->>DB : Resolve Dependencies
+Engine->>FileAPI : Upload Image with Normalized URI
+FileAPI->>SB : Upload to Storage Bucket
+SB-->>Engine : Remote URL
 Engine->>SB : Call RPC Function
-alt Assessment with Image
-SB->>Storage : Upload Image
-Storage-->>SB : Return URL
 SB-->>Engine : Remote ID
-else Patient or Assessment
-SB-->>Engine : Remote ID
-end
 Engine->>DB : Update remote_id & sync_status
 Engine->>DB : Mark done
 else Offline
@@ -427,10 +435,12 @@ Skip --> WaitForSync
   - Performs circular dependency resolution for assessments to ensure parent patients exist remotely.
   - Marks status as in_progress and updates last_attempted_at.
   - Calls appropriate Supabase RPC function (upsert_patient or upsert_assessment).
-  - For assessments with images, uploads to storage bucket first and includes remote URL with robust error handling.
+  - For assessments with images, uploads to storage bucket first using modern File API and includes remote URL with robust error handling.
   - On success, stores remote_id in local table, updates sync_status to "synced", marks status as done.
   - On failure, increments attemptCount, sets status to pending or failed based on MAX_RETRIES, updates last_attempted_at, and waits with exponential backoff capped at maximum delay.
 - retrySyncItem resets a specific failed item to pending with zero attempts.
+
+**Updated** The image upload process now uses modern File API with Directory and File objects, providing better performance and cross-platform compatibility compared to the legacy expo-file-system API.
 
 ```mermaid
 flowchart TD
@@ -443,7 +453,8 @@ CheckDeps --> |Missing| Continue["Continue to next item"]
 CheckDeps --> |Available| MarkInProg["Update status=in_progress,<br/>last_attempted_at=now"]
 MarkInProg --> TryRPC["Call Supabase RPC Function"]
 TryRPC --> UploadImage{"Assessment with image?"}
-UploadImage --> |Yes| UploadToStorage["Upload to lesion-images bucket"]
+UploadImage --> |Yes| ModernFileAPI["Use Modern File API<br/>with normalizeImageUri()"]
+ModernFileAPI --> UploadToStorage["Upload to lesion-images bucket"]
 UploadToStorage --> GetURL["Get public URL"]
 GetURL --> ContinueRPC["Continue with RPC call"]
 UploadImage --> |No| ContinueRPC
@@ -607,6 +618,8 @@ The system implements comprehensive error handling throughout the synchronizatio
 
 **Store Refresh Errors**: Zustand store refresh operations are wrapped in try-catch blocks to prevent sync failures from affecting the overall process.
 
+**Updated** The modern File API provides better error handling with descriptive messages and file existence validation, improving reliability across different platforms and edge cases.
+
 **Section sources**
 - [repository.ts (assessments):64-72](file://src/features/assessments/repository.ts#L64-L72)
 - [syncEngine.ts:67-74](file://src/features/sync/syncEngine.ts#L67-L74)
@@ -614,12 +627,48 @@ The system implements comprehensive error handling throughout the synchronizatio
 - [syncEngine.ts:488-494](file://src/features/sync/syncEngine.ts#L488-L494)
 - [image.ts:64-71](file://src/utils/image.ts#L64-L71)
 
+### Modern File API Integration and Base64 Utilities
+
+**Updated** The sync engine has been significantly enhanced with modern File API integration and custom base64 utilities for improved performance and React Native compatibility:
+
+**Modern File API Migration**: The system now uses the newer expo-file-system API with Directory and File objects instead of the legacy API, providing better performance and more reliable file operations across platforms.
+
+**Custom Base64 Utilities**: A dedicated base64 utility module provides React Native compatible base64 encoding/decoding without relying on global atob polyfills, ensuring consistent behavior across different JavaScript environments.
+
+**Enhanced Image URI Normalization**: The normalizeImageUri() function handles complex URI encoding issues, particularly for Android Expo Go cache paths, ensuring reliable file access across different platforms and caching scenarios.
+
+**Improved File Existence Validation**: The sync engine now validates file existence before attempting operations, providing better error handling and preventing unnecessary failures.
+
+```mermaid
+flowchart TD
+ImageCapture["Image Capture"] --> NormalizeURI["normalizeImageUri()"]
+NormalizeURI --> ModernFileAPI["Modern File API"]
+ModernFileAPI --> DirectoryOps["Directory/File Operations"]
+DirectoryOps --> SaveLocally["saveImageLocally()"]
+SaveLocally --> Base64Utils["Custom Base64 Utils"]
+Base64Utils --> Uint8Array["Uint8Array Conversion"]
+Uint8Array --> Upload["Upload to Supabase"]
+```
+
+**Diagram sources**
+- [image.ts:11-31](file://src/utils/image.ts#L11-L31)
+- [image.ts:56-72](file://src/utils/image.ts#L56-L72)
+- [base64.ts:12-33](file://src/utils/base64.ts#L12-L33)
+- [syncEngine.ts:299-343](file://src/features/sync/syncEngine.ts#L299-L343)
+
+**Section sources**
+- [image.ts:1-103](file://src/utils/image.ts#L1-L103)
+- [base64.ts:1-64](file://src/utils/base64.ts#L1-L64)
+- [syncEngine.ts:299-343](file://src/features/sync/syncEngine.ts#L299-L343)
+
 ## Dependency Analysis
 - Sync engine depends on:
   - SQLite client for reading/writing sync_queue.
   - NetInfo wrapper for connectivity checks.
   - Supabase client for RPC calls and storage operations.
   - Dynamic imports to resolve circular dependencies between auth and sync modules.
+  - Modern File API for improved file operations.
+  - Custom base64 utilities for React Native compatibility.
 - Feature repositories depend on:
   - SQLite client and schema for writing entities and enqueueing outbox entries.
   - Enhanced error handling for file operations and network requests.
@@ -635,6 +684,8 @@ Engine["Sync Engine"] --> DB
 Engine --> NetInfo["NetInfo Wrapper"]
 Engine --> Supabase["Supabase Client"]
 Engine --> Dynamic["Dynamic Imports"]
+Engine --> FileAPI["Modern File API"]
+Engine --> Base64["Custom Base64 Utils"]
 Auth["Auth Store"] --> Dynamic
 Dynamic --> Engine
 Supabase --> RPC["RPC Functions"]
@@ -677,6 +728,8 @@ Hooks --> NetInfo
 - RPC function efficiency: Server-side functions are optimized with proper indexing and minimal round trips; leverage existing functions rather than creating custom endpoints.
 - Circular dependency resolution: Enhanced dependency checking prevents unnecessary sync attempts and reduces network overhead.
 - Dynamic imports: Used to resolve circular dependencies between auth and sync modules, improving startup performance.
+- **Updated** Modern File API: The migration to newer File API provides better performance and reliability for file operations, reducing memory usage and improving cross-platform compatibility.
+- **Updated** Custom Base64 Processing: The custom base64 utilities eliminate dependency on global polyfills and provide more efficient byte array processing for image uploads.
 
 ## Troubleshooting Guide
 - No sync happening:
@@ -708,6 +761,11 @@ Hooks --> NetInfo
   - Check file permissions and storage directory accessibility.
   - Verify image file paths and ensure files exist before upload attempts.
   - Review error handling in saveImageLocally function for graceful fallbacks.
+- **Updated** File API Issues:
+  - Verify modern File API imports are working correctly with Directory and File objects.
+  - Check normalizeImageUri() function for proper URI handling, especially on Android Expo Go.
+  - Ensure base64 utilities are functioning without global polyfill dependencies.
+  - Monitor file existence validation and error handling in the sync engine.
 
 **Section sources**
 - [syncEngine.ts:55-125](file://src/features/sync/syncEngine.ts#L55-L125)
@@ -721,7 +779,9 @@ Hooks --> NetInfo
 - [002_rls_policies.sql:153-159](file://supabase/migrations/002_rls_policies.sql#L153-L159)
 
 ## Conclusion
-DermSight's enhanced offline-first synchronization leverages a production-ready outbox pattern to guarantee eventual consistency between local SQLite and Supabase backend. The system now features automatic remote data pulling on email authentication, enabling seamless multi-device data portability. The sync engine manages queue processing, retry logic with exponential backoff, clear status transitions, and circular dependency resolution while integrating seamlessly with Supabase RPC functions for data synchronization. Comprehensive Row Level Security ensures data isolation between health workers, while the secure storage bucket handles lesion image uploads with proper access controls. Enhanced error handling and graceful fallback mechanisms ensure robust operation even when facing network connectivity issues, permission problems, or missing local files. Connectivity monitoring enables automatic sync triggering, while UI components provide transparent feedback. The integration with patient and assessment repositories ensures that all critical data changes are captured and synchronized reliably. Future enhancements should focus on optimizing batch processing for large datasets, implementing real-time sync notifications, and expanding analytics capabilities through additional RPC functions.
+DermSight's enhanced offline-first synchronization leverages a production-ready outbox pattern to guarantee eventual consistency between local SQLite and Supabase backend. The system now features automatic remote data pulling on email authentication, enabling seamless multi-device data portability. The sync engine manages queue processing, retry logic with exponential backoff, clear status transitions, and circular dependency resolution while integrating seamlessly with Supabase RPC functions for data synchronization. Comprehensive Row Level Security ensures data isolation between health workers, while the secure storage bucket handles lesion image uploads with proper access controls. Enhanced error handling and graceful fallback mechanisms ensure robust operation even when facing network connectivity issues, permission problems, or missing local files. Connectivity monitoring enables automatic sync triggering, while UI components provide transparent feedback. The integration with patient and assessment repositories ensures that all critical data changes are captured and synchronized reliably.
+
+**Updated** Recent enhancements include migration to modern File API for improved performance and reliability, custom base64 utilities for React Native compatibility, enhanced image URI normalization for better cross-platform support, and improved error handling with descriptive messages and file existence validation. These improvements provide better performance, more reliable file operations, and enhanced compatibility across different platforms and environments. Future enhancements should focus on optimizing batch processing for large datasets, implementing real-time sync notifications, and expanding analytics capabilities through additional RPC functions.
 
 ## Appendices
 
@@ -825,3 +885,22 @@ The complete Supabase backend architecture includes:
 - [002_rls_policies.sql:1-159](file://supabase/migrations/002_rls_policies.sql#L1-L159)
 - [003_storage_bucket.sql:1-80](file://supabase/migrations/003_storage_bucket.sql#L1-L80)
 - [004_functions_and_analytics.sql:1-217](file://supabase/migrations/004_functions_and_analytics.sql#L1-L217)
+
+### Modern File API Implementation Details
+
+**Updated** The sync engine now utilizes modern File API components for improved performance and reliability:
+
+**Directory and File Objects**: The system uses Directory and File objects from expo-file-system for creating directories, copying files, and managing file operations with better cross-platform support.
+
+**Normalized URI Processing**: The normalizeImageUri() function handles complex URI encoding scenarios, particularly for Android Expo Go cache paths, ensuring reliable file access across different platforms.
+
+**Enhanced Error Handling**: File operations now include comprehensive error handling with descriptive messages and file existence validation to prevent failures and provide better debugging information.
+
+**Base64 Processing**: Custom base64 utilities provide React Native compatible encoding/decoding without relying on global polyfills, ensuring consistent behavior across different JavaScript environments.
+
+**Section sources**
+- [image.ts:1-103](file://src/utils/image.ts#L1-L103)
+- [base64.ts:1-64](file://src/utils/base64.ts#L1-L64)
+- [syncEngine.ts:299-343](file://src/features/sync/syncEngine.ts#L299-L343)
+
+</docs>

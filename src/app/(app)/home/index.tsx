@@ -2,19 +2,21 @@ import { useAssessmentsStore } from "@/features/assessments/store";
 import { useAuthStore } from "@/features/auth/store";
 import { usePatientsStore } from "@/features/patients/store";
 import { useConnectivity } from "@/hooks/useConnectivity";
+import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
-  ImageSourcePropType,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
+    ImageSourcePropType,
+    Pressable,
+    ScrollView,
+    Text,
+    View,
 } from "react-native";
-import * as Haptics from "expo-haptics";
 
 export default function HomeScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { workerName } = useAuthStore();
   const { patients, loadPatients } = usePatientsStore();
@@ -43,7 +45,7 @@ export default function HomeScreen() {
         <View className="flex-row items-center justify-between mb-1">
           <View>
             <Text className="text-xl font-bold text-navy dark:text-slate-100">
-              Hello, {workerName || "User"}
+              {t("home:greeting", { name: workerName || t("common:loading") })}
             </Text>
           </View>
           <View className="flex-row items-center gap-3">
@@ -52,7 +54,7 @@ export default function HomeScreen() {
                 className={`w-2 h-2 rounded-full ${isOffline ? "bg-amber-500" : "bg-green-500"} mr-1.5`}
               />
               <Text className="text-xs text-gray-500 dark:text-slate-400">
-                {isOffline ? "Device Offline" : "Device Online"}
+                {isOffline ? t("home:deviceOffline") : t("home:deviceOnline")}
               </Text>
             </View>
             <Pressable
@@ -90,10 +92,10 @@ export default function HomeScreen() {
           </View>
           <View className="flex-1">
             <Text className="text-white text-lg font-bold">
-              New Skin Assessment
+              {t("home:newAssessment")}
             </Text>
             <Text className="text-white/80 text-sm mt-0.5">
-              Capture or upload a lesion.
+              {t("home:newAssessmentSub")}
             </Text>
           </View>
           <Text className="text-white/60 text-2xl">›</Text>
@@ -103,30 +105,30 @@ export default function HomeScreen() {
         <View className="flex-row flex-wrap gap-3 mb-5">
           <MetricCard
             icon={require("../../../../assets/icons/home-users.png")}
-            title="Patients"
+            title={t("home:patients")}
             value={`${patients.length}`}
-            subtitle="Records"
+            subtitle={t("home:patientsSub")}
             onPress={() => router.push("/patients")}
           />
           <MetricCard
             icon={require("../../../../assets/icons/home-checklist.png")}
-            title="Assessments"
+            title={t("home:assessments")}
             value={`${totalCount}`}
-            subtitle="Total"
+            subtitle={t("home:assessmentsSub")}
             onPress={() => router.push("/assessments")}
           />
           <MetricCard
             icon={require("../../../../assets/icons/home-cloud.png")}
-            title="Pending Sync"
+            title={t("home:pendingSync")}
             value={`${pendingSyncCount}`}
-            subtitle="Records"
+            subtitle={t("home:pendingSyncSub")}
             onPress={() => router.push("/assessments")}
           />
           <MetricCard
             icon={require("../../../../assets/icons/home-chart.png")}
-            title="Reports"
-            value="View"
-            subtitle="Summary"
+            title={t("home:reports")}
+            value={t("home:viewSummary")}
+            subtitle={t("home:reportsSub")}
             onPress={async () => {
               try {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -146,10 +148,10 @@ export default function HomeScreen() {
             />
             <View className="flex-1 ml-3">
               <Text className="text-sm font-medium text-green-800 dark:text-green-300">
-                You are offline
+                {t("home:offlineBanner")}
               </Text>
               <Text className="text-xs text-green-600 dark:text-green-455 mt-0.5">
-                Data will sync automatically when connection is available.
+                {t("home:offlineBannerDesc")}
               </Text>
             </View>
           </View>
@@ -192,10 +194,16 @@ function MetricCard({
           contentFit="contain"
           tintColor="#0D9E94"
         />
-        <Text className="text-sm text-gray-500 dark:text-slate-400">{title}</Text>
+        <Text className="text-sm text-gray-500 dark:text-slate-400">
+          {title}
+        </Text>
       </View>
-      <Text className="text-2xl font-bold text-navy dark:text-slate-100">{value}</Text>
-      <Text className="text-xs text-gray-400 dark:text-slate-500">{subtitle}</Text>
+      <Text className="text-2xl font-bold text-navy dark:text-slate-100">
+        {value}
+      </Text>
+      <Text className="text-xs text-gray-400 dark:text-slate-500">
+        {subtitle}
+      </Text>
     </Pressable>
   );
 }

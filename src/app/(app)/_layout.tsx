@@ -3,6 +3,7 @@ import { useThemeStore } from "@/features/theme/store";
 import { Image } from "expo-image";
 import { Tabs } from "expo-router";
 import { ImageSourcePropType, Platform, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function TabIcon({
   icon,
@@ -44,6 +45,7 @@ function TabIcon({
 
 export default function AppLayout() {
   const isIOS = Platform.OS === "ios";
+  const { bottom: bottomInset } = useSafeAreaInsets();
   const { resolvedTheme } = useThemeStore();
   const isDark = resolvedTheme === "dark";
 
@@ -59,8 +61,8 @@ export default function AppLayout() {
             borderTopColor: isDark ? "#1E293B" : "#F3F4F6",
             elevation: 0,
             shadowOpacity: 0,
-            height: isIOS ? 84 : 64,
-            paddingBottom: isIOS ? 22 : 8,
+            height: isIOS ? 84 : 64 + bottomInset,
+            paddingBottom: isIOS ? 22 : 8 + bottomInset,
             paddingTop: 8,
           },
           tabBarShowLabel: false,

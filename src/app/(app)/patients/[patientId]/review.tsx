@@ -8,12 +8,14 @@ import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 
 const ICON_COLOR = "#0D9E94";
 const ICON_COLOR_DARK = "#2DD4BF";
 
 export default function ReviewScreen() {
+  const { t } = useTranslation();
   const { capturedImageUri } = useAssessmentsStore();
   const {
     patientId: rawPatientId,
@@ -53,7 +55,7 @@ export default function ReviewScreen() {
     setAnalyzing(true);
     try {
       const result = await runInference(activeImageUri || "captured_image");
-      toast.success("Analysis complete!");
+      toast.success(t("review:analysisComplete") || "Analysis complete!");
 
       router.push({
         pathname: `/(app)/patients/${patientId}/result`,
@@ -64,7 +66,10 @@ export default function ReviewScreen() {
       } as Href);
     } catch (e) {
       console.error("Analysis failed:", e);
-      toast.error("Analysis failed. Please retake the photo.");
+      toast.error(
+        t("review:analysisFailed") ||
+          "Analysis failed. Please retake the photo.",
+      );
     } finally {
       setAnalyzing(false);
     }
@@ -81,7 +86,7 @@ export default function ReviewScreen() {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (e) {}
-    toast.info("Image discarded.");
+    toast.info(t("review:imageDiscarded") || "Image discarded.");
     router.back();
   };
 
@@ -98,7 +103,7 @@ export default function ReviewScreen() {
           />
         </Pressable>
         <Text className="text-lg font-bold text-navy dark:text-slate-100">
-          Review Image
+          {t("review:title")}
         </Text>
         <Pressable onPress={handleDelete} className="flex-row items-center p-1">
           <Image
@@ -107,7 +112,9 @@ export default function ReviewScreen() {
             contentFit="contain"
             tintColor="#EF4444"
           />
-          <Text className="text-sm font-semibold text-red-500">Delete</Text>
+          <Text className="text-sm font-semibold text-red-500">
+            {t("review:delete")}
+          </Text>
         </Pressable>
       </View>
 
@@ -117,7 +124,7 @@ export default function ReviewScreen() {
       >
         <View className="px-5">
           <Text className="text-sm text-gray-500 dark:text-slate-400 mb-4">
-            Check the image quality before analysis
+            {t("review:subtitle")}
           </Text>
 
           {/* Captured image preview */}
@@ -142,7 +149,7 @@ export default function ReviewScreen() {
                   <Text className="text-4xl">🔬</Text>
                 </View>
                 <Text className="text-gray-400 dark:text-slate-500 text-sm mt-3">
-                  Captured Lesion Image
+                  {t("review:capturedImage") || "Captured Lesion Image"}
                 </Text>
               </View>
             )}
@@ -151,8 +158,8 @@ export default function ReviewScreen() {
           {fileStats && !fileStats.exists && (
             <View className="bg-red-50 dark:bg-red-950/20 p-3.5 rounded-xl mb-4 border border-red-150/30 dark:border-red-900/30">
               <Text className="text-xs text-red-650 dark:text-red-400 leading-relaxed">
-                Warning: Captured image file does not exist on disk. Please
-                retake.
+                {t("review:fileMissing") ||
+                  "Warning: Captured image file does not exist on disk. Please retake."}
               </Text>
             </View>
           )}
@@ -167,10 +174,10 @@ export default function ReviewScreen() {
             />
             <View className="flex-1">
               <Text className="text-sm font-semibold text-[#0D9488] dark:text-teal-300">
-                Image Quality: Good
+                {t("review:qualityGood")}
               </Text>
               <Text className="text-xs text-[#14B8A6] dark:text-teal-400 mt-0.5">
-                The image is clear and suitable for analysis.
+                {t("review:qualityNote")}
               </Text>
             </View>
           </View>
@@ -178,21 +185,21 @@ export default function ReviewScreen() {
           {/* Tips */}
           <View className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800/80 rounded-2xl p-4 mb-6">
             <Text className="text-sm font-semibold text-navy dark:text-slate-100 mb-3">
-              Tips for better results
+              {t("review:tipsTitle")}
             </Text>
             <TipRow
               icon={require("../../../../../assets/icons/review-natural-light.png")}
-              text="Use natural light"
+              text={t("review:useNaturalLight")}
               isDark={isDark}
             />
             <TipRow
               icon={require("../../../../../assets/icons/review-lesion.png")}
-              text="Keep the lesion in focus"
+              text={t("review:keepFocus")}
               isDark={isDark}
             />
             <TipRow
               icon={require("../../../../../assets/icons/review-entire-lesion.png")}
-              text="Capture the entire lesion"
+              text={t("review:captureEntire")}
               isDark={isDark}
             />
           </View>
@@ -207,7 +214,9 @@ export default function ReviewScreen() {
           className={`flex-row items-center justify-center rounded-xl py-4 ${analyzing ? "bg-primary/70" : "bg-primary"}`}
         >
           <Text className="text-white font-semibold text-base mr-2">
-            {analyzing ? "Analyzing Image..." : "Use Image & Analyze"}
+            {analyzing
+              ? t("review:analyzing") || "Analyzing Image..."
+              : t("review:useImage")}
           </Text>
           {!analyzing && <Text className="text-white text-lg">→</Text>}
           {analyzing && <View className="w-5 h-5" />}
@@ -225,7 +234,7 @@ export default function ReviewScreen() {
             tintColor="#0D9E94"
           />
           <Text className="text-primary dark:text-primary-400 font-semibold text-base">
-            Retake Photo
+            {t("review:retake")}
           </Text>
         </Pressable>
       </View>

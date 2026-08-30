@@ -60,6 +60,10 @@
     "records": "Rekodi {{count}}",
     "total": "Jumla {{count}}",
     "viewSummary": "Tazama Muhtasari",
+    "patientsSub": "Rekodi",
+    "assessmentsSub": "Jumla",
+    "pendingSyncSub": "Rekodi",
+    "reportsSub": "Muhtasari",
     "offlineBanner": "Uko nje ya mtandao",
     "offlineBannerDesc": "Data itasawazishwa kiotomatiki."
   },
@@ -183,7 +187,15 @@
     "helpSupportDesc": "Maswali na mawasiliano ya msaada.",
     "about": "Kuhusu DermSight",
     "logout": "Toka",
+    "languageDesc": "Badilisha lugha",
+    "themeDesc": "Geuza mandhari",
+    "unitsDesc": "Badilisha vipimo",
     "version": "Toleo {{version}} (Build {{build}})"
+  },
+  "language": {
+    "en": "Kiingereza",
+    "fr": "Kifaransa",
+    "sw": "Kiswahili"
   },
   "common": {
     "save": "Hifadhi",
@@ -197,6 +209,11 @@
     "retry": "Jaribu tena",
     "noData": "Hakuna data inayopatikana",
     "required": "Lazima",
-    "optional": "Si lazima"
+    "optional": "Si lazima",
+    "system": "Mfumo",
+    "light": "Nuru",
+    "dark": "Giza",
+    "close": "Funga",
+    "ok": "Sawa"
   }
 }

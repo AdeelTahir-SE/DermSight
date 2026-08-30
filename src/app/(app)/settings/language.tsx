@@ -5,6 +5,7 @@
 import i18n from "@/lib/i18n";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable, Text, View } from "react-native";
 
 const LANGUAGES = [
@@ -14,6 +15,7 @@ const LANGUAGES = [
 ];
 
 export default function LanguageScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [selected, setSelected] = useState(i18n.language || "en");
 
@@ -29,7 +31,9 @@ export default function LanguageScreen() {
           <Pressable onPress={() => router.back()} className="p-1 mr-3">
             <Text className="text-xl">←</Text>
           </Pressable>
-          <Text className="text-lg font-bold text-navy">Language</Text>
+          <Text className="text-lg font-bold text-navy">
+            {t("settings:language")}
+          </Text>
         </View>
       </View>
 

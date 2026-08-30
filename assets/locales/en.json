@@ -60,6 +60,10 @@
     "records": "{{count}} Records",
     "total": "{{count}} Total",
     "viewSummary": "View Summary",
+    "patientsSub": "Records",
+    "assessmentsSub": "Total",
+    "pendingSyncSub": "Records",
+    "reportsSub": "Summary",
     "offlineBanner": "You are offline",
     "offlineBannerDesc": "Data will sync automatically when connection is available."
   },
@@ -183,7 +187,15 @@
     "helpSupportDesc": "FAQs and contact support.",
     "about": "About DermSight",
     "logout": "Log Out",
+    "languageDesc": "Change app language",
+    "themeDesc": "Customize color scheme",
+    "unitsDesc": "Toggle measurement units",
     "version": "Version {{version}} (Build {{build}})"
+  },
+  "language": {
+    "en": "English",
+    "fr": "French",
+    "sw": "Swahili"
   },
   "common": {
     "save": "Save",
@@ -197,6 +209,11 @@
     "retry": "Retry",
     "noData": "No data available",
     "required": "Required",
-    "optional": "Optional"
+    "optional": "Optional",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark",
+    "close": "Close",
+    "ok": "OK"
   }
 }

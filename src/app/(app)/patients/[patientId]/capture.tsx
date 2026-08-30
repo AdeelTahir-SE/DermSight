@@ -10,6 +10,7 @@ import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Pressable,
@@ -19,6 +20,7 @@ import {
 } from "react-native";
 
 export default function CaptureScreen() {
+  const { t } = useTranslation();
   const { setCapturedImageUri } = useAssessmentsStore();
   const { patientId: rawPatientId, patientid: fallbackPatientId } =
     useLocalSearchParams<{
@@ -45,11 +47,11 @@ export default function CaptureScreen() {
           <Text className="text-4xl">📷</Text>
         </View>
         <Text className="text-white text-xl font-bold text-center mb-2">
-          Camera Access Required
+          {t("capture:cameraRequired") || "Camera Access Required"}
         </Text>
         <Text className="text-white/60 text-sm text-center mb-8">
-          DermSight needs camera access to capture images of skin lesions for
-          assessment.
+          {t("capture:cameraRequiredDesc") ||
+            "DermSight needs camera access to capture images of skin lesions for assessment."}
         </Text>
         <Pressable
           onPress={async () => {
@@ -61,7 +63,7 @@ export default function CaptureScreen() {
           className="bg-primary px-8 py-4 rounded-xl"
         >
           <Text className="text-white font-semibold text-base">
-            Grant Camera Access
+            {t("capture:grantAccess") || "Grant Camera Access"}
           </Text>
         </Pressable>
       </View>
@@ -74,11 +76,11 @@ export default function CaptureScreen() {
       <View className="flex-1 bg-black items-center justify-center px-8">
         <Text className="text-5xl mb-4">🚫</Text>
         <Text className="text-white text-xl font-bold text-center mb-2">
-          Camera Access Denied
+          {t("capture:cameraDenied") || "Camera Access Denied"}
         </Text>
         <Text className="text-white/60 text-sm text-center mb-6">
-          Please enable camera access in your device settings to capture lesion
-          images.
+          {t("capture:cameraDeniedDesc") ||
+            "Please enable camera access in your device settings to capture lesion images."}
         </Text>
         <Pressable
           onPress={async () => {
@@ -89,7 +91,7 @@ export default function CaptureScreen() {
           }}
           className="bg-white/20 px-8 py-3 rounded-xl"
         >
-          <Text className="text-white font-medium">Go Back</Text>
+          <Text className="text-white font-medium">{t("common:back")}</Text>
         </Pressable>
       </View>
     );
@@ -120,7 +122,9 @@ export default function CaptureScreen() {
       }
     } catch (error) {
       console.error("[CaptureScreen] Capture failed:", error);
-      toast.error("Capture failed. Please try again.");
+      toast.error(
+        t("capture:captureFailed") || "Capture failed. Please try again.",
+      );
     } finally {
       setIsCapturing(false);
     }
@@ -211,7 +215,7 @@ export default function CaptureScreen() {
       {/* Instruction overlay */}
       <View className="absolute top-28 left-8 right-8 bg-black/60 rounded-2xl py-3 px-4 z-10">
         <Text className="text-white text-sm text-center leading-5">
-          Position the lesion within the frame{"\n"}and ensure good lighting
+          {t("capture:positionInstruction")}
         </Text>
       </View>
 
@@ -233,14 +237,14 @@ export default function CaptureScreen() {
             <Text
               className={`text-base font-semibold ${activeTab === "photo" ? "text-[#0D9E94]" : "text-white/60"}`}
             >
-              PHOTO
+              {t("capture:photo")}
             </Text>
           </Pressable>
           <Pressable onPress={() => setActiveTab("guide")}>
             <Text
               className={`text-base font-semibold ${activeTab === "guide" ? "text-[#0D9E94]" : "text-white/60"}`}
             >
-              GUIDE
+              {t("capture:guide")}
             </Text>
           </Pressable>
         </View>
@@ -253,7 +257,8 @@ export default function CaptureScreen() {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               } catch (e) {}
               toast.info(
-                "Import from gallery is disabled. Use the live camera for diagnostics.",
+                t("capture:galleryDisabled") ||
+                  "Import from gallery is disabled. Use the live camera for diagnostics.",
               );
             }}
             className="items-center"
@@ -266,7 +271,7 @@ export default function CaptureScreen() {
                 tintColor="#FFFFFF"
               />
             </View>
-            <Text className="text-white text-xs">Gallery</Text>
+            <Text className="text-white text-xs">{t("capture:gallery")}</Text>
           </Pressable>
 
           {/* Shutter button */}
@@ -300,7 +305,7 @@ export default function CaptureScreen() {
                 tintColor="#FFFFFF"
               />
             </View>
-            <Text className="text-white text-xs">Tips</Text>
+            <Text className="text-white text-xs">{t("capture:tips")}</Text>
           </Pressable>
         </View>
 
@@ -310,25 +315,26 @@ export default function CaptureScreen() {
             <View className="flex-row items-start mb-2">
               <Text className="text-white/90 text-xs mr-2">•</Text>
               <Text className="text-white/80 text-xs flex-1">
-                Use natural light when possible
+                {t("review:useNaturalLight")}
               </Text>
             </View>
             <View className="flex-row items-start mb-2">
               <Text className="text-white/90 text-xs mr-2">•</Text>
               <Text className="text-white/80 text-xs flex-1">
-                Keep the lesion centered and in focus
+                {t("review:keepFocus")}
               </Text>
             </View>
             <View className="flex-row items-start mb-2">
               <Text className="text-white/90 text-xs mr-2">•</Text>
               <Text className="text-white/80 text-xs flex-1">
-                Capture the entire lesion with some surrounding skin
+                {t("review:captureEntire")}
               </Text>
             </View>
             <View className="flex-row items-start">
               <Text className="text-white/90 text-xs mr-2">•</Text>
               <Text className="text-white/80 text-xs flex-1">
-                Avoid shadows and glare on the skin
+                {t("capture:avoidShadows") ||
+                  "Avoid shadows and glare on the skin"}
               </Text>
             </View>
           </View>
@@ -344,10 +350,10 @@ export default function CaptureScreen() {
           />
           <View className="flex-1">
             <Text className="text-white text-sm font-semibold">
-              Capture clear, close-up image
+              {t("capture:tipText")}
             </Text>
             <Text className="text-white/60 text-xs mt-0.5">
-              Avoid shadows and keep steady
+              {t("capture:avoidShadows") || "Avoid shadows and keep steady"}
             </Text>
           </View>
           <Text className="text-white/60 text-lg">⌄</Text>

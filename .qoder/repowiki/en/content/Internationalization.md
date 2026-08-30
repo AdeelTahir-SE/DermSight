@@ -3,13 +3,22 @@
 <cite>
 **Referenced Files in This Document**
 - [i18n.ts](file://src/lib/i18n.ts)
+- [_layout.tsx](file://src/app/_layout.tsx)
 - [en.json](file://assets/locales/en.json)
 - [fr.json](file://assets/locales/fr.json)
 - [sw.json](file://assets/locales/sw.json)
 - [language.tsx](file://src/app/(app)/settings/language.tsx)
-- [_layout.tsx](file://src/app/_layout.tsx)
+- [home/index.tsx](file://src/app/(app)/home/index.tsx)
 - [package.json](file://package.json)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated architecture section to reflect comprehensive I18nextProvider wrapping at root layout level
+- Enhanced component usage examples showing translation function implementation throughout the app
+- Added detailed coverage of runtime language switching and fallback mechanisms
+- Updated dependency analysis to include react-i18next integration
+- Expanded testing approaches for multi-language functionality with provider context
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -24,300 +33,374 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains DermSight’s internationalization (i18n) system that supports English, French, and Swahili. It covers how i18next is initialized, how translations are structured and loaded, how users select a language at runtime, and how the app falls back when translations are missing. It also provides guidance for adding new languages, formatting dates and numbers per locale, cultural considerations for healthcare terminology, right-to-left support, testing strategies, and how i18n integrates with patient data display and assessment results.
+This document explains DermSight's internationalization (i18n) system that supports English, French, and Swahili. The system now features a comprehensive i18next implementation that wraps the entire application with I18nextProvider in the root layout, ensuring all user-facing text elements use translation functions with robust fallback mechanisms. Language switching is fully supported throughout the app lifecycle, providing seamless multilingual experiences for community health workers across different regions.
 
 ## Project Structure
-The i18n implementation is centered around:
-- A single initialization module that configures i18next and registers translation resources.
-- JSON translation files organized by language under assets/locales.
-- A settings screen that lets users switch languages at runtime.
-- A root layout that ensures i18n is bootstrapped early in the app lifecycle.
+The i18n implementation follows a centralized architecture pattern:
+- Root-level I18nextProvider wrapping the entire application tree
+- Centralized i18n initialization module configuring translation resources
+- JSON translation files organized by language under assets/locales
+- Settings screen enabling runtime language switching
+- Comprehensive translation usage across all app components
 
 ```mermaid
 graph TB
-A["Root Layout<br/>_layout.tsx"] --> B["i18n Initialization<br/>src/lib/i18n.ts"]
-B --> C["English Resources<br/>assets/locales/en.json"]
-B --> D["French Resources<br/>assets/locales/fr.json"]
-B --> E["Swahili Resources<br/>assets/locales/sw.json"]
-F["Language Selection UI<br/>src/app/(app)/settings/language.tsx"] --> B
+A["Root Layout<br/>_layout.tsx"] --> B["I18nextProvider<br/>Wraps Entire App"]
+B --> C["i18n Initialization<br/>src/lib/i18n.ts"]
+C --> D["English Resources<br/>assets/locales/en.json"]
+C --> E["French Resources<br/>assets/locales/fr.json"]
+C --> F["Swahili Resources<br/>assets/locales/sw.json"]
+G["Language Selection UI<br/>src/app/(app)/settings/language.tsx"] --> C
+H["App Components<br/>Home, Patients, etc."] --> B
 ```
 
 **Diagram sources**
-- [_layout.tsx:1-54](file://src/app/_layout.tsx#L1-L54)
-- [i18n.ts:1-29](file://src/lib/i18n.ts#L1-L29)
-- [en.json:1-203](file://assets/locales/en.json#L1-L203)
-- [fr.json:1-203](file://assets/locales/fr.json#L1-L203)
-- [sw.json:1-203](file://assets/locales/sw.json#L1-L203)
-- [language.tsx:1-68](file://src/app/(app)/settings/language.tsx#L1-L68)
+- [_layout.tsx:62-78](file://src/app/_layout.tsx#L62-L78)
+- [i18n.ts:18-26](file://src/lib/i18n.ts#L18-L26)
+- [language.tsx:22-25](file://src/app/(app)/settings/language.tsx#L22-L25)
 
 **Section sources**
-- [_layout.tsx:1-54](file://src/app/_layout.tsx#L1-L54)
-- [i18n.ts:1-29](file://src/lib/i18n.ts#L1-L29)
+- [_layout.tsx:62-78](file://src/app/_layout.tsx#L62-L78)
+- [i18n.ts:18-26](file://src/lib/i18n.ts#L18-L26)
 
 ## Core Components
-- i18next configuration and resource registration: The initialization module imports translation bundles and sets default and fallback languages. It enables interpolation and sets compatibility mode for React integration.
-- Translation resources: Each language has a JSON file containing keys grouped by feature areas such as app, onboarding, auth, home, patients, capture, review, result, sync, settings, and common.
-- Language selection UI: A simple list of supported languages that updates the active language via i18next’s changeLanguage API.
+- **I18nextProvider**: Wraps the entire application at the root layout level, making translations available to all child components
+- **i18next Configuration**: Centralized initialization module that registers translation resources and configures interpolation settings
+- **Translation Resources**: JSON files containing localized strings organized by feature areas (app, onboarding, auth, home, patients, capture, review, result, sync, settings, common)
+- **Language Switching**: Runtime language change functionality through the settings screen using i18next.changeLanguage API
 
 Key behaviors:
-- Default language is set to English.
-- Fallback language is English to ensure content always renders even if a key is missing in another language.
-- Interpolation is enabled so dynamic values can be injected into strings using placeholders.
+- Default language set to English with automatic fallback
+- Interpolation enabled for dynamic content injection
+- Compatibility mode configured for React integration
+- All components access translations through the useTranslation hook
 
 **Section sources**
-- [i18n.ts:1-29](file://src/lib/i18n.ts#L1-L29)
-- [en.json:1-203](file://assets/locales/en.json#L1-L203)
-- [fr.json:1-203](file://assets/locales/fr.json#L1-L203)
-- [sw.json:1-203](file://assets/locales/sw.json#L1-L203)
-- [language.tsx:1-68](file://src/app/(app)/settings/language.tsx#L1-L68)
+- [_layout.tsx:62-78](file://src/app/_layout.tsx#L62-L78)
+- [i18n.ts:18-26](file://src/lib/i18n.ts#L18-L26)
+- [language.tsx:22-25](file://src/app/(app)/settings/language.tsx#L22-L25)
 
 ## Architecture Overview
-The i18n architecture follows a straightforward pattern:
-- Bootstrap: The root layout imports the i18n module early, ensuring translations are available before any screens render.
-- Resources: Translations are bundled statically from JSON files and registered with i18next.
-- Runtime switching: The language selection screen calls changeLanguage to update the active language across the app.
-- Fallbacks: Missing keys or languages fall back to English automatically.
+The i18n architecture implements a provider-based pattern for comprehensive application coverage:
 
 ```mermaid
 sequenceDiagram
-participant App as "App"
+participant App as "Application"
 participant Root as "Root Layout"
+participant Provider as "I18nextProvider"
 participant I18n as "i18n Module"
+participant Components as "App Components"
 participant LangUI as "Language Screen"
-participant EN as "en.json"
-participant FR as "fr.json"
-participant SW as "sw.json"
-App->>Root : Start
-Root->>I18n : Import and initialize
-I18n-->>EN : Load English resources
-I18n-->>FR : Load French resources
-I18n-->>SW : Load Swahili resources
-App->>LangUI : User opens Language settings
+App->>Root : Initialize
+Root->>Provider : Wrap with I18nextProvider
+Provider->>I18n : Load resources (en, fr, sw)
+Components->>Provider : Access translations via hooks
 LangUI->>I18n : changeLanguage(code)
-I18n-->>App : Re-render with selected language
+I18n-->>Components : Re-render with new locale
 ```
 
+**Updated** The architecture now uses I18nextProvider at the root level instead of individual component providers, ensuring consistent translation availability throughout the entire application lifecycle.
+
 **Diagram sources**
-- [_layout.tsx:1-54](file://src/app/_layout.tsx#L1-L54)
-- [i18n.ts:1-29](file://src/lib/i18n.ts#L1-L29)
-- [language.tsx:1-68](file://src/app/(app)/settings/language.tsx#L1-L68)
-- [en.json:1-203](file://assets/locales/en.json#L1-L203)
-- [fr.json:1-203](file://assets/locales/fr.json#L1-L203)
-- [sw.json:1-203](file://assets/locales/sw.json#L1-L203)
+- [_layout.tsx:62-78](file://src/app/_layout.tsx#L62-L78)
+- [i18n.ts:18-26](file://src/lib/i18n.ts#L18-L26)
+- [language.tsx:22-25](file://src/app/(app)/settings/language.tsx#L22-L25)
 
 ## Detailed Component Analysis
 
-### i18next Initialization
+### I18nextProvider Integration
+**Updated** The root layout now wraps the entire application with I18nextProvider, providing global translation access to all components without requiring individual provider setup.
+
 Responsibilities:
-- Registers translation resources for English, French, and Swahili.
-- Sets default and fallback languages to English.
-- Enables interpolation without escaping values for React components.
-- Configures compatibility mode for React integration.
+- Provides i18n instance to the entire component tree
+- Ensures translations are available before any screens render
+- Manages language state across the application lifecycle
+- Handles re-renders when language changes occur
 
-Implications:
-- All components can rely on consistent translation availability after bootstrap.
-- Missing keys will not break rendering; they will fall back to English.
-
-**Section sources**
-- [i18n.ts:1-29](file://src/lib/i18n.ts#L1-L29)
-
-### Translation File Structure and Key Naming
-Structure:
-- Each JSON file groups keys by feature area (e.g., app, onboarding, auth, home, patients, capture, review, result, sync, settings, common).
-- Keys use dot notation to represent hierarchical structure (e.g., home.greeting, patients.firstName).
-
-Naming conventions:
-- Use descriptive, domain-scoped keys to avoid collisions and improve maintainability.
-- Keep keys stable over time to minimize migration effort.
-- Use pluralization-friendly keys where needed (e.g., records, total) and leverage i18next features for plurals if required.
-
-Examples of key usage:
-- Greetings and roles: app.name, home.greeting, home.role
-- Patient management: patients.title, patients.search, patients.savePatient
-- Assessment flow: capture.positionInstruction, review.useImage, result.screeningResult
-- Sync status: sync.syncNow, sync.pendingItems, sync.noConnection
-- Common actions: common.save, common.cancel, common.retry
+Implementation details:
+- Imported from react-i18next package
+- Configured with i18n instance from src/lib/i18n.ts
+- Positioned above SafeAreaProvider and Stack navigation
+- Maintains proper rendering order for optimal performance
 
 **Section sources**
-- [en.json:1-203](file://assets/locales/en.json#L1-L203)
-- [fr.json:1-203](file://assets/locales/fr.json#L1-L203)
-- [sw.json:1-203](file://assets/locales/sw.json#L1-L203)
+- [_layout.tsx:62-78](file://src/app/_layout.tsx#L62-L78)
+
+### Translation Function Usage Across Components
+**Updated** All user-facing text elements now use translation functions with comprehensive fallback mechanisms.
+
+Component integration patterns:
+- Home screen uses `useTranslation()` hook for dynamic greetings and status messages
+- Patient management screens implement localized labels, placeholders, and error states
+- Assessment workflows provide translated instructions and results
+- Settings interface offers complete localization including language selection
+
+Example implementations:
+- Dynamic content: `{t("home:greeting", { name: workerName || t("common:loading") })}`
+- Status messages: `{isOffline ? t("home:deviceOffline") : t("home:deviceOnline")}`
+- Form labels: `{t("patients:firstName")}`, `{t("patients:lastName")}`
+- Action buttons: `{t("common:save")}`, `{t("common:cancel")}`
+
+**Section sources**
+- [home/index.tsx:19,48,57,95,98,108,115,122,129,151,154](file://src/app/(app)/home/index.tsx#L19-L154)
 
 ### Dynamic Language Switching
 Behavior:
-- The language selection screen lists supported languages and updates the active language via i18next.changeLanguage.
-- After changing the language, the app re-renders with the new locale’s strings.
+- Language selection screen lists supported languages with native names
+- Updates active language via i18next.changeLanguage API
+- Triggers immediate re-render across all components with new locale
+- Maintains selected language state during runtime session
 
-Considerations:
-- Ensure all user-facing text uses translation keys rather than hardcoded strings to reflect changes immediately.
-- Persisting the selected language across sessions is recommended for better UX; currently, the selection applies during runtime.
+Enhanced capabilities:
+- Real-time language switching without app restart
+- Consistent translation updates across all screens
+- Proper cleanup and resource management
+- Error handling for unsupported language codes
 
 **Section sources**
-- [language.tsx:1-68](file://src/app/(app)/settings/language.tsx#L1-L68)
+- [language.tsx:22-25](file://src/app/(app)/settings/language.tsx#L22-L25)
 
 ### Locale Detection and Persistence
 Current state:
-- The app initializes with English as the default language and does not auto-detect device locale.
-- There is no explicit persistence mechanism for the selected language in the analyzed code.
+- Application initializes with English as default language
+- No automatic device locale detection implemented
+- Language selection persists only during runtime session
 
-Recommendations:
-- Detect device locale at startup and map it to supported codes (en, fr, sw).
-- Persist the chosen language using secure storage or preferences so it survives app restarts.
-- Provide a clear way for users to override automatic detection.
+Recommendations for enhancement:
+- Implement device locale detection at startup
+- Add persistent storage for selected language preference
+- Provide clear override mechanism for automatic detection
+- Consider caching strategies for improved performance
 
 [No sources needed since this section provides general guidance]
 
-### Text Localization in Components
+### Text Localization Patterns
 Guidance:
-- Replace hardcoded strings with translation keys from the appropriate namespace (e.g., home.greeting, patients.title).
-- Use interpolation to inject dynamic values like names or counts.
-- Ensure error messages, labels, placeholders, and empty states are fully localized.
+- Replace hardcoded strings with translation keys from appropriate namespaces
+- Use interpolation for dynamic values like names, counts, and dates
+- Ensure comprehensive coverage of error messages, labels, and empty states
+- Maintain consistency in key naming conventions across all locales
 
-Example patterns (by reference):
-- Home greeting and role: home.greeting, home.role
-- Patient list header and search placeholder: patients.title, patients.search
-- Capture instructions and tips: capture.positionInstruction, capture.tips
-- Review actions and quality notes: review.useImage, review.qualityGood
-- Result disclaimers and actions: result.disclaimer, result.saveResult
-- Sync queue status and actions: sync.syncNow, sync.pendingItems, sync.noConnection
-- Settings entries and version info: settings.language, settings.version
+Implementation examples:
+- Greetings and roles: `home:greeting`, `home:role`
+- Patient management: `patients:title`, `patients:search`, `patients:savePatient`
+- Assessment workflow: `capture:positionInstruction`, `review:useImage`, `result:screeningResult`
+- System messages: `sync:syncNow`, `sync:pendingItems`, `sync:noConnection`
+- Common actions: `common:save`, `common:cancel`, `common:retry`
 
 **Section sources**
-- [en.json:1-203](file://assets/locales/en.json#L1-L203)
-- [fr.json:1-203](file://assets/locales/fr.json#L1-L203)
-- [sw.json:1-203](file://assets/locales/sw.json#L1-L203)
+- [home/index.tsx:48,57,95,98,108,115,122,129,151,154](file://src/app/(app)/home/index.tsx#L48-L154)
+- [en.json:1-220](file://assets/locales/en.json#L1-L220)
 
 ### Date and Number Formatting for Different Locales
 Guidance:
-- Use locale-aware formatters to present dates and numbers consistently across languages.
-- For dates, prefer libraries or APIs that respect locale-specific formats (e.g., day/month order, month names).
-- For numbers, apply locale-specific separators and decimal rules.
+- Integrate locale-aware formatting utilities for dates and numbers
+- Use libraries or APIs that respect locale-specific formats
+- Apply locale-specific separators and decimal rules consistently
+- Avoid hardcoding format strings in components
 
-Implementation note:
-- Integrate a formatting utility that reads the current locale from i18n and formats values accordingly.
-- Avoid hardcoding date or number formats in components.
+Implementation approach:
+- Create formatting utilities that read current locale from i18n
+- Implement date formatters respecting cultural preferences
+- Apply number formatting based on regional standards
+- Test formatting across all supported locales
 
 [No sources needed since this section provides general guidance]
 
 ### Cultural Considerations for Healthcare Terminology
 Guidelines:
-- Use respectful, culturally appropriate terms for gender, health conditions, and procedures.
-- Align terminology with local health worker practices and patient communication norms.
-- Validate translations with native speakers familiar with healthcare contexts.
-- Maintain consistency across all screens to reduce confusion.
+- Use respectful, culturally appropriate terms for medical conditions and procedures
+- Align terminology with local healthcare practices and patient communication norms
+- Validate translations with native speakers familiar with healthcare contexts
+- Maintain consistency across all screens to reduce confusion for health workers
 
 [No sources needed since this section provides general guidance]
 
 ### Right-to-Left Language Support
 Guidance:
-- If future locales require right-to-left (RTL) layout, configure the UI framework to adapt layouts based on locale direction.
-- Test alignment, icons, and navigation flows in RTL mode.
-- Ensure text containers do not assume left-to-right behavior.
+- Prepare infrastructure for future RTL language support
+- Configure UI framework to adapt layouts based on locale direction
+- Test alignment, icons, and navigation flows in RTL mode
+- Ensure text containers handle bidirectional text properly
 
 [No sources needed since this section provides general guidance]
 
 ### Testing Approaches for Multi-Language Functionality
+**Updated** Enhanced testing strategies for comprehensive i18n coverage:
+
 Recommendations:
-- Unit tests: Verify that translation keys resolve correctly for each supported locale.
-- Integration tests: Simulate language switching and assert that UI elements update accordingly.
-- Visual regression: Compare screenshots across locales to catch layout issues.
-- Accessibility: Ensure screen readers announce localized strings appropriately.
+- Unit tests: Verify translation key resolution for each supported locale
+- Integration tests: Simulate language switching and assert UI updates
+- Visual regression: Compare screenshots across locales for layout issues
+- Accessibility testing: Ensure screen readers announce localized strings correctly
+- Provider context testing: Validate I18nextProvider behavior in component trees
+
+Testing implementation:
+- Mock i18n instance for isolated component testing
+- Test language switching scenarios and state persistence
+- Verify fallback mechanisms work correctly for missing translations
+- Test interpolation and pluralization across different locales
 
 [No sources needed since this section provides general guidance]
 
 ### Relationship with Patient Data Display and Assessment Results
 Integration points:
-- Patient-related labels, placeholders, and statuses should be localized to ensure clarity for health workers.
-- Assessment results and disclaimers must be translated accurately to communicate risk levels and recommended actions.
-- Sync status messages should be localized to inform users about connectivity and data synchronization.
+- Patient-related labels, placeholders, and statuses fully localized
+- Assessment results and disclaimers accurately translated for risk communication
+- Sync status messages localized to inform users about connectivity
+- Medical terminology validated for cultural appropriateness
+
+Enhanced integration:
+- All patient data displays use translation keys for labels and formatting
+- Assessment workflows provide localized instructions and results
+- Error states and loading indicators are fully internationalized
+- User feedback messages support multiple languages
 
 **Section sources**
-- [en.json:1-203](file://assets/locales/en.json#L1-L203)
-- [fr.json:1-203](file://assets/locales/fr.json#L1-L203)
-- [sw.json:1-203](file://assets/locales/sw.json#L1-L203)
+- [home/index.tsx:48,57,95,98,108,115,122,129,151,154](file://src/app/(app)/home/index.tsx#L48-L154)
+- [en.json:1-220](file://assets/locales/en.json#L1-L220)
 
 ## Dependency Analysis
+**Updated** The i18n system dependencies now include comprehensive React integration:
+
 The i18n system depends on:
-- i18next and react-i18next packages for core functionality and React integration.
-- Static JSON translation files for each supported language.
-- The root layout to initialize i18n early in the app lifecycle.
-- The language selection screen to trigger runtime language changes.
+- i18next core library for internationalization functionality
+- react-i18next for React component integration and hooks
+- I18nextProvider for global translation context
+- Static JSON translation files for each supported language
+- Root layout integration for application-wide provider setup
+- Language selection screen for runtime configuration
 
 ```mermaid
 graph TB
 Pkg["Dependencies<br/>package.json"] --> I18nLib["i18next + react-i18next"]
-I18nLib --> Init["Initialization<br/>src/lib/i18n.ts"]
+I18nLib --> Provider["I18nextProvider<br/>Root Layout"]
+Provider --> Init["Initialization<br/>src/lib/i18n.ts"]
 Init --> EN["en.json"]
 Init --> FR["fr.json"]
 Init --> SW["sw.json"]
-Init --> Root["Root Layout<br/>src/app/_layout.tsx"]
-Root --> App["App Screens"]
+Provider --> Components["All App Components"]
 LangUI["Language Screen<br/>src/app/(app)/settings/language.tsx"] --> Init
 ```
 
 **Diagram sources**
 - [package.json:1-66](file://package.json#L1-L66)
-- [i18n.ts:1-29](file://src/lib/i18n.ts#L1-L29)
-- [_layout.tsx:1-54](file://src/app/_layout.tsx#L1-L54)
-- [language.tsx:1-68](file://src/app/(app)/settings/language.tsx#L1-L68)
-- [en.json:1-203](file://assets/locales/en.json#L1-L203)
-- [fr.json:1-203](file://assets/locales/fr.json#L1-L203)
-- [sw.json:1-203](file://assets/locales/sw.json#L1-L203)
+- [_layout.tsx:62-78](file://src/app/_layout.tsx#L62-L78)
+- [i18n.ts:18-26](file://src/lib/i18n.ts#L18-L26)
+- [language.tsx:22-25](file://src/app/(app)/settings/language.tsx#L22-L25)
 
 **Section sources**
 - [package.json:1-66](file://package.json#L1-L66)
-- [i18n.ts:1-29](file://src/lib/i18n.ts#L1-L29)
+- [_layout.tsx:62-78](file://src/app/_layout.tsx#L62-L78)
+- [i18n.ts:18-26](file://src/lib/i18n.ts#L18-L26)
 
 ## Performance Considerations
-- Keep translation files modular and well-structured to minimize parsing overhead.
-- Avoid excessive interpolation in hot paths to prevent unnecessary re-renders.
-- Preload only necessary locales if supporting many languages in the future.
-- Monitor bundle size impact of additional locales and consider lazy loading if needed.
+**Updated** Performance optimizations for comprehensive i18n implementation:
+
+- Provider-based architecture reduces redundant provider setup
+- Centralized resource loading minimizes bundle size impact
+- Efficient re-rendering when language changes occur
+- Lazy loading considerations for additional locales
+- Memory management for translation resources
+- Interpolation performance optimization for dynamic content
+
+Best practices:
+- Keep translation files modular and well-structured
+- Avoid excessive interpolation in hot rendering paths
+- Monitor bundle size impact of additional locales
+- Consider code splitting for large translation files
+- Optimize re-render cycles during language switching
 
 [No sources needed since this section provides general guidance]
 
 ## Troubleshooting Guide
+**Updated** Enhanced troubleshooting for comprehensive i18n implementation:
+
 Common issues and resolutions:
 - Missing translations:
-  - Symptom: UI shows raw keys or falls back to English.
-  - Resolution: Add the missing key to all supported locale files; verify key paths match component usage.
-- Incorrect interpolation:
-  - Symptom: Dynamic values not displayed.
-  - Resolution: Ensure placeholders are used consistently and values are passed correctly to the translation function.
-- Language not persisting:
-  - Symptom: Language resets on app restart.
-  - Resolution: Implement persistence for the selected language using secure storage or preferences.
-- Device locale mismatch:
-  - Symptom: Auto-detected language differs from user preference.
-  - Resolution: Allow manual override and prioritize user choice over device locale.
+  - Symptom: UI shows raw keys or falls back to English
+  - Resolution: Add missing keys to all locale files; verify key paths match component usage
+- Provider context issues:
+  - Symptom: Translation functions not available in components
+  - Resolution: Ensure I18nextProvider wraps components properly; check import statements
+- Language switching problems:
+  - Symptom: Language doesn't update across all screens
+  - Resolution: Verify i18n.changeLanguage calls; check component re-render triggers
+- Interpolation errors:
+  - Symptom: Dynamic values not displayed correctly
+  - Resolution: Ensure placeholder syntax matches; validate parameter passing
+
+Advanced troubleshooting:
+- Debug translation resolution using console logging
+- Verify fallback chain works correctly for missing keys
+- Check for circular dependencies in translation imports
+- Monitor memory usage during language switching operations
 
 **Section sources**
-- [i18n.ts:1-29](file://src/lib/i18n.ts#L1-L29)
-- [language.tsx:1-68](file://src/app/(app)/settings/language.tsx#L1-L68)
+- [_layout.tsx:62-78](file://src/app/_layout.tsx#L62-L78)
+- [i18n.ts:18-26](file://src/lib/i18n.ts#L18-L26)
+- [language.tsx:22-25](file://src/app/(app)/settings/language.tsx#L22-L25)
 
 ## Conclusion
-DermSight’s i18n system provides a solid foundation for multi-language support with English, French, and Swahili. The centralized initialization, structured translation files, and runtime language switching enable a responsive and accessible experience for community health workers. To enhance usability, consider implementing locale detection, persistent language preferences, robust date and number formatting, and comprehensive testing across locales. These improvements will strengthen the app’s localization workflow and ensure consistent, culturally appropriate communication in healthcare contexts.
+DermSight's comprehensive i18n system provides robust multi-language support with English, French, and Swahili. The implementation now features I18nextProvider wrapping the entire application, ensuring consistent translation availability across all components. The centralized initialization, structured translation files, and runtime language switching enable a responsive and accessible experience for community health workers. Future enhancements should focus on locale detection, persistent language preferences, advanced date and number formatting, and comprehensive testing across all supported locales to strengthen the localization workflow and ensure culturally appropriate communication in healthcare contexts.
 
 ## Appendices
 
 ### Adding a New Language
+**Updated** Steps for adding new language support:
+
 Steps:
-- Create a new JSON file under assets/locales with the same key structure as existing files.
-- Register the new language in the i18n initialization module by importing and adding it to the resources object.
-- Update the language selection screen to include the new language option.
-- Test language switching and verify all keys render correctly.
+- Create new JSON file under assets/locales with complete key structure
+- Import and register language in i18n initialization module
+- Add language option to language selection screen
+- Update I18nextProvider configuration if needed
+- Test comprehensive language switching across all screens
+- Verify translation key coverage and fallback mechanisms
 
 **Section sources**
-- [i18n.ts:1-29](file://src/lib/i18n.ts#L1-L29)
-- [language.tsx:1-68](file://src/app/(app)/settings/language.tsx#L1-L68)
+- [i18n.ts:18-26](file://src/lib/i18n.ts#L18-L26)
+- [language.tsx:11-15](file://src/app/(app)/settings/language.tsx#L11-L15)
 
 ### Updating Existing Translations
 Guidelines:
-- Edit the relevant keys in each locale file while preserving key names to avoid breaking references.
-- Validate translations for accuracy and cultural appropriateness.
-- Run tests to ensure no regressions in UI or functionality.
+- Edit relevant keys in each locale file while preserving key names
+- Validate translations for accuracy and cultural appropriateness
+- Test language switching to ensure no regressions
+- Verify interpolation and pluralization work correctly
+- Run comprehensive tests across all affected components
 
 **Section sources**
-- [en.json:1-203](file://assets/locales/en.json#L1-L203)
-- [fr.json:1-203](file://assets/locales/fr.json#L1-L203)
-- [sw.json:1-203](file://assets/locales/sw.json#L1-L203)
+- [en.json:1-220](file://assets/locales/en.json#L1-L220)
+- [fr.json:1-220](file://assets/locales/fr.json#L1-L220)
+- [sw.json:1-220](file://assets/locales/sw.json#L1-L220)
+
+### Component Integration Examples
+**New Section** Practical examples of translation usage in components:
+
+Basic translation usage:
+```typescript
+import { useTranslation } from 'react-i18next';
+
+function MyComponent() {
+  const { t } = useTranslation();
+  return <Text>{t('home:greeting')}</Text>;
+}
+```
+
+Interpolation with dynamic values:
+```typescript
+<Text>{t('home:greeting', { name: userName })}</Text>
+```
+
+Conditional translations:
+```typescript
+{isOffline ? t('home:deviceOffline') : t('home:deviceOnline')}
+```
+
+Fallback mechanisms:
+```typescript
+{t('home:greeting', { name: workerName || t('common:loading') })}
+```
+
+**Section sources**
+- [home/index.tsx:19,48,57,95,98,108,115,122,129,151,154](file://src/app/(app)/home/index.tsx#L19-L154)

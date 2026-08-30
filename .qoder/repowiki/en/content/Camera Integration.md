@@ -17,11 +17,11 @@
 ## Update Summary
 **Changes Made**
 - Enhanced capture screen with tabbed navigation between PHOTO and GUIDE modes for improved user experience
-- Replaced text emojis with custom icon-based controls throughout the interface for better visual consistency
+- Integrated comprehensive haptic feedback using expo-haptics library across all user interactions
 - Improved framing guide with larger corner brackets (72x72px) for better lesion positioning guidance
-- Integrated haptic feedback using expo-haptics library for tactile user interaction confirmation
+- Replaced text emojis with custom icon-based controls throughout the interface for better visual consistency
 - Implemented structured tips panel with consistent formatting and professional styling
-- Added comprehensive haptic feedback integration across all user interactions including camera controls, shutter button, and navigation elements
+- Added haptic feedback integration for camera controls, shutter button, and navigation elements
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -52,7 +52,7 @@ The camera workflow spans multiple screens and supporting components:
 
 ```mermaid
 graph TB
-Capture["Capture Screen<br/>expo-camera CameraView<br/>Tabbed Navigation"] --> Review["Review Screen<br/>quality check & validation"]
+Capture["Enhanced Capture Screen<br/>expo-camera CameraView<br/>Tabbed Navigation<br/>Haptic Feedback"] --> Review["Review Screen<br/>quality check & validation"]
 Review --> Result["Result Screen<br/>diagnosis & ABCD"]
 Capture --> Permissions["useCameraPermissions<br/>cross-platform hook"]
 Review --> Inference["runInference<br/>mock ML"]
@@ -67,8 +67,8 @@ Capture --> Haptics["expo-haptics<br/>tactile feedback"]
 ```
 
 **Diagram sources**
-- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
-- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
+- [capture.tsx:1-365](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L365)
+- [review.tsx:1-268](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L268)
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
@@ -78,8 +78,8 @@ Capture --> Haptics["expo-haptics<br/>tactile feedback"]
 - [ABCDPanel.tsx:1-68](file://src/components/assessment/ABCDPanel.tsx#L1-L68)
 
 **Section sources**
-- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
-- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
+- [capture.tsx:1-365](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L365)
+- [review.tsx:1-268](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L268)
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
@@ -90,7 +90,7 @@ Capture --> Haptics["expo-haptics<br/>tactile feedback"]
 
 ## Core Components
 - **Camera Permission Hook**: Provides status and request flow with platform-specific handling; supports undetermined/denied/granted states with web fallback
-- **Enhanced Capture Screen**: Presents a full-screen CameraView with real-time preview, sophisticated framing guides with corner brackets and center crosshair, instructional overlay, flash mode toggling, front/back camera switching, shutter button, expandable tips panel, and tabbed navigation between PHOTO and GUIDE modes
+- **Enhanced Capture Screen**: Presents a full-screen CameraView with real-time preview, sophisticated framing guides with corner brackets and center crosshair, instructional overlay, flash mode toggling, front/back camera switching, shutter button, expandable tips panel, tabbed navigation between PHOTO and GUIDE modes, and comprehensive haptic feedback
 - **Review Screen**: Displays captured image with quality indicator, tips for better results, and actions to analyze or retake
 - **Result Screen**: Shows top diagnosis, confidence, class probabilities, ABCD explainability, and recommended actions based on risk tier
 - **Image Utilities**: Modern file management using expo-file-system v57 API with Directory, File, and Paths classes for directory creation, file operations, and size information
@@ -100,8 +100,8 @@ Capture --> Haptics["expo-haptics<br/>tactile feedback"]
 
 **Section sources**
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
-- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
-- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
+- [capture.tsx:1-365](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L365)
+- [review.tsx:1-268](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L268)
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
 - [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
@@ -144,10 +144,10 @@ J-->>U : Display diagnosis & ABCD
 ```
 
 **Diagram sources**
-- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
+- [capture.tsx:1-365](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L365)
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
 - [store.ts:1-87](file://src/features/assessments/store.ts#L1-L87)
-- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
+- [review.tsx:1-268](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L268)
 - [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 
@@ -217,10 +217,10 @@ Adjust --> Guide
 ```
 
 **Diagram sources**
-- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
+- [capture.tsx:1-365](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L365)
 
 **Section sources**
-- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
+- [capture.tsx:1-365](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L365)
 
 ### Review Screen
 The review screen provides image validation and analysis initiation:
@@ -254,13 +254,13 @@ Res-->>U : Display diagnosis & ABCD
 ```
 
 **Diagram sources**
-- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
+- [review.tsx:1-268](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L268)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
 - [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 
 **Section sources**
-- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
+- [review.tsx:1-268](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L268)
 
 ### Result Screen
 The result screen presents comprehensive diagnosis information with clinical context:
@@ -384,8 +384,8 @@ The capture screen integrates comprehensive haptic feedback using the expo-hapti
 - **Accessibility**: Enhances usability for healthcare workers in various environments by providing tactile feedback alongside visual cues
 
 **Section sources**
-- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
-- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
+- [capture.tsx:1-365](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L365)
+- [review.tsx:1-268](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L268)
 
 ## Dependency Analysis
 Key dependencies and relationships within the camera integration system:
@@ -419,9 +419,9 @@ Review --> Haptics
 ```
 
 **Diagram sources**
-- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
+- [capture.tsx:1-365](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L365)
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
-- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
+- [review.tsx:1-268](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L268)
 - [classify.ts:1-62](file://src/features/assessments/inference/classify.ts#L1-L62)
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 - [riskLevels.ts:1-121](file://src/constants/riskLevels.ts#L1-L121)
@@ -431,8 +431,8 @@ Review --> Haptics
 - [package.json:15-22](file://package.json#L15-L22)
 
 **Section sources**
-- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
-- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
+- [capture.tsx:1-365](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L365)
+- [review.tsx:1-268](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L268)
 - [result.tsx:1-280](file://src/app/(app)/patients/[patientId]/result.tsx#L1-L280)
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
@@ -471,8 +471,8 @@ Common issues and resolutions:
 
 **Section sources**
 - [useCameraPermissions.ts:1-38](file://src/hooks/useCameraPermissions.ts#L1-L38)
-- [capture.tsx:1-359](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L359)
-- [review.tsx:1-259](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L259)
+- [capture.tsx:1-365](file://src/app/(app)/patients/[patientId]/capture.tsx#L1-L365)
+- [review.tsx:1-268](file://src/app/(app)/patients/[patientId]/review.tsx#L1-L268)
 - [image.ts:1-103](file://src/utils/image.ts#L1-L103)
 
 ## Conclusion
@@ -507,12 +507,12 @@ const [activeTab, setActiveTab] = useState<"photo" | "guide">("photo");
 <View className="flex-row justify-center mb-5">
   <Pressable onPress={() => setActiveTab("photo")} className="mr-6">
     <Text className={`text-base font-semibold ${activeTab === "photo" ? "text-[#0D9E94]" : "text-white/60"}`}>
-      PHOTO
+      {t("capture:photo")}
     </Text>
   </Pressable>
   <Pressable onPress={() => setActiveTab("guide")}>
     <Text className={`text-base font-semibold ${activeTab === "guide" ? "text-[#0D9E94]" : "text-white/60"}`}>
-      GUIDE
+      {t("capture:guide")}
     </Text>
   </Pressable>
 </View>
