@@ -12,6 +12,7 @@ interface AssessmentsState {
   capturedImageUri: string | null;
   totalCount: number;
   pendingSyncCount: number;
+  highRiskCount: number;
   isLoading: boolean;
 
   // Actions
@@ -34,6 +35,7 @@ export const useAssessmentsStore = create<AssessmentsState>((set) => ({
   capturedImageUri: null,
   totalCount: 0,
   pendingSyncCount: 0,
+  highRiskCount: 0,
   isLoading: false,
 
   setCapturedImageUri: (uri) => set({ capturedImageUri: uri }),
@@ -62,7 +64,8 @@ export const useAssessmentsStore = create<AssessmentsState>((set) => ({
     try {
       const total = await repo.getAssessmentCount();
       const pending = await repo.getPendingSyncCount();
-      set({ totalCount: total, pendingSyncCount: pending });
+      const highRisk = await repo.getHighRiskCount();
+      set({ totalCount: total, pendingSyncCount: pending, highRiskCount: highRisk });
     } catch {
       // silent
     }

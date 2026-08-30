@@ -1,17 +1,19 @@
 import { ConnectivityBanner } from "@/components/ui/ConnectivityBanner";
 import { useThemeStore } from "@/features/theme/store";
-import { Image } from "expo-image";
-import { Tabs } from "expo-router";
-import { ImageSourcePropType, Platform, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs, usePathname } from "expo-router";
+import { Platform, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function TabIcon({
-  icon,
+  name,
+  outlineName,
   label,
   focused,
   isDark,
 }: {
-  icon: ImageSourcePropType;
+  name: keyof typeof Ionicons.glyphMap;
+  outlineName: keyof typeof Ionicons.glyphMap;
   label: string;
   focused: boolean;
   isDark: boolean;
@@ -21,17 +23,13 @@ function TabIcon({
 
   return (
     <View className="items-center justify-center" style={{ width: 70 }}>
-      <Image
-        source={icon}
-        style={{
-          width: 24,
-          height: 24,
-          tintColor: focused ? activeColor : inactiveColor,
-        }}
-        contentFit="contain"
+      <Ionicons
+        name={focused ? name : outlineName}
+        size={24}
+        color={focused ? activeColor : inactiveColor}
       />
       <Text
-        className="text-[11px] mt-1.5"
+        className="text-[11px] mt-1"
         style={{
           color: focused ? activeColor : inactiveColor,
           fontWeight: focused ? "600" : "400",
@@ -45,17 +43,25 @@ function TabIcon({
 
 export default function AppLayout() {
   const isIOS = Platform.OS === "ios";
+  const pathname = usePathname();
   const { bottom: bottomInset } = useSafeAreaInsets();
   const { resolvedTheme } = useThemeStore();
   const isDark = resolvedTheme === "dark";
 
+  const shouldHideTabs =
+    pathname.includes("/capture") ||
+    pathname.includes("/review") ||
+    pathname.includes("/result") ||
+    pathname.includes("/reports");
+
   return (
-    <View className="flex-1 bg-gray-50 dark:bg-slate-950">
+    <View className="flex-1 bg-white dark:bg-slate-950">
       <ConnectivityBanner />
       <Tabs
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
+            display: shouldHideTabs ? "none" : "flex",
             backgroundColor: isDark ? "#0F172A" : "#FFFFFF",
             borderTopWidth: 1,
             borderTopColor: isDark ? "#1E293B" : "#F3F4F6",
@@ -75,7 +81,8 @@ export default function AppLayout() {
           options={{
             tabBarIcon: ({ focused }) => (
               <TabIcon
-                icon={require("../../../assets/icons/tab-home.png")}
+                name="home"
+                outlineName="home-outline"
                 label="Home"
                 focused={focused}
                 isDark={isDark}
@@ -88,7 +95,8 @@ export default function AppLayout() {
           options={{
             tabBarIcon: ({ focused }) => (
               <TabIcon
-                icon={require("../../../assets/icons/tab-patients.png")}
+                name="people"
+                outlineName="people-outline"
                 label="Patients"
                 focused={focused}
                 isDark={isDark}
@@ -101,8 +109,9 @@ export default function AppLayout() {
           options={{
             tabBarIcon: ({ focused }) => (
               <TabIcon
-                icon={require("../../../assets/icons/tab-assessments.png")}
-                label="Assessments"
+                name="clipboard"
+                outlineName="clipboard-outline"
+                label="Sync"
                 focused={focused}
                 isDark={isDark}
               />
@@ -114,12 +123,19 @@ export default function AppLayout() {
           options={{
             tabBarIcon: ({ focused }) => (
               <TabIcon
-                icon={require("../../../assets/icons/tab-settings.png")}
+                name="settings-sharp"
+                outlineName="settings-outline"
                 label="Settings"
                 focused={focused}
                 isDark={isDark}
               />
             ),
+          }}
+        />
+        <Tabs.Screen
+          name="reports"
+          options={{
+            href: null,
           }}
         />
       </Tabs>

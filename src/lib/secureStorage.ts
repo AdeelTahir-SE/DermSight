@@ -13,6 +13,8 @@ const KEYS = {
   USER_ID: "dermsight_user_id",
   WORKER_NAME: "dermsight_worker_name",
   USER_EMAIL: "dermsight_user_email",
+  REMEMBERED_EMAIL: "dermsight_remembered_email",
+  REMEMBER_ME: "dermsight_remember_me",
 } as const;
 
 const isWeb = Platform.OS === "web";
@@ -130,6 +132,49 @@ export async function getUserEmail(): Promise<string | null> {
     return localStorage.getItem(KEYS.USER_EMAIL);
   } else {
     return SecureStore.getItemAsync(KEYS.USER_EMAIL);
+  }
+}
+
+// ── Remember Me ─────────────────────────────────────────────────────────
+export async function saveRememberedEmail(email: string): Promise<void> {
+  if (isWeb) {
+    localStorage.setItem(KEYS.REMEMBERED_EMAIL, email);
+  } else {
+    await SecureStore.setItemAsync(KEYS.REMEMBERED_EMAIL, email);
+  }
+}
+
+export async function getRememberedEmail(): Promise<string | null> {
+  if (isWeb) {
+    return localStorage.getItem(KEYS.REMEMBERED_EMAIL);
+  } else {
+    return SecureStore.getItemAsync(KEYS.REMEMBERED_EMAIL);
+  }
+}
+
+export async function deleteRememberedEmail(): Promise<void> {
+  if (isWeb) {
+    localStorage.removeItem(KEYS.REMEMBERED_EMAIL);
+  } else {
+    await SecureStore.deleteItemAsync(KEYS.REMEMBERED_EMAIL);
+  }
+}
+
+export async function saveRememberMePreference(enabled: boolean): Promise<void> {
+  if (isWeb) {
+    localStorage.setItem(KEYS.REMEMBER_ME, enabled ? "true" : "false");
+  } else {
+    await SecureStore.setItemAsync(KEYS.REMEMBER_ME, enabled ? "true" : "false");
+  }
+}
+
+export async function getRememberMePreference(): Promise<boolean> {
+  if (isWeb) {
+    const val = localStorage.getItem(KEYS.REMEMBER_ME);
+    return val !== "false";
+  } else {
+    const val = await SecureStore.getItemAsync(KEYS.REMEMBER_ME);
+    return val !== "false";
   }
 }
 

@@ -38,7 +38,6 @@ export default function CaptureScreen() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [showTips, setShowTips] = useState(false);
-  const [activeTab, setActiveTab] = useState<"photo" | "guide">("photo");
 
   // Permission not yet determined — show loading
   if (status === "undetermined") {
@@ -273,25 +272,7 @@ export default function CaptureScreen() {
       </View>
 
       {/* Bottom controls */}
-      <View className="absolute bottom-0 left-0 right-0 bg-black/85 pb-10 pt-4 px-6 rounded-t-3xl z-10">
-        {/* Tabs */}
-        <View className="flex-row justify-center mb-5">
-          <Pressable onPress={() => setActiveTab("photo")} className="mr-6">
-            <Text
-              className={`text-base font-semibold ${activeTab === "photo" ? "text-[#0D9E94]" : "text-white/60"}`}
-            >
-              {t("capture:photo")}
-            </Text>
-          </Pressable>
-          <Pressable onPress={() => setActiveTab("guide")}>
-            <Text
-              className={`text-base font-semibold ${activeTab === "guide" ? "text-[#0D9E94]" : "text-white/60"}`}
-            >
-              {t("capture:guide")}
-            </Text>
-          </Pressable>
-        </View>
-
+      <View className="absolute bottom-0 left-0 right-0 bg-black/85 pb-10 pt-5 px-6 rounded-t-3xl z-10">
         {/* Shutter + side controls */}
         <View className="flex-row items-center justify-between mb-4">
           <Pressable

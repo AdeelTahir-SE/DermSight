@@ -47,13 +47,11 @@ export function Input({
         <Text className="text-sm font-medium text-navy dark:text-slate-200 mb-1.5">{label}</Text>
       )}
       <View
-        className={`flex-row items-center border rounded-xl bg-white dark:bg-slate-900 px-3 ${borderColor} ${
-          multiline ? "py-2" : ""
-        }`}
+        className={`flex-row ${multiline ? "items-start pt-3 pb-3" : "items-center"} border rounded-xl bg-white dark:bg-slate-900 px-3 ${borderColor}`}
       >
-        {icon && <View className="mr-2 opacity-70">{icon}</View>}
+        {icon && <View className={`mr-2.5 ${multiline ? "mt-0.5" : ""}`}>{icon}</View>}
         <TextInput
-          className={`flex-1 text-base text-navy dark:text-slate-100 ${multiline ? "py-2 min-h-[80px]" : "py-3"}`}
+          className={`flex-1 text-base text-navy dark:text-slate-100 ${multiline ? "pt-0 pb-1 min-h-[90px]" : "py-3"}`}
           placeholder={placeholder}
           placeholderTextColor="#64748B"
           value={value}
@@ -63,6 +61,7 @@ export function Input({
           autoCapitalize={autoCapitalize}
           multiline={multiline}
           numberOfLines={numberOfLines}
+          textAlignVertical={multiline ? "top" : "center"}
           editable={editable}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}

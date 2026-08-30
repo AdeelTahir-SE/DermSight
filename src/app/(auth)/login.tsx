@@ -3,9 +3,10 @@ import { Input } from "@/components/ui/Input";
 import { useAuthStore } from "@/features/auth/store";
 import { useConnectivity } from "@/hooks/useConnectivity";
 import { toast } from "@/features/notifications/toastStore";
+import * as SecureStorage from "@/lib/secureStorage";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import * as Haptics from "expo-haptics";
 
@@ -17,7 +18,26 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [pinMode, setPinMode] = useState(pinSet);
   const [pin, setPin] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadRememberedCredentials() {
+      try {
+        const pref = await SecureStorage.getRememberMePreference();
+        setRememberMe(pref);
+        if (pref) {
+          const savedEmail = await SecureStorage.getRememberedEmail();
+          if (savedEmail) {
+            setEmail(savedEmail);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading remembered credentials:", err);
+      }
+    }
+    loadRememberedCredentials();
+  }, []);
 
   const handleLogin = async () => {
     setError("");
@@ -53,6 +73,13 @@ export default function LoginScreen() {
       }
       const success = await loginWithEmail(email.trim(), password);
       if (success) {
+        if (rememberMe) {
+          await SecureStorage.saveRememberedEmail(email.trim());
+          await SecureStorage.saveRememberMePreference(true);
+        } else {
+          await SecureStorage.deleteRememberedEmail();
+          await SecureStorage.saveRememberMePreference(false);
+        }
         toast.success("Logged in successfully!");
         const currentPinSet = useAuthStore.getState().pinSet;
         if (currentPinSet) {
@@ -176,19 +203,33 @@ export default function LoginScreen() {
               secureTextEntry
               icon={
                 <Image
-                  source={require("../../../assets/splash-screens/privacy-matters-lock.png")}
+                  source={require("../../../assets/icons/settings-change-pin.png")}
                   style={{ width: 20, height: 20 }}
                   contentFit="contain"
                   tintColor="#9CA3AF"
                 />
               }
             />
-            <View className="flex-row items-center mb-6 mt-1">
-              <View className="w-5 h-5 rounded border border-green-500 bg-green-500 dark:bg-green-600 items-center justify-center mr-2">
-                <Text className="text-white text-xs font-bold">✓</Text>
+            <Pressable
+              onPress={async () => {
+                try {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                } catch (e) {}
+                setRememberMe((prev) => !prev);
+              }}
+              className="flex-row items-center mb-6 mt-1 self-start"
+            >
+              <View
+                className={`w-5 h-5 rounded items-center justify-center mr-2 border ${
+                  rememberMe
+                    ? "bg-primary border-primary dark:bg-primary-600 dark:border-primary-600"
+                    : "border-gray-300 dark:border-slate-700 bg-transparent"
+                }`}
+              >
+                {rememberMe && <Text className="text-white text-xs font-bold">✓</Text>}
               </View>
               <Text className="text-sm text-gray-600 dark:text-slate-400">Remember me</Text>
-            </View>
+            </Pressable>
           </View>
         )}
 

@@ -12,11 +12,18 @@ interface ABCDPanelProps {
 }
 
 export function ABCDPanel({ scores }: ABCDPanelProps) {
+  const safeScores = scores || {
+    asymmetry: 0,
+    border: 0,
+    color: 0,
+    diameter: 0,
+  };
+
   const scoreValues = [
-    scores.asymmetry,
-    scores.border,
-    scores.color,
-    scores.diameter,
+    safeScores.asymmetry ?? 0,
+    safeScores.border ?? 0,
+    safeScores.color ?? 0,
+    safeScores.diameter ?? 0,
   ];
 
   return (

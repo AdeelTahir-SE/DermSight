@@ -12,6 +12,7 @@ import {
 import { getAllSyncItems, runSync } from "@/features/sync/syncEngine";
 import { useThemeStore, type ThemeType } from "@/features/theme/store";
 import i18n from "@/lib/i18n";
+import { Ionicons } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
@@ -43,6 +44,7 @@ export default function SettingsScreen() {
   const [showEditName, setShowEditName] = useState(false);
   const [nameInput, setNameInput] = useState(workerName || "");
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [showLanguagePicker, setShowLanguagePicker] = useState(false);
 
   const isDark = resolvedTheme === "dark";
 
@@ -56,6 +58,21 @@ export default function SettingsScreen() {
     units === "metric"
       ? t("settings:metricLabel")
       : t("settings:imperialLabel");
+
+  const languagesList = [
+    { code: "en", name: "English", nativeName: "English" },
+    { code: "fr", name: "French", nativeName: "Français" },
+    { code: "sw", name: "Swahili", nativeName: "Kiswahili" },
+  ];
+
+  const handleSelectLanguage = async (code: string) => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch {}
+    await i18n.changeLanguage(code);
+    toast.success(t("settings:languageSet", { defaultValue: "Language updated." }));
+    setShowLanguagePicker(false);
+  };
 
   const handleSaveName = async () => {
     if (nameInput.trim()) {
@@ -348,22 +365,73 @@ export default function SettingsScreen() {
         </View>
       </Modal>
 
-      <View className="bg-white dark:bg-slate-900 px-5 pt-12 pb-5">
-        <View className="flex-row items-center justify-between">
-          <View>
-            <Text className="text-2xl font-bold text-navy dark:text-slate-100">
-              {t("settings:title")}
+      <Modal
+        visible={showLanguagePicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLanguagePicker(false)}
+      >
+        <View className="flex-1 bg-black/60 justify-center px-6">
+          <View className="bg-white dark:bg-slate-900 border border-gray-150/10 dark:border-slate-800 rounded-2xl p-6 shadow-xl">
+            <Text className="text-xl font-bold text-navy dark:text-slate-100 mb-1.5">
+              {t("settings:language")}
             </Text>
-            <Text className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-              {t("settings:subtitle")}
+            <Text className="text-xs text-gray-500 dark:text-slate-400 mb-5">
+              {t("settings:languageDesc")}
             </Text>
+            <View className="gap-2 mb-4">
+              {languagesList.map((lang) => (
+                <Pressable
+                  key={lang.code}
+                  onPress={() => handleSelectLanguage(lang.code)}
+                  className={`flex-row items-center justify-between p-4 rounded-xl ${
+                    i18n.language === lang.code
+                      ? "bg-primary-50 dark:bg-primary-950/20 border border-primary"
+                      : "bg-gray-50 dark:bg-slate-850 border border-gray-100/50 dark:border-slate-800"
+                  }`}
+                >
+                  <View>
+                    <Text
+                      className={`text-base font-semibold ${
+                        i18n.language === lang.code
+                          ? "text-primary dark:text-primary-400"
+                          : "text-navy dark:text-slate-200"
+                      }`}
+                    >
+                      {lang.name}
+                    </Text>
+                    <Text className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
+                      {lang.nativeName}
+                    </Text>
+                  </View>
+                  {i18n.language === lang.code && (
+                    <Image
+                      source={require("../../../../assets/icons/home-checklist.png")}
+                      style={{ width: 18, height: 18 }}
+                      contentFit="contain"
+                      tintColor={isDark ? "#33BFAF" : "#0D9E94"}
+                    />
+                  )}
+                </Pressable>
+              ))}
+            </View>
+            <Button
+              title={t("common:close")}
+              variant="outline"
+              onPress={() => setShowLanguagePicker(false)}
+            />
           </View>
-          <Image
-            source={require("../../../../assets/icons/settings-header-profile.png")}
-            style={{ width: 40, height: 40 }}
-            contentFit="contain"
-            tintColor={isDark ? ICON_COLOR_DARK : ICON_COLOR}
-          />
+        </View>
+      </Modal>
+
+      <View className="bg-white dark:bg-slate-900 px-5 pt-12 pb-5">
+        <View>
+          <Text className="text-2xl font-bold text-navy dark:text-slate-100">
+            {t("settings:title")}
+          </Text>
+          <Text className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
+            {t("settings:subtitle")}
+          </Text>
         </View>
       </View>
 
@@ -407,7 +475,7 @@ export default function SettingsScreen() {
             title={t("settings:language")}
             subtitle={t("settings:languageDesc")}
             rightLabel={t(`language:${i18n.language}`)}
-            onPress={() => router.push("/(app)/settings/language")}
+            onPress={() => setShowLanguagePicker(true)}
           />
           <SettingsRow
             icon={require("../../../../assets/icons/settings-theme.png")}
@@ -421,15 +489,8 @@ export default function SettingsScreen() {
             title={t("settings:notifications")}
             subtitle={t("settings:notificationsDesc")}
             rightLabel={notificationsEnabled ? t("common:on") : t("common:off")}
-            onPress={handleToggleNotifications}
-          />
-          <SettingsRow
-            icon={require("../../../../assets/icons/settings-units.png")}
-            title={t("settings:units")}
-            subtitle={t("settings:unitsDesc")}
-            rightLabel={unitLabel}
             isLast
-            onPress={handleToggleUnits}
+            onPress={handleToggleNotifications}
           />
         </Card>
 
@@ -455,6 +516,7 @@ export default function SettingsScreen() {
           />
           <SettingsRow
             icon={require("../../../../assets/icons/ai-chip.png")}
+            iconSize={34}
             title={t("settings:modelManagement")}
             subtitle={t("settings:modelManagementDesc")}
             isLast
@@ -489,19 +551,30 @@ export default function SettingsScreen() {
           />
         </Card>
 
+        {/* Log Out Button */}
         <Pressable
           onPress={handleLogout}
-          className="mt-6 flex-row items-center justify-center bg-red-50 dark:bg-red-950/10 rounded-2xl py-4 border border-red-100 dark:border-red-950/20"
+          className="mt-7 flex-row items-center justify-between bg-white dark:bg-slate-900 rounded-2xl px-4 py-3.5 border border-red-100 dark:border-red-950/40 shadow-[0_1px_4px_rgba(220,38,38,0.04)] active:opacity-85"
         >
-          <Image
-            source={require("../../../../assets/icons/settings-logout.png")}
-            style={{ width: 20, height: 20, marginRight: 8 }}
-            contentFit="contain"
-            tintColor="#DC2626"
-          />
-          <Text className="text-red-600 dark:text-red-400 font-semibold text-base">
-            {t("settings:logout")}
-          </Text>
+          <View className="flex-row items-center">
+            <View className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-950/40 items-center justify-center mr-3.5 border border-red-100 dark:border-red-900/30">
+              <Image
+                source={require("../../../../assets/icons/settings-logout.png")}
+                style={{ width: 19, height: 19 }}
+                contentFit="contain"
+                tintColor="#DC2626"
+              />
+            </View>
+            <View>
+              <Text className="text-[15px] font-bold text-red-600 dark:text-red-400">
+                {t("settings:logout")}
+              </Text>
+              <Text className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
+                Sign out of this account
+              </Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#FCA5A5" />
         </Pressable>
       </View>
     </ScrollView>
@@ -526,6 +599,7 @@ function Card({ children }: { children: React.ReactNode }) {
 
 function SettingsRow({
   icon,
+  iconSize = 24,
   title,
   subtitle,
   rightLabel,
@@ -533,6 +607,7 @@ function SettingsRow({
   onPress,
 }: {
   icon: any;
+  iconSize?: number;
   title: string;
   subtitle: string;
   rightLabel?: string;
@@ -555,12 +630,14 @@ function SettingsRow({
       onPress={handlePress}
       className={`flex-row items-center px-4 py-4 ${isLast ? "" : "border-b border-gray-100 dark:border-slate-800/80"}`}
     >
-      <Image
-        source={icon}
-        style={{ width: 24, height: 24, marginRight: 12 }}
-        contentFit="contain"
-        tintColor={isDark ? ICON_COLOR_DARK : ICON_COLOR}
-      />
+      <View style={{ width: 34, height: 34, marginRight: 10, alignItems: "center", justifyContent: "center" }}>
+        <Image
+          source={icon}
+          style={{ width: iconSize, height: iconSize }}
+          contentFit="contain"
+          tintColor={isDark ? ICON_COLOR_DARK : ICON_COLOR}
+        />
+      </View>
       <View className="flex-1 pr-2">
         <Text className="text-base font-semibold text-navy dark:text-slate-100">
           {title}

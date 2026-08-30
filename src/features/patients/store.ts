@@ -22,6 +22,7 @@ interface PatientsState {
   setSearchQuery: (query: string) => void;
   addPatient: (patient: Patient) => void;
   updatePatientInStore: (patient: Patient) => void;
+  removePatientFromStore: (patientId: string) => void;
 }
 
 export const usePatientsStore = create<PatientsState>((set, get) => ({
@@ -70,6 +71,13 @@ export const usePatientsStore = create<PatientsState>((set, get) => ({
     set((state) => ({
       patients: state.patients.map((p) => (p.id === patient.id ? patient : p)),
       activePatient: state.activePatient?.id === patient.id ? patient : state.activePatient,
+    }));
+  },
+
+  removePatientFromStore: (patientId) => {
+    set((state) => ({
+      patients: state.patients.filter((p) => p.id !== patientId),
+      activePatient: state.activePatient?.id === patientId ? null : state.activePatient,
     }));
   },
 }));

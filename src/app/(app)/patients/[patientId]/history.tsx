@@ -2,8 +2,10 @@ import { Badge } from "@/components/ui/Badge";
 import { AssessmentListSkeleton } from "@/components/assessment/AssessmentListSkeleton";
 import { DIAGNOSIS_LABELS } from "@/constants/riskLevels";
 import { getAssessmentsByPatient } from "@/features/assessments/repository";
+import { useThemeStore } from "@/features/theme/store";
 import type { Assessment } from "@/types";
 import { formatDateTime } from "@/utils/date";
+import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useEffect, useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
@@ -19,15 +21,25 @@ export default function HistoryScreen() {
   }>();
   const patientId = rawPatientId || fallbackPatientId || "";
   const router = useRouter();
+  const { resolvedTheme } = useThemeStore();
+  const isDark = resolvedTheme === "dark";
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (patientId) {
-      getAssessmentsByPatient(patientId)
-        .then(setAssessments)
-        .finally(() => setLoading(false));
+    async function load() {
+      if (patientId) {
+        try {
+          const list = await getAssessmentsByPatient(patientId);
+          setAssessments(list);
+        } catch (e) {
+          console.error("Failed to load assessments:", e);
+        } finally {
+          setLoading(false);
+        }
+      }
     }
+    load();
   }, [patientId]);
 
   const handleBack = async () => {
@@ -57,7 +69,12 @@ export default function HistoryScreen() {
       <View className="bg-white dark:bg-slate-900 px-5 pt-12 pb-4 border-b border-gray-100 dark:border-slate-800/80">
         <View className="flex-row items-center">
           <Pressable onPress={handleBack} className="p-1 mr-3">
-            <Text className="text-xl text-navy dark:text-slate-100">←</Text>
+            <Image
+              source={require("../../../../../assets/icons/profile-back.png")}
+              style={{ width: 24, height: 24 }}
+              contentFit="contain"
+              tintColor={isDark ? "#E2E8F0" : "#1B2B4B"}
+            />
           </Pressable>
           <View>
             <Text className="text-lg font-bold text-navy dark:text-slate-100">

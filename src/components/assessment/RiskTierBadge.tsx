@@ -9,7 +9,7 @@ interface RiskTierBadgeProps {
 }
 
 export function RiskTierBadge({ riskTier, showAction = false }: RiskTierBadgeProps) {
-  const config = RISK_TIER_CONFIG[riskTier];
+  const config = RISK_TIER_CONFIG[riskTier] || RISK_TIER_CONFIG.urgent_referral;
 
   // Map solid colored dots dynamically
   const dotColorClass =
@@ -22,16 +22,16 @@ export function RiskTierBadge({ riskTier, showAction = false }: RiskTierBadgePro
           : "bg-green-500 dark:bg-green-400";
 
   return (
-    <View className={`rounded-2xl p-4 ${config.bgColorClass}`}>
+    <View className={`rounded-2xl p-4 ${config.bgColorClass || "bg-red-50 dark:bg-red-950/30"}`}>
       <View className="flex-row items-center mb-1">
         <View className={`w-3 h-3 rounded-full mr-2.5 ${dotColorClass}`} />
-        <Text className={`text-lg font-bold ${config.textColorClass}`}>
-          {config.label}
+        <Text className={`text-lg font-bold ${config.textColorClass || "text-red-650"}`}>
+          {config.label || "Referral Required"}
         </Text>
       </View>
       {showAction && (
-        <Text className={`text-sm font-medium mt-1 leading-relaxed ${config.textColorClass} opacity-85`}>
-          {config.action}
+        <Text className={`text-sm font-medium mt-1 leading-relaxed ${config.textColorClass || "text-red-650"} opacity-85`}>
+          {config.action || "Please consult a specialist for confirmation."}
         </Text>
       )}
     </View>

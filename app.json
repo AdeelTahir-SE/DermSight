@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.dermsight.app",
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/logo.png"
     },
     "android": {
       "package": "com.dermsight.app",

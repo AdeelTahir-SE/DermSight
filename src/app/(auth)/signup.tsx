@@ -151,7 +151,7 @@ export default function SignupScreen() {
             editable={!isLoading}
             icon={
               <Image
-                source={require("../../../assets/splash-screens/privacy-matters-lock.png")}
+                  source={require("../../../assets/icons/settings-change-pin.png")}
                 style={{ width: 20, height: 20 }}
                 contentFit="contain"
                 tintColor="#9CA3AF"

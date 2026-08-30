@@ -196,6 +196,7 @@ export async function updatePatient(
 }
 
 export async function deletePatient(id: string): Promise<void> {
+  db.delete(syncQueue).where(eq(syncQueue.entityId, id)).run();
   db.delete(patients).where(eq(patients.id, id)).run();
 }
 

@@ -3,6 +3,7 @@
  */
 
 import i18n from "@/lib/i18n";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -25,13 +26,18 @@ export default function LanguageScreen() {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <View className="bg-white px-5 pt-12 pb-4 border-b border-gray-100">
+    <View className="flex-1 bg-gray-50 dark:bg-slate-950">
+      <View className="bg-white dark:bg-slate-900 px-5 pt-12 pb-4 border-b border-gray-100 dark:border-slate-800">
         <View className="flex-row items-center">
           <Pressable onPress={() => router.back()} className="p-1 mr-3">
-            <Text className="text-xl">←</Text>
+            <Image
+              source={require("../../../../assets/icons/profile-back.png")}
+              style={{ width: 24, height: 24 }}
+              contentFit="contain"
+              tintColor="#1B2B4B"
+            />
           </Pressable>
-          <Text className="text-lg font-bold text-navy">
+          <Text className="text-lg font-bold text-navy dark:text-slate-100">
             {t("settings:language")}
           </Text>
         </View>

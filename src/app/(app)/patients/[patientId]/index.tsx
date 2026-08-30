@@ -145,16 +145,9 @@ export default function PatientDetailScreen() {
             </Text>
           </View>
           <View className="flex-1">
-            <View className="flex-row items-center">
-              <Text className="text-xl font-bold text-navy dark:text-slate-100 mr-2">
-                {patient.firstName} {patient.lastName}
-              </Text>
-              <View className="px-2 py-0.5 rounded-full bg-primary-50 dark:bg-primary-950/20">
-                <Text className="text-xs font-semibold text-primary dark:text-primary-400">
-                  {t("patientDetail:active")}
-                </Text>
-              </View>
-            </View>
+            <Text className="text-xl font-bold text-navy dark:text-slate-100">
+              {patient.firstName} {patient.lastName}
+            </Text>
             <Text className="text-sm text-gray-500 dark:text-slate-400 mt-1">
               {displayId} • {sexLabel}, {age} {t("patients:yrs")}
             </Text>
@@ -186,14 +179,17 @@ export default function PatientDetailScreen() {
             icon={require("../../../../../assets/icons/profile-location.png")}
             label={t("patientDetail:viewLocation")}
             onPress={() => {
-              if (patient.latitude && patient.longitude) {
+              if (patient.address && patient.address.trim()) {
+                const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(patient.address.trim())}`;
+                Linking.openURL(url);
+              } else if (patient.latitude && patient.longitude) {
                 const url = `https://maps.google.com/?q=${patient.latitude},${patient.longitude}`;
                 Linking.openURL(url);
               } else {
                 Alert.alert(
                   t("patientDetail:viewLocation"),
                   t("patientDetail:noLocation") ||
-                    "No location data available for this patient.",
+                    "No address or location data recorded for this patient.",
                 );
               }
             }}

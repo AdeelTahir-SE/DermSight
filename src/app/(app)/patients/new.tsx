@@ -3,16 +3,23 @@ import { Input } from "@/components/ui/Input";
 import { useAuthStore } from "@/features/auth/store";
 import { createPatient } from "@/features/patients/repository";
 import { usePatientsStore } from "@/features/patients/store";
+import { useThemeStore } from "@/features/theme/store";
 import { toast } from "@/features/notifications/toastStore";
+import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function NewPatientScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { userId } = useAuthStore();
   const { addPatient } = usePatientsStore();
+  const { resolvedTheme } = useThemeStore();
+  const isDark = resolvedTheme === "dark";
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [dob, setDob] = useState("");
@@ -25,10 +32,50 @@ export default function NewPatientScreen() {
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
-    if (!firstName.trim()) newErrors.firstName = "First name is required";
-    if (!lastName.trim()) newErrors.lastName = "Last name is required";
-    if (!dob.trim()) newErrors.dob = "Date of birth is required";
-    if (!sex) newErrors.sex = "Please select a gender";
+    if (!firstName.trim())
+      newErrors.firstName = t("patients:firstNameRequired", { defaultValue: "First name is required" });
+    if (!lastName.trim())
+      newErrors.lastName = t("patients:lastNameRequired", { defaultValue: "Last name is required" });
+
+    // Comprehensive DOB validation
+    if (!dob.trim()) {
+      newErrors.dob = t("patients:dobRequired", { defaultValue: "Date of birth is required" });
+    } else {
+      const parts = dob.replace(/\s+/g, "").split(/[-/]/);
+      if (parts.length !== 3 || parts[0].length !== 2 || parts[1].length !== 2 || parts[2].length !== 4) {
+        newErrors.dob = t("patients:invalidDob", { defaultValue: "Please enter a valid date (DD / MM / YYYY)" });
+      } else {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        const year = parseInt(parts[2], 10);
+        const currentYear = new Date().getFullYear();
+
+        if (isNaN(day) || isNaN(month) || isNaN(year) || year < 1900 || year > currentYear || month < 1 || month > 12 || day < 1) {
+          newErrors.dob = t("patients:invalidDob", { defaultValue: "Please enter a valid date (DD / MM / YYYY)" });
+        } else {
+          let maxDays = 31;
+          if (month === 4 || month === 6 || month === 9 || month === 11) {
+            maxDays = 30;
+          } else if (month === 2) {
+            const isLeap = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+            maxDays = isLeap ? 29 : 28;
+          }
+
+          if (day > maxDays) {
+            newErrors.dob = t("patients:invalidDob", { defaultValue: "Please enter a valid date (DD / MM / YYYY)" });
+          } else {
+            const dobDate = new Date(year, month - 1, day);
+            const today = new Date();
+            today.setHours(23, 59, 59, 999);
+            if (dobDate > today) {
+              newErrors.dob = t("patients:dobFuture", { defaultValue: "Date of birth cannot be in the future" });
+            }
+          }
+        }
+      }
+    }
+
+    if (!sex) newErrors.sex = t("patients:genderRequired", { defaultValue: "Please select a gender" });
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -36,11 +83,11 @@ export default function NewPatientScreen() {
   const handleDobChange = (text: string) => {
     // Remove non-digits
     const cleaned = text.replace(/\D/g, "");
+    if (cleaned.length > 8) return;
     let formatted = cleaned;
-    if (cleaned.length > 2) {
+    if (cleaned.length > 2 && cleaned.length <= 4) {
       formatted = `${cleaned.substring(0, 2)} / ${cleaned.substring(2, 4)}`;
-    }
-    if (cleaned.length > 4) {
+    } else if (cleaned.length > 4) {
       formatted = `${cleaned.substring(0, 2)} / ${cleaned.substring(2, 4)} / ${cleaned.substring(4, 8)}`;
     }
     setDob(formatted);
@@ -63,10 +110,10 @@ export default function NewPatientScreen() {
         userId,
       );
       addPatient(patient);
-      toast.success("Patient registered successfully!");
+      toast.success(t("patients:patientCreated", { defaultValue: "Patient registered successfully!" }));
       router.back();
     } catch {
-      toast.error("Failed to save patient. Please try again.");
+      toast.error(t("patients:patientCreateFailed", { defaultValue: "Failed to save patient. Please try again." }));
     } finally {
       setSaving(false);
     }
@@ -83,199 +130,223 @@ export default function NewPatientScreen() {
   };
 
   return (
-    <ScrollView
-      className="flex-1 bg-gray-50 dark:bg-slate-950"
-      showsVerticalScrollIndicator={false}
-    >
+    <SafeAreaView edges={["top"]} className="flex-1 bg-white dark:bg-slate-900">
       {/* Header */}
-      <View className="bg-navy dark:bg-slate-900 px-5 pt-12 pb-6 rounded-b-[28px] shadow-sm">
+      <View className="bg-white dark:bg-slate-900 px-5 pt-3 pb-4 border-b border-[#EBF2F1] dark:border-slate-800">
         <View className="flex-row items-center">
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => router.back()}
-            className="mr-4 w-10 h-10 rounded-full bg-white/10 items-center justify-center border border-white/10"
+            className="mr-3.5 p-1"
           >
-            <Text className="text-white text-xl">←</Text>
+            <Image
+              source={require("../../../../assets/icons/profile-back.png")}
+              style={{ width: 24, height: 24 }}
+              contentFit="contain"
+              tintColor={isDark ? "#E2E8F0" : "#1B2B4B"}
+            />
           </TouchableOpacity>
           <View>
-            <Text className="text-xl font-bold text-white">
-              New Patient Registration
+            <Text className="text-xl font-bold text-[#1B2B4B] dark:text-slate-100">
+              {t("patients:newRegistration", { defaultValue: "New Patient Registration" })}
             </Text>
-            <Text className="text-xs text-white/70 dark:text-slate-400 mt-0.5">
-              Enter patient details to begin screening
+            <Text className="text-xs text-[#64748B] dark:text-slate-400 mt-0.5">
+              {t("patients:newRegistrationSub", { defaultValue: "Enter patient details to begin screening" })}
             </Text>
           </View>
         </View>
       </View>
 
-      <View className="p-5">
-        {/* Card 1: Personal Info */}
-        <View className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-4 shadow-sm border border-gray-100 dark:border-slate-800/80">
-          <Text className="text-xs font-bold text-primary dark:text-primary-400 mb-4 uppercase tracking-wider">
-            Personal Information
-          </Text>
+      <ScrollView
+        className="flex-1 bg-gray-50 dark:bg-slate-950"
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="p-5">
+          {/* Card 1: Personal Info */}
+          <View className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-4 shadow-sm border border-gray-100 dark:border-slate-800/80">
+            <Text className="text-xs font-bold text-primary dark:text-primary-400 mb-4 uppercase tracking-wider">
+              {t("patients:personalInfo", { defaultValue: "Personal Information" })}
+            </Text>
 
-          <Input
-            label="First Name *"
-            placeholder="Enter first name"
-            value={firstName}
-            onChangeText={setFirstName}
-            editable={!saving}
-            icon={
-              <Image
-                source={require("../../../../assets/icons/np-person.png")}
-                style={{ width: 20, height: 20 }}
-                contentFit="contain"
-                tintColor="#0D9E94"
-              />
-            }
-            error={errors.firstName}
-          />
-          <Input
-            label="Last Name *"
-            placeholder="Enter last name"
-            value={lastName}
-            onChangeText={setLastName}
-            editable={!saving}
-            icon={
-              <Image
-                source={require("../../../../assets/icons/np-person.png")}
-                style={{ width: 20, height: 20 }}
-                contentFit="contain"
-                tintColor="#0D9E94"
-              />
-            }
-            error={errors.lastName}
-          />
-          <Input
-            label="Date of Birth *"
-            placeholder="DD / MM / YYYY"
-            value={dob}
-            onChangeText={handleDobChange}
-            editable={!saving}
-            icon={
-              <Image
-                source={require("../../../../assets/icons/np-calendar.png")}
-                style={{ width: 20, height: 20 }}
-                contentFit="contain"
-                tintColor="#0D9E94"
-              />
-            }
-            error={errors.dob}
-            keyboardType="numeric"
-          />
+            <Input
+              label={`${t("patients:firstName", { defaultValue: "First Name" })} *`}
+              placeholder={t("patients:firstNamePlaceholder", { defaultValue: "Enter first name" })}
+              value={firstName}
+              onChangeText={setFirstName}
+              editable={!saving}
+              icon={
+                <Image
+                  source={require("../../../../assets/icons/np-person.png")}
+                  style={{ width: 20, height: 20 }}
+                  contentFit="contain"
+                  tintColor="#0D9E94"
+                />
+              }
+              error={errors.firstName}
+            />
+            <Input
+              label={`${t("patients:lastName", { defaultValue: "Last Name" })} *`}
+              placeholder={t("patients:lastNamePlaceholder", { defaultValue: "Enter last name" })}
+              value={lastName}
+              onChangeText={setLastName}
+              editable={!saving}
+              icon={
+                <Image
+                  source={require("../../../../assets/icons/np-person.png")}
+                  style={{ width: 20, height: 20 }}
+                  contentFit="contain"
+                  tintColor="#0D9E94"
+                />
+              }
+              error={errors.lastName}
+            />
+            <Input
+              label={`${t("patients:dateOfBirth", { defaultValue: "Date of Birth" })} *`}
+              placeholder={t("patients:dobPlaceholder", { defaultValue: "DD / MM / YYYY" })}
+              value={dob}
+              onChangeText={handleDobChange}
+              editable={!saving}
+              icon={
+                <Image
+                  source={require("../../../../assets/icons/np-calendar.png")}
+                  style={{ width: 20, height: 20 }}
+                  contentFit="contain"
+                  tintColor="#0D9E94"
+                />
+              }
+              error={errors.dob}
+              keyboardType="numeric"
+            />
 
-          {/* Gender selector */}
-          <View className="mb-2">
-            <Text className="text-sm font-medium text-navy dark:text-slate-200 mb-1.5">Gender *</Text>
-            <View className="flex-row gap-3">
-              {(["male", "female", "other"] as const).map((option) => {
-                const isSelected = sex === option;
-                return (
-                  <TouchableOpacity
-                    key={option}
-                    activeOpacity={0.7}
-                    onPress={() => selectGender(option)}
-                    disabled={saving}
-                    className={`flex-1 py-3.5 rounded-xl border flex-row items-center justify-center gap-1.5 ${
-                      isSelected
-                        ? "border-primary bg-primary-50 dark:bg-primary-950/20 shadow-sm"
-                        : "border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900"
-                    }`}
-                  >
-                    <Image
-                      source={require("../../../../assets/icons/profile-gender.png")}
-                      style={{ width: 16, height: 16 }}
-                      contentFit="contain"
-                      tintColor={isSelected ? "#0D9E94" : "#9CA3AF"}
-                    />
-                    <Text
-                      className={`text-sm font-semibold capitalize ${
-                        isSelected ? "text-primary dark:text-primary-400" : "text-gray-500 dark:text-slate-400"
+            {/* Gender selector */}
+            <View className="mb-2">
+              <Text className="text-sm font-medium text-navy dark:text-slate-200 mb-1.5">
+                {`${t("patients:gender", { defaultValue: "Gender" })} *`}
+              </Text>
+              <View className="flex-row gap-3">
+                {(["male", "female", "other"] as const).map((option) => {
+                  const isSelected = sex === option;
+                  const iconSource =
+                    option === "male"
+                      ? require("../../../../assets/icons/male-gender-icon.png")
+                      : option === "female"
+                        ? require("../../../../assets/icons/female-gender-icon.png")
+                        : require("../../../../assets/icons/others-gender-icon.png");
+
+                  const genderLabel =
+                    option === "male"
+                      ? t("patients:male", { defaultValue: "Male" })
+                      : option === "female"
+                        ? t("patients:female", { defaultValue: "Female" })
+                        : t("patients:other", { defaultValue: "Other" });
+
+                  return (
+                    <TouchableOpacity
+                      key={option}
+                      activeOpacity={0.7}
+                      onPress={() => selectGender(option)}
+                      disabled={saving}
+                      className={`flex-1 py-3.5 rounded-xl border flex-row items-center justify-center gap-1.5 ${
+                        isSelected
+                          ? "border-primary bg-primary-50 dark:bg-primary-950/20 shadow-sm"
+                          : "border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900"
                       }`}
                     >
-                      {option}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+                      <Image
+                        source={iconSource}
+                        style={{ width: 17, height: 17 }}
+                        contentFit="contain"
+                        tintColor={isSelected ? "#0D9E94" : "#9CA3AF"}
+                      />
+                      <Text
+                        className={`text-sm font-semibold capitalize ${
+                          isSelected ? "text-primary dark:text-primary-400" : "text-gray-500 dark:text-slate-400"
+                        }`}
+                      >
+                        {genderLabel}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              {errors.sex && (
+                <Text className="text-sm text-red-500 dark:text-red-400 mt-1">{errors.sex}</Text>
+              )}
             </View>
-            {errors.sex && (
-              <Text className="text-sm text-red-500 dark:text-red-400 mt-1">{errors.sex}</Text>
-            )}
+          </View>
+
+          {/* Card 2: Contact Info */}
+          <View className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-4 shadow-sm border border-gray-100 dark:border-slate-800/80">
+            <Text className="text-xs font-bold text-primary dark:text-primary-400 mb-4 uppercase tracking-wider">
+              {t("patients:contactInfo", { defaultValue: "Contact Information" })}
+            </Text>
+            <Input
+              label={t("patients:phone", { defaultValue: "Phone Number" })}
+              placeholder={t("patients:phonePlaceholder", { defaultValue: "03XX XXXXXX" })}
+              value={phone}
+              onChangeText={setPhone}
+              editable={!saving}
+              icon={
+                <Image
+                  source={require("../../../../assets/icons/np-phone.png")}
+                  style={{ width: 20, height: 20 }}
+                  contentFit="contain"
+                  tintColor="#0D9E94"
+                />
+              }
+              keyboardType="phone-pad"
+            />
+            <Input
+              label={t("patients:address", { defaultValue: "Address (Village / Area)" })}
+              placeholder={t("patients:addressPlaceholder", { defaultValue: "Enter address" })}
+              value={address}
+              onChangeText={setAddress}
+              editable={!saving}
+              icon={
+                <Image
+                  source={require("../../../../assets/icons/np-location.png")}
+                  style={{ width: 20, height: 20 }}
+                  contentFit="contain"
+                  tintColor="#0D9E94"
+                />
+              }
+            />
+          </View>
+
+          {/* Card 3: Notes Info */}
+          <View className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-4 shadow-sm border border-gray-100 dark:border-slate-800/80">
+            <Text className="text-xs font-bold text-primary dark:text-primary-400 mb-4 uppercase tracking-wider">
+              {t("patients:additionalInfo", { defaultValue: "Additional Information" })}
+            </Text>
+            <Input
+              label={t("patients:notes", { defaultValue: "Notes" })}
+              placeholder={t("patients:notesPlaceholder", {
+                defaultValue: "Enter medical history, symptoms, or any other notes",
+              })}
+              value={notes}
+              onChangeText={setNotes}
+              editable={!saving}
+              icon={
+                <Ionicons
+                  name="document-text-outline"
+                  size={20}
+                  color="#0D9E94"
+                />
+              }
+              multiline
+            />
+          </View>
+
+          <View className="mt-4 mb-8">
+            <Button
+              title={t("patients:savePatient", { defaultValue: "Save Patient" })}
+              onPress={handleSave}
+              loading={saving}
+              disabled={saving}
+            />
           </View>
         </View>
-
-        {/* Card 2: Contact Info */}
-        <View className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-4 shadow-sm border border-gray-100 dark:border-slate-800/80">
-          <Text className="text-xs font-bold text-primary dark:text-primary-400 mb-4 uppercase tracking-wider">
-            Contact Information
-          </Text>
-          <Input
-            label="Phone Number"
-            placeholder="03XX XXXXXX"
-            value={phone}
-            onChangeText={setPhone}
-            editable={!saving}
-            icon={
-              <Image
-                source={require("../../../../assets/icons/np-phone.png")}
-                style={{ width: 20, height: 20 }}
-                contentFit="contain"
-                tintColor="#0D9E94"
-              />
-            }
-            keyboardType="phone-pad"
-          />
-          <Input
-            label="Address (Village / Area)"
-            placeholder="Enter address"
-            value={address}
-            onChangeText={setAddress}
-            editable={!saving}
-            icon={
-              <Image
-                source={require("../../../../assets/icons/np-location.png")}
-                style={{ width: 20, height: 20 }}
-                contentFit="contain"
-                tintColor="#0D9E94"
-              />
-            }
-          />
-        </View>
-
-        {/* Card 3: Notes Info */}
-        <View className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-4 shadow-sm border border-gray-100 dark:border-slate-800/80">
-          <Text className="text-xs font-bold text-primary dark:text-primary-400 mb-4 uppercase tracking-wider">
-            Additional Information
-          </Text>
-          <Input
-            label="Notes"
-            placeholder="Enter medical history, symptoms, or any other notes"
-            value={notes}
-            onChangeText={setNotes}
-            editable={!saving}
-            icon={
-              <Image
-                source={require("../../../../assets/icons/np-notes.png")}
-                style={{ width: 20, height: 20 }}
-                contentFit="contain"
-                tintColor="#0D9E94"
-              />
-            }
-            multiline
-          />
-        </View>
-
-        <View className="mt-4 mb-8">
-          <Button
-            title="Save Patient"
-            onPress={handleSave}
-            loading={saving}
-            disabled={saving}
-          />
-        </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

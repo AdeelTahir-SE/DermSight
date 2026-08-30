@@ -51,6 +51,15 @@ export async function getPendingSyncCount(): Promise<number> {
   return rows.length;
 }
 
+export async function getHighRiskCount(): Promise<number> {
+  const rows = db
+    .select()
+    .from(assessments)
+    .where(eq(assessments.riskTier, "high"))
+    .all();
+  return rows.length;
+}
+
 export async function createAssessment(
   patientId: string,
   imageUri: string,
