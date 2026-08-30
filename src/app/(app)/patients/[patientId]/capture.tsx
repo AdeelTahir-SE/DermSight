@@ -143,7 +143,7 @@ export default function CaptureScreen() {
       />
 
       {/* Top bar */}
-      <View className="flex-row items-center justify-between px-5 pt-12 pb-4 absolute top-0 left-0 right-0 z-10">
+      <View className="flex-row items-center justify-between px-5 pt-4 pb-4 absolute top-0 left-0 right-0 z-10">
         <Pressable
           onPress={() => router.back()}
           className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
