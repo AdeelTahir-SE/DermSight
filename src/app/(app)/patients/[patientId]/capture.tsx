@@ -37,6 +37,7 @@ export default function CaptureScreen() {
   const [flash, setFlash] = useState<FlashMode>("off");
   const [facing, setFacing] = useState<"back" | "front">("back");
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isCameraReady, setIsCameraReady] = useState(false);
   const [showTips, setShowTips] = useState(false);
 
   // Permission not yet determined — show loading
@@ -88,16 +89,18 @@ export default function CaptureScreen() {
   }
 
   const handleCapture = async () => {
-    if (!cameraRef.current || isCapturing) return;
+    if (!cameraRef.current || !isCameraReady || isCapturing) return;
 
     setIsCapturing(true);
     try {
       const photo: CameraCapturedPicture | undefined =
         await cameraRef.current.takePictureAsync({
-          quality: 0.8,
-          skipProcessing: false,
+          quality: 0.9,
+          skipProcessing: true,
           exif: true,
         });
+
+      console.log("[CaptureScreen] Photo taken:", photo?.uri, photo?.width, photo?.height);
 
       if (photo?.uri) {
         setCapturedImageUri(photo.uri);
@@ -107,7 +110,7 @@ export default function CaptureScreen() {
         } as Href);
       }
     } catch (error) {
-      console.error("Capture failed:", error);
+      console.error("[CaptureScreen] Capture failed:", error);
     } finally {
       setIsCapturing(false);
     }
@@ -133,6 +136,8 @@ export default function CaptureScreen() {
         ref={cameraRef}
         facing={facing}
         flash={flash}
+        mode="picture"
+        onCameraReady={() => setIsCameraReady(true)}
         style={StyleSheet.absoluteFill}
         enableTorch={false}
       />

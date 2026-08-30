@@ -8,10 +8,12 @@ import { runInference } from "@/features/assessments/inference/classify";
 import { useAssessmentsStore } from "@/features/assessments/store";
 import { safeDecodeURI } from "@/utils/image";
 import { Image } from "expo-image";
+import * as FileSystem from "expo-file-system";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -33,6 +35,19 @@ export default function ReviewScreen() {
   const activeImageUri = capturedImageUri || safeDecodeURI(imageUri);
   const router = useRouter();
   const [analyzing, setAnalyzing] = useState(false);
+  const [fileStats, setFileStats] = useState<{ exists: boolean; size?: number } | null>(null);
+
+  useEffect(() => {
+    console.log("[ReviewScreen] activeImageUri:", activeImageUri);
+    if (activeImageUri && Platform.OS !== "web") {
+      FileSystem.getInfoAsync(activeImageUri)
+        .then((info) => {
+          console.log("[ReviewScreen] File info:", info);
+          setFileStats(info);
+        })
+        .catch((e) => console.error("[ReviewScreen] getInfoAsync error:", e));
+    }
+  }, [activeImageUri]);
 
   const handleAnalyze = async () => {
     setAnalyzing(true);
@@ -76,13 +91,16 @@ export default function ReviewScreen() {
           </Text>
 
           {/* Captured image preview */}
-          <View className="w-full aspect-square bg-gray-100 rounded-2xl mb-4 overflow-hidden border border-gray-200">
+          <View className="w-full aspect-square bg-gray-100 rounded-2xl mb-4 overflow-hidden border border-gray-200 justify-center items-center">
             {activeImageUri ? (
               <Image
                 source={{ uri: activeImageUri }}
                 style={{ width: "100%", height: "100%" }}
                 contentFit="cover"
                 transition={200}
+                onError={(err) =>
+                  console.error("[ReviewScreen] Image load error:", err.error, err)
+                }
               />
             ) : (
               <View className="flex-1 items-center justify-center">
@@ -95,6 +113,14 @@ export default function ReviewScreen() {
               </View>
             )}
           </View>
+
+          {fileStats && !fileStats.exists && (
+            <View className="bg-red-50 p-2 rounded-lg mb-3">
+              <Text className="text-xs text-red-600">
+                Warning: Captured image file does not exist on disk.
+              </Text>
+            </View>
+          )}
 
           {/* Quality indicator */}
           <View className="flex-row items-center bg-green-50 rounded-xl p-3 mb-4">
