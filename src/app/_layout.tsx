@@ -11,8 +11,8 @@ import { initializeDatabase } from "@/db/client";
 import { useAuthStore } from "@/features/auth/store";
 import { usePreferencesStore } from "@/features/preferences/store";
 import {
-  registerBackgroundSync,
-  startConnectivityAutoSync,
+    registerBackgroundSync,
+    startConnectivityAutoSync,
 } from "@/features/sync/backgroundSync";
 import { useThemeStore } from "@/features/theme/store";
 import { Stack } from "expo-router";

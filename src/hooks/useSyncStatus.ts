@@ -2,9 +2,9 @@
  * Sync status hook — tracks pending sync count and sync state.
  */
 
-import { useState, useEffect, useCallback } from "react";
-import { getPendingCount, runSync } from "@/features/sync/syncEngine";
 import { usePreferencesStore } from "@/features/preferences/store";
+import { getPendingCount, runSync } from "@/features/sync/syncEngine";
+import { useCallback, useEffect, useState } from "react";
 import { useConnectivity } from "./useConnectivity";
 
 export function useSyncStatus() {

@@ -3,9 +3,9 @@
  * last successful sync timestamp, persisted across sessions.
  */
 
-import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
+import { create } from "zustand";
 
 export type UnitsType = "metric" | "imperial";
 

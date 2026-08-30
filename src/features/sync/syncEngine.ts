@@ -369,8 +369,6 @@ export async function pullRemoteData(
       };
     }
 
-    console.log("Starting remote data pull for health worker:", workerId);
-
     // 2. Fetch remote patients created by this health worker
     const { data: remotePatients, error: patientError } = await supabase
       .from("patients")
@@ -378,7 +376,6 @@ export async function pullRemoteData(
       .eq("created_by", workerId);
 
     if (patientError) {
-      console.error("Failed to pull remote patients:", patientError.message);
       return {
         success: false,
         error: `Pull patients failed: ${patientError.message}`,
@@ -440,10 +437,6 @@ export async function pullRemoteData(
       .eq("created_by", workerId);
 
     if (assessmentError) {
-      console.error(
-        "Failed to pull remote assessments:",
-        assessmentError.message,
-      );
       return {
         success: false,
         error: `Pull assessments failed: ${assessmentError.message}`,
@@ -517,17 +510,12 @@ export async function pullRemoteData(
       usePatientsStore.getState().loadPatients();
       useAssessmentsStore.getState().loadAll();
       useAssessmentsStore.getState().loadCounts();
-    } catch (storeError) {
-      console.warn(
-        "Failed to refresh Zustand stores after remote pull:",
-        storeError,
-      );
+    } catch {
+      // UI refresh failure does not affect pull outcome.
     }
 
-    console.log("Successfully pulled all remote records from Supabase!");
     return { success: true };
   } catch (e: any) {
-    console.error("Failed to pull remote database data:", e);
     return { success: false, error: e?.message || "Data pull error" };
   }
 }
