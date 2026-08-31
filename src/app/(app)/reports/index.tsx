@@ -6,7 +6,6 @@ import type { Assessment, Patient } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Haptics from "expo-haptics";
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import * as Sharing from "expo-sharing";
 import React, { useEffect, useMemo, useState } from "react";
@@ -27,13 +26,13 @@ const CLASS_CONFIGS: Record<
   string,
   { label: string; color: string; full: string; icon: keyof typeof Ionicons.glyphMap; bg: string }
 > = {
-  nv: { label: "NV", color: "#3B82F6", full: "Melanocytic Nevi", icon: "disc-outline", bg: "#EFF6FF" },
-  mel: { label: "MEL", color: "#EF4444", full: "Melanoma", icon: "warning", bg: "#FEF2F2" },
-  bkl: { label: "BKL", color: "#10B981", full: "Benign Keratosis", icon: "shield-checkmark", bg: "#ECFDF5" },
-  bcc: { label: "BCC", color: "#F97316", full: "Basal Cell Carcinoma", icon: "alert-circle", bg: "#FFF7ED" },
-  akiec: { label: "AKIEC", color: "#EC4899", full: "Actinic Keratoses", icon: "flame", bg: "#FDF2F8" },
-  vasc: { label: "VASC", color: "#8B5CF6", full: "Vascular Lesions", icon: "water", bg: "#F5F3FF" },
-  df: { label: "DF", color: "#64748B", full: "Dermatofibroma", icon: "bandage", bg: "#F8FAFC" },
+  nv: { label: "NV", color: "#0D9E94", full: "Melanocytic Nevi", icon: "disc-outline", bg: "#E6F7F5" },
+  mel: { label: "MEL", color: "#DC2626", full: "Melanoma", icon: "alert-circle", bg: "#FEE2E2" },
+  bkl: { label: "BKL", color: "#0D9E94", full: "Benign Keratosis", icon: "shield-checkmark", bg: "#E6F7F5" },
+  bcc: { label: "BCC", color: "#D97706", full: "Basal Cell Carcinoma", icon: "warning", bg: "#FEF3C7" },
+  akiec: { label: "AKIEC", color: "#EA580C", full: "Actinic Keratoses", icon: "pulse", bg: "#FFEDD5" },
+  vasc: { label: "VASC", color: "#0A7E76", full: "Vascular Lesions", icon: "water-outline", bg: "#E6F7F5" },
+  df: { label: "DF", color: "#64748B", full: "Dermatofibroma", icon: "bandage-outline", bg: "#F1F5F9" },
 };
 
 export default function ReportsScreen() {
@@ -115,7 +114,7 @@ export default function ReportsScreen() {
     };
 
     for (const a of filteredData.assessments) {
-      if (a.riskTier === "high") highRiskCount++;
+      if (a.riskTier === "high" || a.riskTier === "urgent_referral") highRiskCount++;
       else if (a.riskTier === "medium") mediumRiskCount++;
       else lowRiskCount++;
 
@@ -214,11 +213,10 @@ export default function ReportsScreen() {
                 onPress={() => router.back()}
                 className="mr-3.5 p-1"
               >
-                <Image
-                  source={require("../../../../assets/icons/profile-back.png")}
-                  style={{ width: 24, height: 24 }}
-                  contentFit="contain"
-                  tintColor={isDark ? "#E2E8F0" : "#1B2B4B"}
+                <Ionicons
+                  name="arrow-back"
+                  size={24}
+                  color={isDark ? "#E2E8F0" : "#1B2B4B"}
                 />
               </TouchableOpacity>
               <View className="flex-1">
@@ -235,7 +233,7 @@ export default function ReportsScreen() {
               activeOpacity={0.8}
               onPress={handleExport}
               disabled={exporting}
-              className="bg-[#0D9E94] px-3.5 py-2 rounded-xl flex-row items-center gap-1.5 shadow-sm"
+              className="bg-[#0D9E94] px-3.5 py-2 rounded-xl flex-row items-center gap-1.5 shadow-sm active:opacity-90"
             >
               {exporting ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
@@ -288,25 +286,33 @@ export default function ReportsScreen() {
               bg={isDark ? "#042F2E" : "#E6F7F5"}
             />
             <KPICard
-              icon="medical"
+              icon="document-text"
               title={t("reports:totalAssessments", { defaultValue: "Total Assessments" })}
               value={metrics.totalAssessments.toString()}
-              color="#3B82F6"
-              bg={isDark ? "#172554" : "#EFF6FF"}
+              color="#0D9E94"
+              bg={isDark ? "#042F2E" : "#E6F7F5"}
             />
             <KPICard
               icon="alert-circle"
               title={t("reports:highRiskCases", { defaultValue: "High Risk Cases" })}
               value={metrics.highRiskCount.toString()}
-              color="#EF4444"
-              bg={isDark ? "#450A0A" : "#FEF2F2"}
+              color={metrics.highRiskCount > 0 ? "#DC2626" : "#0D9E94"}
+              bg={
+                metrics.highRiskCount > 0
+                  ? isDark
+                    ? "#450A0A"
+                    : "#FEE2E2"
+                  : isDark
+                    ? "#042F2E"
+                    : "#E6F7F5"
+              }
             />
             <KPICard
               icon="cloud-done"
               title={t("reports:syncRate", { defaultValue: "Sync Coverage" })}
               value={`${metrics.syncPercentage}%`}
-              color="#10B981"
-              bg={isDark ? "#064E3B" : "#ECFDF5"}
+              color="#0D9E94"
+              bg={isDark ? "#042F2E" : "#E6F7F5"}
             />
           </View>
 
@@ -332,7 +338,7 @@ export default function ReportsScreen() {
                 label={t("reports:highRisk", { defaultValue: "High Risk" })}
                 count={metrics.highRiskCount}
                 total={metrics.totalAssessments}
-                color="#EF4444"
+                color="#DC2626"
                 badgeBg="#FEE2E2"
                 badgeText="#DC2626"
               />
@@ -341,18 +347,18 @@ export default function ReportsScreen() {
                 label={t("reports:mediumRisk", { defaultValue: "Medium Risk" })}
                 count={metrics.mediumRiskCount}
                 total={metrics.totalAssessments}
-                color="#F59E0B"
+                color="#D97706"
                 badgeBg="#FEF3C7"
                 badgeText="#D97706"
               />
               <RiskProgressRow
-                icon="checkmark-circle"
+                icon="shield-checkmark"
                 label={t("reports:lowRisk", { defaultValue: "Low Risk" })}
                 count={metrics.lowRiskCount}
                 total={metrics.totalAssessments}
-                color="#10B981"
-                badgeBg="#DCFCE7"
-                badgeText="#16A34A"
+                color="#0D9E94"
+                badgeBg="#E6F7F5"
+                badgeText="#0D9E94"
               />
             </View>
           </View>
@@ -403,7 +409,7 @@ export default function ReportsScreen() {
                       </Text>
                     </View>
 
-                    <View className="h-2 rounded-full bg-gray-100 dark:bg-slate-800 overflow-hidden">
+                    <View className="h-2 rounded-full bg-[#F1F5F9] dark:bg-slate-800 overflow-hidden">
                       <View
                         className="h-full rounded-full"
                         style={{
@@ -426,7 +432,7 @@ export default function ReportsScreen() {
                 {t("reports:clinicalInsights", { defaultValue: "Clinical Summary & Notes" })}
               </Text>
             </View>
-            <Text className="text-[13px] text-[#134E4A] dark:text-teal-200/80 leading-relaxed font-normal">
+            <Text className="text-[13px] text-[#0A5C56] dark:text-teal-200/80 leading-relaxed font-medium">
               {t("reports:insightsDesc", {
                 defaultValue:
                   "Screening trends recorded locally on this device. All high risk findings should be triaged immediately to regional dermatologists or tele-dermatology referral hubs.",

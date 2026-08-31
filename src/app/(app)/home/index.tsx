@@ -141,37 +141,6 @@ export default function HomeScreen() {
             isDark={isDark}
           />
         </View>
-
-        {/* Offline Status Banner Card - Only rendered when offline without right arrow */}
-        {isOffline && (
-          <Pressable
-            onPress={async () => {
-              try {
-                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              } catch (e) {}
-            }}
-            className="flex-row items-center bg-[#E8F7F5] dark:bg-teal-950/30 border border-[#D0F0EB] dark:border-teal-900/40 rounded-2xl p-4 active:opacity-90"
-          >
-            <View className="w-12 h-12 rounded-full bg-[#CCEFEB] dark:bg-teal-900/50 items-center justify-center mr-3.5">
-              <Image
-                source={require("../../../../assets/icons/home-wifi-off.png")}
-                style={{ width: 22, height: 22 }}
-                contentFit="contain"
-                tintColor="#0D9E94"
-              />
-            </View>
-            <View className="flex-1">
-              <Text className="text-[15px] font-bold text-[#1B2B4B] dark:text-slate-100">
-                {t("home:offlineBanner", { defaultValue: "You are offline" })}
-              </Text>
-              <Text className="text-[12px] text-[#64748B] dark:text-slate-400 mt-0.5 leading-[17px]">
-                {t("home:offlineBannerDesc", {
-                  defaultValue: "Data will sync automatically when connection is available.",
-                })}
-              </Text>
-            </View>
-          </Pressable>
-        )}
       </View>
     </ScrollView>
     </SafeAreaView>

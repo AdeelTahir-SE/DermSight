@@ -16,6 +16,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ActivityIndicator, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
 export default function ResultScreen() {
@@ -217,29 +218,31 @@ export default function ResultScreen() {
 
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-white dark:bg-slate-900">
-      <View className="flex-1 bg-gray-50 dark:bg-slate-950">
+      <View className="flex-1 bg-[#F8FAFC] dark:bg-slate-950">
         {/* Header */}
-        <View className="bg-white dark:bg-slate-900 px-5 pt-3 pb-4 border-b border-gray-100 dark:border-slate-800/80">
+        <View className="bg-white dark:bg-slate-900 px-5 pt-3 pb-4 border-b border-[#EBF2F1] dark:border-slate-800">
           <View className="flex-row items-center">
             <Pressable onPress={handleBack} className="p-1 mr-3">
-              <Image
-                source={require("../../../../../assets/icons/profile-back.png")}
-                style={{ width: 24, height: 24 }}
-                contentFit="contain"
-                tintColor={isDark ? "#E2E8F0" : "#1B2B4B"}
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                color={isDark ? "#E2E8F0" : "#1B2B4B"}
               />
             </Pressable>
-            <Text className="text-lg font-bold text-navy dark:text-slate-100">Assessment Result</Text>
+            <View>
+              <Text className="text-xl font-bold text-[#1B2B4B] dark:text-slate-100">Assessment Result</Text>
+              <Text className="text-xs text-[#64748B] dark:text-slate-400 mt-0.5">AI Clinical Screening Breakdown</Text>
+            </View>
           </View>
         </View>
 
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
           <View className="p-5 gap-4">
-            {/* Disclaimer */}
-            <View className="bg-amber-50 dark:bg-amber-950/20 border border-amber-100/50 dark:border-amber-900/30 rounded-2xl p-4 flex-row items-start">
-              <Text className="text-sm mr-2.5">⚠️</Text>
-              <Text className="text-xs text-amber-705 dark:text-amber-300 flex-1 leading-relaxed">
-                This is a screening result, not a diagnosis. Always consult a specialist for confirmation.
+            {/* Clinical Notice */}
+            <View className="bg-[#E6F7F5] dark:bg-teal-950/30 border border-[#C6EFEA] dark:border-teal-900/40 rounded-2xl p-3.5 flex-row items-center">
+              <Ionicons name="information-circle" size={20} color="#0D9E94" style={{ marginRight: 10 }} />
+              <Text className="text-xs text-[#0D9E94] dark:text-teal-300 flex-1 leading-relaxed font-medium">
+                This is an AI screening suggestion, not a definitive diagnosis. Always consult a qualified specialist.
               </Text>
             </View>
 
@@ -263,21 +266,24 @@ export default function ResultScreen() {
 
             {/* Top Diagnosis */}
             <Card>
-              <Text className="text-xs text-gray-500 dark:text-slate-400 mb-1">Top Diagnosis</Text>
-              <Text className="text-lg font-bold text-navy dark:text-slate-100">
+              <View className="flex-row items-center justify-between mb-1">
+                <Text className="text-xs font-semibold text-[#64748B] dark:text-slate-400">Primary Classification</Text>
+                <Ionicons name="shield-outline" size={16} color="#0D9E94" />
+              </View>
+              <Text className="text-lg font-bold text-[#1B2B4B] dark:text-slate-100">
                 {diagnosisInfo.name}
               </Text>
               <View className="flex-row items-center mt-2.5">
-                <Text className="text-sm text-gray-500 dark:text-slate-450 mr-2">Confidence</Text>
-                <Text className="text-base font-bold text-primary dark:text-primary-400">
+                <Text className="text-sm text-[#64748B] dark:text-slate-400 mr-2">Confidence Level:</Text>
+                <Text className="text-base font-bold text-[#0D9E94] dark:text-teal-400">
                   {Math.round(safeResult.confidenceScore * 100)}%
                 </Text>
               </View>
               {diagnosisInfo.malignant && (
-                <View className="flex-row items-center mt-3 bg-red-50 dark:bg-red-950/25 border border-red-100/20 dark:border-red-900/20 rounded-xl p-3">
-                  <Text className="text-xs mr-2">⚠️</Text>
-                  <Text className="text-xs text-red-650 dark:text-red-400 font-semibold flex-1">
-                    Malignant classification
+                <View className="flex-row items-center mt-3 bg-red-50 dark:bg-red-950/25 border border-red-100 dark:border-red-900/30 rounded-xl p-3">
+                  <Ionicons name="alert-circle" size={16} color="#DC2626" style={{ marginRight: 8 }} />
+                  <Text className="text-xs text-red-700 dark:text-red-400 font-semibold flex-1">
+                    Potential Malignant Classification
                   </Text>
                 </View>
               )}

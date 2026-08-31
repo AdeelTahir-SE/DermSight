@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import type { DiagnosisClass } from "@/types";
 import { DIAGNOSIS_LABELS } from "@/constants/riskLevels";
 import * as Haptics from "expo-haptics";
@@ -33,21 +34,30 @@ export function ClassProbabilityList({
     <View>
       <Pressable
         onPress={handleExpandToggle}
-        className="flex-row items-center justify-between py-2"
+        className="flex-row items-center justify-between py-1"
       >
-        <Text className="text-base font-semibold text-navy dark:text-slate-100">
-          All Diagnostic Classes
-        </Text>
-        <Text className="text-sm font-semibold text-primary dark:text-primary-400">
-          {expanded ? "Collapse" : "Expand"}
-        </Text>
+        <View>
+          <Text className="text-base font-bold text-[#1B2B4B] dark:text-slate-100">
+            All Diagnostic Classes
+          </Text>
+          <Text className="text-xs text-[#64748B] dark:text-slate-400 mt-0.5">
+            Full probability breakdown across all 7 classes
+          </Text>
+        </View>
+        <View className="flex-row items-center bg-[#E6F7F5] dark:bg-teal-950/40 px-2.5 py-1 rounded-full">
+          <Text className="text-xs font-bold text-[#0D9E94] dark:text-teal-300 mr-1">
+            {expanded ? "Collapse" : "Expand"}
+          </Text>
+          <Ionicons
+            name={expanded ? "chevron-up" : "chevron-down"}
+            size={14}
+            color="#0D9E94"
+          />
+        </View>
       </Pressable>
-      <Text className="text-xs text-gray-500 dark:text-slate-400 mb-4">
-        Full probability breakdown across all 7 classes.
-      </Text>
 
       {expanded && (
-        <View className="gap-3">
+        <View className="gap-3 mt-4 pt-3 border-t border-gray-100 dark:border-slate-800">
           {sortedClasses.map(([cls, prob]) => {
             const info = DIAGNOSIS_LABELS[cls] || {
               name: cls,
@@ -61,15 +71,15 @@ export function ClassProbabilityList({
 
             const labelStyle = isPredicted
               ? "font-bold text-[#1B2B4B] dark:text-slate-100"
-              : "text-gray-600 dark:text-slate-400";
+              : "text-[#64748B] dark:text-slate-400";
 
             const progressStyle = isPredicted
               ? "bg-[#0D9E94] dark:bg-[#2DD4BF]"
-              : "bg-[#94A3B8] dark:bg-slate-600";
+              : "bg-[#CBD5E1] dark:bg-slate-700";
 
             const percentStyle = isPredicted
               ? "font-bold text-[#0D9E94] dark:text-teal-400"
-              : "text-gray-500 dark:text-slate-400";
+              : "text-[#64748B] dark:text-slate-400";
 
             return (
               <View key={cls} className="flex-row items-center">
@@ -80,7 +90,7 @@ export function ClassProbabilityList({
                   )}
                 </View>
                 <View className="flex-1 mx-3">
-                  <View className="h-2.5 bg-[#E2E8F0] dark:bg-slate-800 rounded-full overflow-hidden">
+                  <View className="h-2 bg-[#F1F5F9] dark:bg-slate-800 rounded-full overflow-hidden">
                     <View
                       className={`h-full rounded-full ${progressStyle}`}
                       style={{
@@ -100,3 +110,4 @@ export function ClassProbabilityList({
     </View>
   );
 }
+

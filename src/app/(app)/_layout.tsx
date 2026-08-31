@@ -1,4 +1,3 @@
-import { ConnectivityBanner } from "@/components/ui/ConnectivityBanner";
 import { useThemeStore } from "@/features/theme/store";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs, usePathname } from "expo-router";
@@ -56,7 +55,6 @@ export default function AppLayout() {
 
   return (
     <View className="flex-1 bg-white dark:bg-slate-950">
-      <ConnectivityBanner />
       <Tabs
         screenOptions={{
           headerShown: false,

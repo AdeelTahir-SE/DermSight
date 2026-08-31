@@ -202,20 +202,6 @@ export default function SyncScreen() {
           </View>
         </View>
 
-        {/* Offline Warning Banner */}
-        {isOffline && (
-          <View className="px-5 mb-2">
-            <View className="flex-row items-center bg-[#FFFBEB] dark:bg-amber-950/30 border border-[#FDE68A] dark:border-amber-900/40 rounded-2xl p-3.5">
-              <Ionicons name="cloud-offline" size={20} color="#D97706" />
-              <Text className="text-[13px] text-[#B45309] dark:text-amber-300 ml-2.5 flex-1 font-medium leading-relaxed">
-                {t("sync:offlineNotice", {
-                  defaultValue: "Device is currently offline. All data is saved securely on this device and will sync when reconnected.",
-                })}
-              </Text>
-            </View>
-          </View>
-        )}
-
         {/* Filter Tabs */}
         <View className="px-5 py-2">
           <View className="flex-row items-center gap-2">
