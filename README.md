@@ -198,6 +198,14 @@ These details are rendered graphically inside the result explainability dashboar
 
 ## Getting Started
 
+###  Quick Install (Android APK)
+Download and install the standalone Android APK directly to test the app on physical devices without needing local development dependencies:
+ **[Download DermSight Android APK](https://drive.google.com/file/d/12AdY-X3D3E5woK8AhKNMqWXBwQA1DxXJ/view?usp=sharing)**
+
+---
+
+### Local Development Setup
+
 ### 1. Install Dependencies
 Ensure you have Node.js installed, then install package dependencies:
 ```bash
