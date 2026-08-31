@@ -2,6 +2,8 @@
 
 DermSight is an offline-first, on-device dermatological risk screening application designed for community health workers in low-bandwidth regions. The app enables health workers to register patients, capture images of skin lesions, perform immediate on-device ML-based risk assessment (returning classification and clinical ABCD scores), and sync data automatically with a centralized Supabase database when internet connectivity is available.
 
+>  **Download Demo APK**: [Download DermSight Android APK (Google Drive)](https://drive.google.com/file/d/12AdY-X3D3E5woK8AhKNMqWXBwQA1DxXJ/view?usp=sharing)
+
 ## Key Capabilities
 
 * **Offline-First Source of Truth**: All writes (patient files, assessments, images) land in a local SQLite database first. The UI never blocks on network connectivity.
