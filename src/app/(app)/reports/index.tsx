@@ -318,23 +318,19 @@ export default function ReportsScreen() {
 
           {/* Triage Risk Breakdown Card */}
           <View className="bg-white dark:bg-slate-900 rounded-3xl p-5 mb-5 border border-[#EBF2F1] dark:border-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-            <View className="flex-row items-center justify-between mb-4">
-              <View>
-                <Text className="text-[16px] font-bold text-[#1B2B4B] dark:text-slate-100">
-                  {t("reports:triageBreakdown", { defaultValue: "Triage Risk Breakdown" })}
-                </Text>
-                <Text className="text-[12px] text-[#64748B] dark:text-slate-400 mt-0.5">
-                  {t("reports:triageBreakdownDesc", {
-                    defaultValue: "Distribution of patient risk classifications",
-                  })}
-                </Text>
-              </View>
-              <Ionicons name="pie-chart-outline" size={20} color="#0D9E94" />
+            <View className="mb-4">
+              <Text className="text-[16px] font-bold text-[#1B2B4B] dark:text-slate-100">
+                {t("reports:triageBreakdown", { defaultValue: "Triage Risk Breakdown" })}
+              </Text>
+              <Text className="text-[12px] text-[#64748B] dark:text-slate-400 mt-0.5">
+                {t("reports:triageBreakdownDesc", {
+                  defaultValue: "Distribution of patient risk classifications",
+                })}
+              </Text>
             </View>
 
             <View className="gap-3.5">
               <RiskProgressRow
-                icon="alert-circle"
                 label={t("reports:highRisk", { defaultValue: "High Risk" })}
                 count={metrics.highRiskCount}
                 total={metrics.totalAssessments}
@@ -343,7 +339,6 @@ export default function ReportsScreen() {
                 badgeText="#DC2626"
               />
               <RiskProgressRow
-                icon="warning"
                 label={t("reports:mediumRisk", { defaultValue: "Medium Risk" })}
                 count={metrics.mediumRiskCount}
                 total={metrics.totalAssessments}
@@ -352,7 +347,6 @@ export default function ReportsScreen() {
                 badgeText="#D97706"
               />
               <RiskProgressRow
-                icon="shield-checkmark"
                 label={t("reports:lowRisk", { defaultValue: "Low Risk" })}
                 count={metrics.lowRiskCount}
                 total={metrics.totalAssessments}
@@ -365,18 +359,15 @@ export default function ReportsScreen() {
 
           {/* Diagnostic Class Distribution Card */}
           <View className="bg-white dark:bg-slate-900 rounded-3xl p-5 mb-5 border border-[#EBF2F1] dark:border-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-            <View className="flex-row items-center justify-between mb-4">
-              <View>
-                <Text className="text-[16px] font-bold text-[#1B2B4B] dark:text-slate-100">
-                  {t("reports:diagnosticDistribution", { defaultValue: "Diagnostic Class Distribution" })}
-                </Text>
-                <Text className="text-[12px] text-[#64748B] dark:text-slate-400 mt-0.5">
-                  {t("reports:diagnosticDistributionDesc", {
-                    defaultValue: "Prevalence of AI-identified lesion categories",
-                  })}
-                </Text>
-              </View>
-              <Ionicons name="analytics-outline" size={20} color="#0D9E94" />
+            <View className="mb-4">
+              <Text className="text-[16px] font-bold text-[#1B2B4B] dark:text-slate-100">
+                {t("reports:diagnosticDistribution", { defaultValue: "Diagnostic Class Distribution" })}
+              </Text>
+              <Text className="text-[12px] text-[#64748B] dark:text-slate-400 mt-0.5">
+                {t("reports:diagnosticDistributionDesc", {
+                  defaultValue: "Prevalence of AI-identified lesion categories",
+                })}
+              </Text>
             </View>
 
             <View className="gap-3">
@@ -390,13 +381,7 @@ export default function ReportsScreen() {
                 return (
                   <View key={key}>
                     <View className="flex-row items-center justify-between mb-1.5">
-                      <View className="flex-row items-center gap-2">
-                        <View
-                          className="w-6 h-6 rounded-lg items-center justify-center"
-                          style={{ backgroundColor: isDark ? "#1E293B" : config.bg }}
-                        >
-                          <Ionicons name={config.icon} size={14} color={config.color} />
-                        </View>
+                      <View className="flex-row items-center gap-1.5">
                         <Text className="text-[13px] font-bold text-[#1B2B4B] dark:text-slate-200">
                           {config.label}
                         </Text>
@@ -480,7 +465,6 @@ function KPICard({
 }
 
 function RiskProgressRow({
-  icon,
   label,
   count,
   total,
@@ -488,7 +472,6 @@ function RiskProgressRow({
   badgeBg,
   badgeText,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
   label: string;
   count: number;
   total: number;
@@ -502,7 +485,6 @@ function RiskProgressRow({
     <View>
       <View className="flex-row items-center justify-between mb-1.5">
         <View className="flex-row items-center gap-1.5">
-          <Ionicons name={icon} size={15} color={color} />
           <Text className="text-[13px] font-bold text-[#1B2B4B] dark:text-slate-100">
             {label}
           </Text>

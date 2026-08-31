@@ -202,9 +202,9 @@
     "unknownLocation": "Unknown location",
     "registeredOn": "Registered on {{date}}",
     "assessmentSummary": "Assessment Summary",
-    "totalAssessments": "{{count}} Assessments Total",
-    "highRiskFindings": "{{count}} High Risk Findings",
-    "lowRiskFindings": "{{count}} Low Risk Findings",
+    "totalAssessments": "Total Screenings",
+    "highRiskFindings": "High Risk",
+    "lowRiskFindings": "Low Risk",
     "recentAssessments": "Recent Assessments",
     "viewAll": "View All",
     "active": "Active"

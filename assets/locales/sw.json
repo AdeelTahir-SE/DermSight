@@ -204,9 +204,9 @@
     "unknownLocation": "Eneo halijulikani",
     "registeredOn": "Alisajiliwa {{date}}",
     "assessmentSummary": "Muhtasari wa Tathmini",
-    "totalAssessments": "Tathmini {{count}} kwa jumla",
-    "highRiskFindings": "Matokeo {{count}} ya hatari kubwa",
-    "lowRiskFindings": "Matokeo {{count}} ya hatari ndogo",
+    "totalAssessments": "Jumla ya Tathmini",
+    "highRiskFindings": "Hatari Kubwa",
+    "lowRiskFindings": "Hatari Ndogo",
     "recentAssessments": "Tathmini za Hivi Karibuni",
     "viewAll": "Tazama zote",
     "active": "Hai"

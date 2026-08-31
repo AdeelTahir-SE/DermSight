@@ -77,25 +77,23 @@ export default function SplashScreen() {
           style={{ width: screenWidth }}
         >
           <View className="flex-1 items-center justify-center">
-            {/* Logo */}
-            <View className="w-52 h-52 rounded-[44px] bg-primary-50 dark:bg-primary-950/20 items-center justify-center mb-8 shadow-sm">
+            {/* Logo with Text */}
+            <View className="items-center justify-center mb-6">
               <Image
-                source={require("../../assets/logo.png")}
-                style={{ width: 156, height: 156 }}
+                source={require("../../assets/logo_with_text.png")}
+                style={{
+                  width: Math.min(screenWidth - 48, 290),
+                  height: 190,
+                }}
                 contentFit="contain"
               />
             </View>
 
-            <Text className="text-4xl font-bold text-center mb-2">
-              <Text className="text-navy dark:text-slate-100">Derm</Text>
-              <Text className="text-primary dark:text-primary-400">Sight</Text>
-            </Text>
-
-            <Text className="text-lg font-semibold text-navy dark:text-slate-200 text-center mb-2">
+            <Text className="text-lg font-bold text-navy dark:text-slate-100 text-center mb-2">
               AI-Powered Skin Cancer Screening
             </Text>
 
-            <Text className="text-sm text-gray-500 dark:text-slate-400 text-center px-4">
+            <Text className="text-sm text-gray-500 dark:text-slate-400 text-center px-4 leading-relaxed">
               Offline. Private. Explainable.{"\n"}Built for community health
               workers.
             </Text>

@@ -554,27 +554,27 @@ export default function SettingsScreen() {
         {/* Log Out Button */}
         <Pressable
           onPress={handleLogout}
-          className="mt-7 flex-row items-center justify-between bg-white dark:bg-slate-900 rounded-2xl px-4 py-3.5 border border-red-100 dark:border-red-950/40 shadow-[0_1px_4px_rgba(220,38,38,0.04)] active:opacity-85"
+          className="mt-7 flex-row items-center justify-between bg-white dark:bg-slate-900 rounded-2xl px-4 py-3.5 border border-red-200 dark:border-red-950/60 shadow-[0_1px_4px_rgba(220,38,38,0.06)] active:opacity-85"
         >
           <View className="flex-row items-center">
-            <View className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-950/40 items-center justify-center mr-3.5 border border-red-100 dark:border-red-900/30">
+            <View className="w-10 h-10 rounded-full bg-[#DC2626] items-center justify-center mr-3.5 shadow-sm">
               <Image
                 source={require("../../../../assets/icons/settings-logout.png")}
                 style={{ width: 19, height: 19 }}
                 contentFit="contain"
-                tintColor="#DC2626"
+                tintColor="#FFFFFF"
               />
             </View>
             <View>
-              <Text className="text-[15px] font-bold text-red-600 dark:text-red-400">
+              <Text className="text-[15px] font-bold text-[#DC2626] dark:text-[#EF4444]">
                 {t("settings:logout")}
               </Text>
-              <Text className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
+              <Text className="text-xs text-[#DC2626]/75 dark:text-[#EF4444]/75 mt-0.5 font-medium">
                 Sign out of this account
               </Text>
             </View>
           </View>
-          <Ionicons name="chevron-forward" size={18} color="#FCA5A5" />
+          <Ionicons name="chevron-forward" size={19} color={isDark ? "#EF4444" : "#DC2626"} />
         </Pressable>
       </View>
     </ScrollView>

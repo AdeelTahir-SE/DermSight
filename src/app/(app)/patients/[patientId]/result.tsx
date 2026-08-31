@@ -238,19 +238,11 @@ export default function ResultScreen() {
 
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
           <View className="p-5 gap-4">
-            {/* Clinical Notice */}
-            <View className="bg-[#E6F7F5] dark:bg-teal-950/30 border border-[#C6EFEA] dark:border-teal-900/40 rounded-2xl p-3.5 flex-row items-center">
-              <Ionicons name="information-circle" size={20} color="#0D9E94" style={{ marginRight: 10 }} />
-              <Text className="text-xs text-[#0D9E94] dark:text-teal-300 flex-1 leading-relaxed font-medium">
-                This is an AI screening suggestion, not a definitive diagnosis. Always consult a qualified specialist.
-              </Text>
-            </View>
-
             {/* Captured Lesion Image */}
             {displayImage ? (
               <View
-                className="w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-slate-800 bg-gray-100 dark:bg-slate-900"
-                style={{ height: 200 }}
+                className="w-full rounded-3xl overflow-hidden border border-gray-200 dark:border-slate-800 bg-gray-100 dark:bg-slate-900 shadow-sm"
+                style={{ height: 210 }}
               >
                 <Image
                   source={{ uri: displayImage }}
@@ -261,33 +253,45 @@ export default function ResultScreen() {
               </View>
             ) : null}
 
-            {/* Risk Tier Badge */}
-            <RiskTierBadge riskTier={safeResult.riskTier} showAction />
-
-            {/* Top Diagnosis */}
+            {/* Top Diagnosis Card */}
             <Card>
-              <View className="flex-row items-center justify-between mb-1">
-                <Text className="text-xs font-semibold text-[#64748B] dark:text-slate-400">Primary Classification</Text>
-                <Ionicons name="shield-outline" size={16} color="#0D9E94" />
+              <View className="flex-row items-center justify-between mb-1.5">
+                <Text className="text-xs font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
+                  Primary Classification
+                </Text>
+                {diagnosisInfo.malignant ? (
+                  <View className="bg-[#DC2626] px-2.5 py-0.5 rounded-full">
+                    <Text className="text-white text-[11px] font-bold">Malignant</Text>
+                  </View>
+                ) : (
+                  <View className="bg-[#0D9E94] px-2.5 py-0.5 rounded-full">
+                    <Text className="text-white text-[11px] font-bold">Benign</Text>
+                  </View>
+                )}
               </View>
-              <Text className="text-lg font-bold text-[#1B2B4B] dark:text-slate-100">
+              <Text className="text-[20px] font-extrabold text-[#1B2B4B] dark:text-slate-100 tracking-tight">
                 {diagnosisInfo.name}
               </Text>
-              <View className="flex-row items-center mt-2.5">
-                <Text className="text-sm text-[#64748B] dark:text-slate-400 mr-2">Confidence Level:</Text>
-                <Text className="text-base font-bold text-[#0D9E94] dark:text-teal-400">
-                  {Math.round(safeResult.confidenceScore * 100)}%
-                </Text>
-              </View>
-              {diagnosisInfo.malignant && (
-                <View className="flex-row items-center mt-3 bg-red-50 dark:bg-red-950/25 border border-red-100 dark:border-red-900/30 rounded-xl p-3">
-                  <Ionicons name="alert-circle" size={16} color="#DC2626" style={{ marginRight: 8 }} />
-                  <Text className="text-xs text-red-700 dark:text-red-400 font-semibold flex-1">
-                    Potential Malignant Classification
+              <View className="mt-3 pt-3 border-t border-[#F1F5F9] dark:border-slate-800">
+                <View className="flex-row items-center justify-between mb-1.5">
+                  <Text className="text-xs font-medium text-[#64748B] dark:text-slate-400">
+                    Model Confidence
+                  </Text>
+                  <Text className="text-sm font-bold text-[#0D9E94] dark:text-teal-400">
+                    {Math.round(safeResult.confidenceScore * 100)}%
                   </Text>
                 </View>
-              )}
+                <View className="h-2 rounded-full bg-[#F1F5F9] dark:bg-slate-800 overflow-hidden">
+                  <View
+                    className="h-full rounded-full bg-[#0D9E94] dark:bg-[#2DD4BF]"
+                    style={{ width: `${Math.max(Math.round(safeResult.confidenceScore * 100), 5)}%` }}
+                  />
+                </View>
+              </View>
             </Card>
+
+            {/* Solid Risk Tier Hero Badge */}
+            <RiskTierBadge riskTier={safeResult.riskTier} showAction />
 
             {/* Class Probability Breakdown */}
             <Card>
@@ -301,6 +305,13 @@ export default function ResultScreen() {
             <Card>
               <ABCDPanel scores={safeResult.abcdScores} />
             </Card>
+
+            {/* Clinical Disclaimer Note */}
+            <View className="px-2 pt-1 pb-2 items-center">
+              <Text className="text-[11px] text-[#64748B] dark:text-slate-400 text-center leading-relaxed font-medium">
+                DermSight is an AI-assisted screening tool. All findings must be validated by a clinical specialist.
+              </Text>
+            </View>
           </View>
         </ScrollView>
 

@@ -80,16 +80,13 @@ export default function SignupScreen() {
     >
       <View className="px-8 py-10 bg-white dark:bg-slate-950">
         {/* Header */}
-        <View className="items-center mb-8">
-          <View className="w-36 h-36 rounded-[32px] bg-primary-50 dark:bg-primary-950/20 items-center justify-center mb-4 shadow-sm">
-            <Image
-              source={require("../../../assets/logo.png")}
-              style={{ width: 104, height: 104 }}
-              contentFit="contain"
-            />
-          </View>
-          <Text className="text-2xl font-bold text-navy dark:text-slate-100">Create Account</Text>
-          <Text className="text-sm text-gray-500 dark:text-slate-400 mt-1">
+        <View className="items-center mb-6">
+          <Image
+            source={require("../../../assets/logo_with_text.png")}
+            style={{ width: 230, height: 110 }}
+            contentFit="contain"
+          />
+          <Text className="text-sm text-gray-500 dark:text-slate-400 mt-2 text-center">
             Register as a community health worker.
           </Text>
         </View>

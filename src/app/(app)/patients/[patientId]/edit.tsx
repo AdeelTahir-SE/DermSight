@@ -426,13 +426,13 @@ export default function EditPatientScreen() {
             />
 
             <TouchableOpacity
-              activeOpacity={0.7}
+              activeOpacity={0.8}
               onPress={handleDelete}
               disabled={saving || deleting}
-              className="py-3.5 px-4 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50/70 dark:bg-red-950/20 flex-row items-center justify-center gap-2"
+              className="py-4 px-4 rounded-2xl bg-[#DC2626] flex-row items-center justify-center gap-2 shadow-sm active:opacity-90"
             >
-              <Ionicons name="trash-outline" size={18} color="#EF4444" />
-              <Text className="text-[14px] font-bold text-red-600 dark:text-red-400">
+              <Ionicons name="trash-outline" size={18} color="#FFFFFF" />
+              <Text className="text-[15px] font-bold text-white tracking-wide">
                 {t("patients:deletePatient", { defaultValue: "Delete Patient" })}
               </Text>
             </TouchableOpacity>

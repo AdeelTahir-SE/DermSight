@@ -32,34 +32,29 @@ const TOAST_THEMES: Record<
   ToastType,
   {
     icon: keyof typeof Ionicons.glyphMap;
-    iconColor: string;
-    iconBg: string;
-    accentBorder: string;
+    bgColor: string;
+    iconBgColor: string;
   }
 > = {
   success: {
     icon: "checkmark-circle",
-    iconColor: "#0D9E94", // DermSight primary teal
-    iconBg: "bg-primary-50 dark:bg-primary-950/60",
-    accentBorder: "border-primary-500/30 dark:border-primary-500/40",
+    bgColor: "bg-[#0D9E94]", // Solid primary teal
+    iconBgColor: "bg-white/20",
   },
   error: {
     icon: "alert-circle",
-    iconColor: "#EF4444",
-    iconBg: "bg-red-50 dark:bg-red-950/60",
-    accentBorder: "border-red-400/30 dark:border-red-500/40",
+    bgColor: "bg-[#DC2626]", // Solid error red
+    iconBgColor: "bg-white/20",
   },
   warning: {
     icon: "warning",
-    iconColor: "#F59E0B",
-    iconBg: "bg-amber-50 dark:bg-amber-950/60",
-    accentBorder: "border-amber-400/30 dark:border-amber-500/40",
+    bgColor: "bg-[#D97706]", // Solid warning amber
+    iconBgColor: "bg-white/20",
   },
   info: {
     icon: "information-circle",
-    iconColor: "#0D9E94",
-    iconBg: "bg-primary-50 dark:bg-primary-950/60",
-    accentBorder: "border-primary-500/30 dark:border-primary-500/40",
+    bgColor: "bg-[#0A7E76]", // Solid teal info
+    iconBgColor: "bg-white/20",
   },
 };
 
@@ -88,32 +83,33 @@ function ToastRow({ item }: { item: ToastItem }) {
     <Animated.View
       entering={FadeInUp.springify().damping(18).stiffness(180)}
       exiting={FadeOutUp.duration(200)}
-      className={`w-full max-w-[420px] flex-row items-center px-3.5 py-3 rounded-2xl bg-white dark:bg-slate-900 border ${theme.accentBorder} shadow-lg shadow-black/10`}
+      className={`w-full max-w-[420px] flex-row items-center px-4 py-3.5 rounded-2xl ${theme.bgColor} shadow-lg shadow-black/25`}
       style={{
-        elevation: 6,
+        elevation: 8,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.12,
-        shadowRadius: 8,
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
       }}
     >
       <View
-        className={`w-8 h-8 rounded-full items-center justify-center mr-3 ${theme.iconBg}`}
+        className={`w-8 h-8 rounded-full items-center justify-center mr-3 ${theme.iconBgColor}`}
       >
-        <Ionicons name={theme.icon} size={20} color={theme.iconColor} />
+        <Ionicons name={theme.icon} size={20} color="#FFFFFF" />
       </View>
 
-      <Text className="flex-1 text-sm font-medium text-navy dark:text-slate-100 leading-snug">
+      <Text className="flex-1 text-[14px] font-semibold text-white leading-snug">
         {item.message}
       </Text>
 
       <Pressable
         onPress={() => hideToast(item.id)}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        className="p-1 ml-2 rounded-full active:bg-gray-100 dark:active:bg-slate-800"
+        className="p-1.5 ml-2 rounded-full active:bg-white/20"
       >
-        <Ionicons name="close" size={16} color="#94A3B8" />
+        <Ionicons name="close" size={16} color="#FFFFFF" />
       </Pressable>
     </Animated.View>
   );
 }
+

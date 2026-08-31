@@ -66,16 +66,16 @@ export default function PinSetupScreen() {
   return (
     <View className="flex-1 bg-white dark:bg-slate-950 justify-center px-8">
       {/* Header */}
-      <View className="items-center mb-8">
-        <View className="w-36 h-36 rounded-[32px] bg-primary-50 dark:bg-primary-950/20 items-center justify-center mb-4 shadow-sm">
-          <Image
-            source={require("../../../assets/logo.png")}
-            style={{ width: 104, height: 104 }}
-            contentFit="contain"
-          />
-        </View>
-        <Text className="text-2xl font-bold text-navy dark:text-slate-100">Set up your PIN</Text>
-        <Text className="text-sm text-gray-500 dark:text-slate-400 text-center mt-2 px-4">
+      <View className="items-center mb-6">
+        <Image
+          source={require("../../../assets/logo_with_text.png")}
+          style={{ width: 230, height: 110 }}
+          contentFit="contain"
+        />
+        <Text className="text-xl font-bold text-navy dark:text-slate-100 mt-2">
+          Set up your PIN
+        </Text>
+        <Text className="text-sm text-gray-500 dark:text-slate-400 text-center mt-1 px-4">
           Create a 4-digit PIN to secure your app and protect patient data.
         </Text>
       </View>

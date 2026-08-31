@@ -7,6 +7,7 @@ import type { Assessment, Patient } from "@/types";
 import { calculateAge, formatDate, formatDateTime } from "@/utils/date";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
+import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -116,11 +117,10 @@ export default function PatientDetailScreen() {
       {/* Header */}
       <View className="bg-white dark:bg-slate-900 px-5 pt-12 pb-4 flex-row items-center justify-between">
         <Pressable onPress={handleBack} className="p-1">
-          <Image
-            source={require("../../../../../assets/icons/profile-back.png")}
-            style={{ width: 24, height: 24 }}
-            contentFit="contain"
-            tintColor={isDark ? "#E2E8F0" : "#1B2B4B"}
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color={isDark ? "#E2E8F0" : "#1B2B4B"}
           />
         </Pressable>
         <Pressable onPress={handleEdit} className="flex-row items-center">
@@ -230,50 +230,55 @@ export default function PatientDetailScreen() {
         </Card>
 
         {/* Assessment Summary */}
-        <SectionHeader title={t("patientDetail:assessmentSummary")} />
-        <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-gray-100 dark:border-slate-800/80">
-          <View className="flex-row gap-2 mb-4">
-            <SummaryCard
-              count={assessments.length}
-              label={t("patientDetail:totalAssessments", {
-                count: assessments.length,
-              })}
-              bgClass="bg-primary-50 dark:bg-primary-950/20"
-              textClass="text-primary dark:text-primary-400"
-            />
-            <SummaryCard
-              count={highRiskCount}
-              label={t("patientDetail:highRiskFindings", {
-                count: highRiskCount,
-              })}
-              bgClass="bg-amber-50 dark:bg-amber-950/20"
-              textClass="text-amber-600 dark:text-amber-400"
-            />
-            <SummaryCard
-              count={lowRiskCount}
-              label={t("patientDetail:lowRiskFindings", {
-                count: lowRiskCount,
-              })}
-              bgClass="bg-blue-50 dark:bg-blue-950/20"
-              textClass="text-blue-600 dark:text-blue-400"
-            />
+        <SectionHeader title={t("patientDetail:assessmentSummary", { defaultValue: "Assessment Summary" })} />
+        <View className="bg-white dark:bg-slate-900 rounded-3xl border border-[#EBF2F1] dark:border-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.02)] overflow-hidden">
+          {/* Top 3 Metric Blocks with dedicated surrounding padding */}
+          <View className="p-4 pb-3">
+            <View className="flex-row gap-3">
+              <SummaryCard
+                count={assessments.length}
+                label={t("patientDetail:totalAssessments", {
+                  defaultValue: "Total Screenings",
+                })}
+                bgClass="bg-[#0D9E94]"
+              />
+              <SummaryCard
+                count={highRiskCount}
+                label={t("patientDetail:highRiskFindings", {
+                  defaultValue: "High Risk",
+                })}
+                bgClass="bg-[#DC2626]"
+              />
+              <SummaryCard
+                count={lowRiskCount}
+                label={t("patientDetail:lowRiskFindings", {
+                  defaultValue: "Low Risk",
+                })}
+                bgClass="bg-[#0A7E76]"
+              />
+            </View>
           </View>
-          <Pressable
-            onPress={handleNewAssessment}
-            className="bg-primary dark:bg-primary-600 rounded-xl py-3.5 items-center flex-row justify-center"
-          >
-            <Text className="text-white font-semibold">
-              {t("home:newAssessment")}
-            </Text>
-          </Pressable>
+
+          {/* Action Button */}
+          <View className="px-4 pb-4">
+            <Pressable
+              onPress={handleNewAssessment}
+              className="bg-[#0D9E94] dark:bg-[#0A7E76] rounded-2xl py-3.5 items-center flex-row justify-center shadow-sm active:opacity-90"
+            >
+              <Ionicons name="camera-outline" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+              <Text className="text-white font-bold text-[15px]">
+                {t("home:newAssessment", { defaultValue: "New Skin Assessment" })}
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* Recent Assessments */}
         {assessments.length > 0 && (
           <>
             <View className="flex-row items-center justify-between mt-6 mb-2">
-              <Text className="text-sm font-semibold text-primary dark:text-primary-400">
-                {t("patientDetail:recentAssessments")}
+              <Text className="text-sm font-bold text-primary dark:text-primary-400">
+                {t("patientDetail:recentAssessments", { defaultValue: "Recent Assessments" })}
               </Text>
               <Pressable
                 onPress={async () => {
@@ -285,8 +290,8 @@ export default function PatientDetailScreen() {
                   router.push(`/(app)/patients/${patientId}/history`);
                 }}
               >
-                <Text className="text-sm text-primary dark:text-primary-400 font-semibold">
-                  {t("patientDetail:viewAll")}
+                <Text className="text-sm text-primary dark:text-primary-400 font-bold">
+                  {t("patientDetail:viewAll", { defaultValue: "View All" })}
                 </Text>
               </Pressable>
             </View>
@@ -301,7 +306,7 @@ export default function PatientDetailScreen() {
                       : "border-b border-gray-100 dark:border-slate-800/80"
                   }`}
                 >
-                  <View className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-slate-850 overflow-hidden mr-3">
+                  <View className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-slate-850 overflow-hidden mr-3 items-center justify-center">
                     {assessment.imageLocalUri ? (
                       <Image
                         source={{ uri: assessment.imageLocalUri }}
@@ -309,8 +314,8 @@ export default function PatientDetailScreen() {
                         contentFit="cover"
                       />
                     ) : (
-                      <View className="w-full h-full items-center justify-center">
-                        <Text className="text-lg">🔬</Text>
+                      <View className="w-full h-full items-center justify-center bg-[#E6F7F5] dark:bg-teal-950/40">
+                        <Ionicons name="scan-outline" size={20} color="#0D9E94" />
                       </View>
                     )}
                   </View>
@@ -320,14 +325,17 @@ export default function PatientDetailScreen() {
                     </Text>
                     <Text className="text-sm font-semibold text-navy dark:text-slate-200 mt-0.5">
                       {assessment.bodyLocation ||
-                        t("patientDetail:unknownLocation") ||
+                        t("patientDetail:unknownLocation", { defaultValue: "Unknown location" }) ||
                         "Unknown location"}
                     </Text>
                   </View>
                   <Badge riskTier={assessment.riskTier} size="sm" />
-                  <Text className="text-gray-300 dark:text-slate-600 ml-2 text-lg">
-                    ›
-                  </Text>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={18}
+                    color={isDark ? "#64748B" : "#94A3B8"}
+                    style={{ marginLeft: 8 }}
+                  />
                 </Pressable>
               ))}
             </Card>
@@ -420,17 +428,22 @@ function SummaryCard({
   count,
   label,
   bgClass,
-  textClass,
 }: {
   count: number;
   label: string;
   bgClass: string;
-  textClass: string;
 }) {
   return (
-    <View className={`flex-1 rounded-xl p-3 ${bgClass}`}>
-      <Text className={`text-2xl font-bold ${textClass}`}>{count}</Text>
-      <Text className={`text-xs font-medium mt-0.5 ${textClass}`}>{label}</Text>
+    <View className={`flex-1 rounded-2xl py-4 px-2 items-center justify-center ${bgClass} shadow-sm`}>
+      <Text className="text-[24px] font-black text-white tracking-tight">
+        {count}
+      </Text>
+      <Text
+        className="text-[11px] font-bold text-white/95 mt-1 text-center leading-tight"
+        numberOfLines={2}
+      >
+        {label}
+      </Text>
     </View>
   );
 }

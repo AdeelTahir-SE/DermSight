@@ -204,9 +204,9 @@
     "unknownLocation": "Localisation inconnue",
     "registeredOn": "Enregistré le {{date}}",
     "assessmentSummary": "Résumé des évaluations",
-    "totalAssessments": "{{count}} évaluations au total",
-    "highRiskFindings": "{{count}} résultats à haut risque",
-    "lowRiskFindings": "{{count}} résultats à faible risque",
+    "totalAssessments": "Total des évaluations",
+    "highRiskFindings": "Haut risque",
+    "lowRiskFindings": "Faible risque",
     "recentAssessments": "Évaluations récentes",
     "viewAll": "Voir tout",
     "active": "Actif"

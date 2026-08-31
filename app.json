@@ -4,25 +4,24 @@
     "slug": "dermsight",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo.png",
+    "icon": "./assets/icon.png",
     "scheme": "dermsight",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/logo.png",
+      "image": "./assets/logo_with_text.png",
       "resizeMode": "contain",
       "backgroundColor": "#FFFFFF"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.dermsight.app",
-      "icon": "./assets/logo.png"
+      "icon": "./assets/icon.png"
     },
     "android": {
       "package": "com.dermsight.app",
       "adaptiveIcon": {
-        "backgroundColor": "#0D9E94",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "permissions": [
@@ -49,8 +48,8 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#FFFFFF",
-          "image": "./assets/logo.png",
-          "imageWidth": 120
+          "image": "./assets/logo_with_text.png",
+          "imageWidth": 260
         }
       ],
       [
