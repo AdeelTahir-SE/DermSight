@@ -7,7 +7,7 @@ DermSight is an offline-first, on-device dermatological risk screening applicati
 
 >  **Download Demo APK**: [Download DermSight Android APK (Google Drive)](https://drive.google.com/file/d/12AdY-X3D3E5woK8AhKNMqWXBwQA1DxXJ/view?usp=sharing)
 
->  **Video Demo**: [DermSight (Demo)](https://github.com/user-attachments/assets/0f58313a-7897-4d98-8461-dac0b22ecb09)
+>  **Video Demo**: [DermSight (Demo)](https://github.com/user-attachments/assets/348f0073-3d5b-451c-8638-28a182b6e5fa)
 
 ## Key Capabilities
 
